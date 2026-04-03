@@ -1,39 +1,47 @@
 <div align="center">
 
 <!-- Animated Header -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=180&section=header&text=ronalc90&fontSize=42&fontColor=fff&animation=twinkling&fontAlignY=32&desc=Full%20Stack%20Developer%20%7C%20Backend%20Enthusiast%20%7C%20Problem%20Solver&descAlignY=55&descSize=16" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=200&section=header&text=Ronald%20Cipagauta&fontSize=40&fontColor=fff&animation=twinkling&fontAlignY=32&desc=Full%20Stack%20Developer%20%7C%20Backend%20%7C%20AI%20%26%20Chatbots%20%7C%20Cloud&descAlignY=55&descSize=16" width="100%"/>
 
 <!-- Typing Animation -->
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=28&duration=3000&pause=800&color=00D9FF&center=true&vCenter=true&multiline=false&repeat=true&width=600&height=60&lines=Hello+World!+%F0%9F%91%8B;I+build+cool+things+%F0%9F%9A%80;Backend+%26+Full+Stack+Dev+%F0%9F%92%BB;Always+learning%2C+always+growing+%F0%9F%8C%B1)](https://git.io/typing-svg)
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=26&duration=3000&pause=800&color=00D9FF&center=true&vCenter=true&multiline=false&repeat=true&width=700&height=60&lines=Full+Stack+Developer+%F0%9F%9A%80;React+%7C+TypeScript+%7C+Node.js+%7C+Java;AI+%26+Chatbots+con+OpenAI+%F0%9F%A4%96;Microservicios+%7C+AWS+%7C+CI%2FCD+%E2%98%81%EF%B8%8F;Apasionado+por+el+c%C3%B3digo+limpio+%E2%9C%A8)](https://git.io/typing-svg)
 
-<!-- Profile Views & Social Badges -->
 <p>
   <img src="https://komarev.com/ghpvc/?username=ronalc90&label=Profile%20Views&color=0e75b6&style=for-the-badge" alt="profile views" />
   <img src="https://img.shields.io/github/followers/ronalc90?label=Followers&style=for-the-badge&color=blue" alt="followers" />
-  <img src="https://img.shields.io/github/stars/ronalc90?label=Stars&style=for-the-badge&color=yellow" alt="stars" />
+  <a href="https://koptup.com"><img src="https://img.shields.io/badge/Portfolio-koptup.com-FF5722?style=for-the-badge&logo=firefox&logoColor=white" alt="portfolio"/></a>
 </p>
 
 </div>
 
 ---
 
-## 🧑‍💻 About Me
+## 🧑‍💻 Sobre Mí
 
 ```yaml
-name: ronalc90
+name: Ronald Demian Cipagauta Penagos
 role: Full Stack Developer
-location: Argentina 🇦🇷
+location: Colombia 🇨🇴
+email: ronalddemiancipagauta@gmail.com
+phone: "+57 302 479 4842"
 portfolio: koptup.com
+
+about: >
+  Desarrollador de software con experiencia en diseño e implementación de
+  soluciones modernas, escalables y centradas en el usuario. Combino
+  desarrollo full stack con React/TypeScript en frontend, y Node.js, Java
+  y Python en backend, integrando arquitecturas REST y microservicios.
+  Recientemente especializado en backend para chatbots inteligentes con
+  OpenAI, recuperación semántica, embeddings y vector stores.
+
 focus:
-  - Backend Development (Java, Spring Boot, Go)
-  - Frontend (JavaScript, React, HTML/CSS)
-  - Database Design (MongoDB, MySQL)
-  - REST APIs & Microservices
-currently_learning:
-  - Golang 🐹
-  - Cloud Architecture ☁️
-  - AI/ML Integration 🤖
-fun_fact: "299+ contributions in the last year and counting! 🔥"
+  - ⚛️  Frontend: React, TypeScript, Angular
+  - 🖥️  Backend: Node.js, Java, Python, .NET
+  - 🤖  AI/Chatbots: OpenAI API, embeddings, vector stores
+  - ☁️  Cloud: AWS (S3), Vercel, CI/CD pipelines
+  - 🗄️  Databases: Oracle, SQL Server, MySQL, MongoDB
+
+currently_working_on: "BC Tecnología — Backend Developer para Falabella"
 ```
 
 ---
@@ -42,32 +50,89 @@ fun_fact: "299+ contributions in the last year and counting! 🔥"
 
 <div align="center">
 
-### 💻 Languages
+### 💻 Lenguajes
 ![Java](https://img.shields.io/badge/Java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
-![Go](https://img.shields.io/badge/Go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
+![Python](https://img.shields.io/badge/Python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![C++](https://img.shields.io/badge/C++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
-![HTML5](https://img.shields.io/badge/HTML5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
+![SQL](https://img.shields.io/badge/SQL-%2307405e.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 
-### ⚙️ Frameworks & Libraries
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white)
-![Hibernate](https://img.shields.io/badge/Hibernate-%2359666C.svg?style=for-the-badge&logo=hibernate&logoColor=white)
+### ⚙️ Frameworks & Librerías
+![React](https://img.shields.io/badge/React-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![Angular](https://img.shields.io/badge/Angular-%23DD0031.svg?style=for-the-badge&logo=angular&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white)
+![.NET](https://img.shields.io/badge/.NET-5C2D91?style=for-the-badge&logo=.net&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens)
-![Handlebars](https://img.shields.io/badge/Handlebars.js-f0772b?style=for-the-badge&logo=handlebarsdotjs&logoColor=white)
 
-### 🗄️ Databases
-![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
+### 🗄️ Bases de Datos
+![Oracle](https://img.shields.io/badge/Oracle-F80000?style=for-the-badge&logo=oracle&logoColor=white)
+![SQL Server](https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoft%20sql%20server&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 
-### 🔧 Tools & Platforms
+### ☁️ Cloud / DevOps
+![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Git](https://img.shields.io/badge/Git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
 ![GitHub](https://img.shields.io/badge/GitHub-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
-![VS Code](https://img.shields.io/badge/VS%20Code-0078d7.svg?style=for-the-badge&logo=visual-studio-code&logoColor=white)
-![IntelliJ IDEA](https://img.shields.io/badge/IntelliJ%20IDEA-000000.svg?style=for-the-badge&logo=intellij-idea&logoColor=white)
+![Bitbucket](https://img.shields.io/badge/Bitbucket-%230047B3.svg?style=for-the-badge&logo=bitbucket&logoColor=white)
+![JIRA](https://img.shields.io/badge/Jira-%230A0FFF.svg?style=for-the-badge&logo=jira&logoColor=white)
+
+### 🤖 IA & Chatbots
+![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)
+![Python](https://img.shields.io/badge/Embeddings%20%26%20Vector%20Stores-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+
+</div>
+
+---
+
+## 💼 Experiencia Profesional
+
+<table width="100%">
+  <tr>
+    <td width="12%" align="center"><b>2025 – Actual</b></td>
+    <td>
+      <b>🏦 BC Tecnología — Desarrollador Backend (para Falabella)</b><br/>
+      Validaciones end-to-end en procesos de conciliación de transacciones bancarias. Corrección de stored procedures con lógica bancaria sobre SQL Server, garantizando consistencia, exactitud y trazabilidad de los datos.
+    </td>
+  </tr>
+  <tr>
+    <td width="12%" align="center"><b>2024 – 2025</b></td>
+    <td>
+      <b>🤖 Globa — Desarrollador Full Stack</b><br/>
+      React + TypeScript en frontend y Node.js/TypeScript en backend. Chatbots inteligentes con OpenAI API, embeddings, vector stores y recuperación semántica. Procesamiento de documentos (PDF, DOCX, HTML, TXT), microservicios, AWS (S3), JWT y pipelines CI/CD.
+    </td>
+  </tr>
+  <tr>
+    <td width="12%" align="center"><b>2023 – 2024</b></td>
+    <td>
+      <b>🎓 Universitas XXI — Desarrollador Full Stack</b><br/>
+      Arquitectura modular por capas con Java EE y REST sobre WebLogic. Interfaces en Oracle APEX, pruebas unitarias con JUnit, CI/CD, Git/Bitbucket, JIRA y soporte en entornos preproductivos y productivos.
+    </td>
+  </tr>
+  <tr>
+    <td width="12%" align="center"><b>2020 – 2023</b></td>
+    <td>
+      <b>🌐 Koptup — Desarrollador Full Stack & Consultor Tecnológico</b><br/>
+      Soluciones a medida con React, Angular, TypeScript. Apps de escritorio WPF + SQL Server, integraciones AWS S3, autenticación JWT, despliegues en Vercel, eCommerce personalizados y consultoría técnica.
+    </td>
+  </tr>
+</table>
+
+---
+
+## 🎓 Educación
+
+<div align="center">
+
+| Título | Institución | Estado |
+|--------|-------------|--------|
+| 🎓 Ingeniería de Desarrollo de Software | Politécnico Grancolombiano | En curso (homologando) |
+| 📚 Tecnología en Sistematización de Datos | Universidad Distrital Francisco José de Caldas | Materias terminadas |
 
 </div>
 
@@ -96,19 +161,20 @@ fun_fact: "299+ contributions in the last year and counting! 🔥"
 
 ---
 
-## 🌐 Connect with me
+## 🌐 Contacto & Redes
 
 <div align="center">
 
 [![Portfolio](https://img.shields.io/badge/Portfolio-koptup.com-FF5722?style=for-the-badge&logo=firefox&logoColor=white)](https://koptup.com)
-[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ronalc90)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ronald-demian-cipagauta-penagos-384944209/)
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ronalc90)
+[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:ronalddemiancipagauta@gmail.com)
 
 </div>
 
 ---
 
-## 🚀 Featured Projects
+## 🚀 Proyectos Destacados
 
 <div align="center">
 
@@ -120,18 +186,9 @@ fun_fact: "299+ contributions in the last year and counting! 🔥"
 
 ---
 
-<div align="center">
-
-### 💬 Random Dev Quote
-![Quote](https://quotes-github-readme.vercel.app/api?type=horizontal&theme=tokyonight)
-
-</div>
-
----
-
 <!-- Animated Footer -->
 <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=100&section=footer&animation=twinkling" width="100%"/>
 
 <div align="center">
-  <i>⭐ Star my repos if you find them interesting! Happy coding! 🚀</i>
+  <i>⭐ Si mis repos te resultan útiles, ¡deja una estrella! Happy coding! 🚀</i>
 </div>
