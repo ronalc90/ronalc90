@@ -1,11 +1,10 @@
 <div align="center">
 
-<!-- Typing SVG - demolab.com is stable and reliable -->
+<!-- Typing SVG -->
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=28&duration=3000&pause=800&color=00D9FF&center=true&vCenter=true&width=750&height=65&lines=👋+Hola%2C+soy+Ronald+Cipagauta;Full+Stack+Developer+🚀;React+%7C+TypeScript+%7C+Node.js+%7C+Java;AI+%26+Chatbots+con+OpenAI+🤖;Microservicios+%7C+AWS+%7C+CI%2FCD+☁️;Apasionado+por+el+código+limpio+✨)](https://git.io/typing-svg)
 
 <br/>
 
-<!-- Badges 100% estáticos via shields.io -->
 <p>
   <img src="https://komarev.com/ghpvc/?username=ronalc90&label=Profile+Views&color=0e75b6&style=for-the-badge" alt="profile views"/>
   <img src="https://img.shields.io/github/followers/ronalc90?label=Followers&style=for-the-badge&color=0077B5&logo=github&logoColor=white" alt="followers"/>
@@ -48,6 +47,26 @@ focus:
 
 currently_working_on: "BC Tecnología — Backend Developer para Falabella"
 ```
+
+---
+
+## 💡 Lo que ofrezco
+
+<div align="center">
+
+| 🌐 Desarrollo Web | 🔌 APIs & Backend | 🤖 AI & Chatbots |
+|:-----------------:|:-----------------:|:----------------:|
+| React, Angular, TypeScript | Node.js, Java, Spring Boot | OpenAI, Embeddings, RAG |
+| Apps modernas y responsivas | REST APIs, Microservicios | Chatbots inteligentes |
+| Integraciones eCommerce | JWT, Seguridad, Auth | Búsqueda semántica |
+
+| ☁️ Cloud & DevOps | 🗄️ Bases de Datos | 🖥️ Desktop Apps |
+|:------------------:|:-----------------:|:---------------:|
+| AWS S3, Vercel | Oracle, SQL Server | WPF + .NET |
+| CI/CD Pipelines | MySQL, MongoDB | Apps empresariales |
+| Git, Bitbucket, JIRA | Stored Procedures | SQL Server integrado |
+
+</div>
 
 ---
 
@@ -153,7 +172,6 @@ currently_working_on: "BC Tecnología — Backend Developer para Falabella"
 
 <div align="center">
 
-<!-- github-readme-stats es confiable en navegadores reales -->
 <img height="175" src="https://github-readme-stats.vercel.app/api?username=ronalc90&show_icons=true&theme=tokyonight&hide_border=true&count_private=true&include_all_commits=true&rank_icon=github" alt="GitHub Stats"/>
 <img height="175" src="https://streak-stats.demolab.com?user=ronalc90&theme=tokyonight&hide_border=true&date_format=j%20M%5B%20Y%5D" alt="GitHub Streak"/>
 
@@ -165,28 +183,52 @@ currently_working_on: "BC Tecnología — Backend Developer para Falabella"
 
 ---
 
+## 📈 Actividad
+
+<div align="center">
+
+[![Activity Graph](https://github-readme-activity-graph.vercel.app/graph?username=ronalc90&theme=tokyo-night&hide_border=true&area=true)](https://github.com/ronalc90)
+
+</div>
+
+---
+
+## 🐍 Snake de contribuciones
+
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ronalc90/ronalc90/output/github-snake-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ronalc90/ronalc90/output/github-snake.svg" />
+  <img alt="github-snake" src="https://raw.githubusercontent.com/ronalc90/ronalc90/output/github-snake.svg" />
+</picture>
+
+</div>
+
+---
+
 ## 🚀 Proyectos Destacados
 
 <div align="center">
 
-### 🔗 [Spring Boot + Java + Hibernate + JWT + API REST + Ajax](https://github.com/ronalc90/Sprintboot-in-java-hibernate-JWT-API-Rest-Ajax)
+### 🔗 [Spring Boot + Java + Hibernate + JWT + API REST](https://github.com/ronalc90/Sprintboot-in-java-hibernate-JWT-API-Rest-Ajax)
 
 ![Java](https://img.shields.io/badge/Java-%23ED8B00.svg?style=flat-square&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-%236DB33F.svg?style=flat-square&logo=spring&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-black?style=flat-square&logo=JSON%20web%20tokens)
 ![Hibernate](https://img.shields.io/badge/Hibernate-59666C?style=flat-square&logo=hibernate&logoColor=white)
 
-API REST completa con Spring Boot, autenticación JWT, Hibernate ORM y frontend Ajax.
+API REST completa con autenticación JWT, Hibernate ORM y frontend Ajax integrado.
 
 ---
 
 ### 🔗 [SaludSalta — Disease Predictor](https://github.com/ronalc90/saludsalta-disease-predictor)
 
 ![Python](https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54)
-![Machine Learning](https://img.shields.io/badge/Machine%20Learning-FF6F00?style=flat-square&logo=tensorflow&logoColor=white)
+![ML](https://img.shields.io/badge/Machine%20Learning-FF6F00?style=flat-square&logo=tensorflow&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=flat-square&logo=mongodb&logoColor=white)
 
-Predictor de enfermedades con modelos de ML integrado en sistema de salud.
+Predictor de enfermedades con modelos de ML integrado en sistema de salud real.
 
 ---
 
@@ -196,7 +238,7 @@ Predictor de enfermedades con modelos de ML integrado en sistema de salud.
 ![Node.js](https://img.shields.io/badge/Node.js-6DA55F?style=flat-square&logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=flat-square&logo=typescript&logoColor=white)
 
-Implementación de RAG con embeddings, vector stores y OpenAI para búsqueda semántica.
+RAG con embeddings, vector stores y OpenAI para búsqueda semántica sobre documentos.
 
 </div>
 
