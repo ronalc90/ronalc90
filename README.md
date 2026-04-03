@@ -23,6 +23,7 @@
 name: ronalc90
 role: Full Stack Developer
 location: Argentina 🇦🇷
+portfolio: koptup.com
 focus:
   - Backend Development (Java, Spring Boot, Go)
   - Frontend (JavaScript, React, HTML/CSS)
@@ -99,9 +100,9 @@ fun_fact: "299+ contributions in the last year and counting! 🔥"
 
 <div align="center">
 
+[![Portfolio](https://img.shields.io/badge/Portfolio-koptup.com-FF5722?style=for-the-badge&logo=firefox&logoColor=white)](https://koptup.com)
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ronalc90)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/ronalc90)
-[![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/ronalc90)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ronald-demian-cipagauta-penagos-384944209/)
 
 </div>
 
