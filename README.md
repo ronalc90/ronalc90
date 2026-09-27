@@ -43,9 +43,12 @@ focus:
   - 🖥️  Backend: Node.js, Java, Python, .NET
   - 🤖  AI/Chatbots: OpenAI API, embeddings, vector stores
   - ☁️  Cloud: AWS (S3), Vercel, CI/CD pipelines
+  - 🔀  Data Flows: Apache NiFi
   - 🗄️  Databases: Oracle, SQL Server, MySQL, MongoDB
 
-currently_working_on: "BC Tecnología — Backend Developer para Falabella"
+currently_working_on:
+  - "SII Group — Backend Developer para Falabella"
+  - "Claro — Flujos de datos con Apache NiFi"
 ```
 
 ---
@@ -105,6 +108,7 @@ currently_working_on: "BC Tecnología — Backend Developer para Falabella"
 ![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![Apache NiFi](https://img.shields.io/badge/Apache%20NiFi-728E9B?style=for-the-badge&logo=apache&logoColor=white)
 ![Git](https://img.shields.io/badge/Git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
 ![GitHub](https://img.shields.io/badge/GitHub-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
 ![Bitbucket](https://img.shields.io/badge/Bitbucket-%230047B3.svg?style=for-the-badge&logo=bitbucket&logoColor=white)
@@ -124,10 +128,17 @@ currently_working_on: "BC Tecnología — Backend Developer para Falabella"
 
 <table width="100%">
   <tr>
+    <td width="13%" align="center"><b>2026<br/>Actual</b></td>
+    <td>
+      <b>📡 Claro — Desarrollador de Flujos de Datos (Apache NiFi)</b><br/>
+      Diseño y desarrollo de flujos en Apache NiFi para la ingesta, transformación y enrutamiento de datos entre sistemas.
+    </td>
+  </tr>
+  <tr>
     <td width="13%" align="center"><b>2025<br/>Actual</b></td>
     <td>
-      <b>🏦 BC Tecnología — Desarrollador Backend (para Falabella)</b><br/>
-      Validaciones end-to-end en procesos de conciliación de transacciones bancarias. Corrección de stored procedures con lógica bancaria sobre SQL Server, garantizando consistencia, exactitud y trazabilidad de los datos.
+      <b>🏦 SII Group — Desarrollador Backend (para Falabella)</b><br/>
+      Validaciones end-to-end en procesos de conciliación de transacciones bancarias. Corrección de stored procedures con lógica bancaria sobre SQL Server, garantizando consistencia, exactitud y trazabilidad de los datos. <i>(Inicialmente vía BC Tecnología.)</i>
     </td>
   </tr>
   <tr>
