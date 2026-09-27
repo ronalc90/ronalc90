@@ -135,10 +135,17 @@ currently_working_on:
     </td>
   </tr>
   <tr>
-    <td width="13%" align="center"><b>2025<br/>Actual</b></td>
+    <td width="13%" align="center"><b>2026<br/>Actual</b></td>
     <td>
       <b>🏦 SII Group — Desarrollador Backend (para Falabella)</b><br/>
-      Validaciones end-to-end en procesos de conciliación de transacciones bancarias. Corrección de stored procedures con lógica bancaria sobre SQL Server, garantizando consistencia, exactitud y trazabilidad de los datos. <i>(Inicialmente vía BC Tecnología.)</i>
+      Continuidad en el proyecto de conciliación bancaria de Falabella tras el cambio de proveedor a SII Group. Validaciones end-to-end y mantenimiento de stored procedures con lógica bancaria sobre SQL Server.
+    </td>
+  </tr>
+  <tr>
+    <td width="13%" align="center"><b>2025<br/>2026</b></td>
+    <td>
+      <b>🏦 BC Tecnología — Desarrollador Backend (para Falabella)</b><br/>
+      Validaciones end-to-end en procesos de conciliación de transacciones bancarias. Corrección de stored procedures con lógica bancaria sobre SQL Server, garantizando consistencia, exactitud y trazabilidad de los datos.
     </td>
   </tr>
   <tr>
