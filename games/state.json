@@ -3,7 +3,7 @@
   "level": 1,
   "hp": 255,
   "maxHp": 300,
-  "prevHp": 300,
+  "prevHp": 255,
   "kills": 0,
   "totalAttacks": 1,
   "players": {
@@ -28,5 +28,12 @@
   ],
   "fallen": []
  },
- "guestbook": []
+ "guestbook": [
+  {
+   "user": "ronalc90",
+   "avatar": "https://avatars.githubusercontent.com/u/36252532?v=4",
+   "cls": "viajero",
+   "t": 1792704237754
+  }
+ ]
 }

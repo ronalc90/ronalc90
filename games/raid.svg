@@ -59,8 +59,8 @@
   <text class="sm" x="502" y="141" text-anchor="end" fill="#efe2c6">255 / 300</text>
   <rect x="32" y="150" width="470" height="22" rx="5" fill="#1d1410" stroke="#4a3a2c"/>
   <g clip-path="url(#bar)">
-    <rect class="ghost" x="32" y="150" width="470.0" height="22" fill="#f3e9d8" fill-opacity=".85"/>
-    <rect class="hpfill" x="32" y="150" width="470.0" height="22" fill="url(#hpG)"/>
+    <rect class="ghost" x="32" y="150" width="399.5" height="22" fill="#f3e9d8" fill-opacity=".85"/>
+    <rect class="hpfill" x="32" y="150" width="399.5" height="22" fill="url(#hpG)"/>
     <rect class="shimmer" x="-88" y="150" width="120" height="22" fill="url(#shG)"/>
   </g>
   <line x1="79" y1="153" x2="79" y2="169" stroke="#000" stroke-opacity=".35"/><line x1="126" y1="153" x2="126" y2="169" stroke="#000" stroke-opacity=".35"/><line x1="173" y1="153" x2="173" y2="169" stroke="#000" stroke-opacity=".35"/><line x1="220" y1="153" x2="220" y2="169" stroke="#000" stroke-opacity=".35"/><line x1="267" y1="153" x2="267" y2="169" stroke="#000" stroke-opacity=".35"/><line x1="314" y1="153" x2="314" y2="169" stroke="#000" stroke-opacity=".35"/><line x1="361" y1="153" x2="361" y2="169" stroke="#000" stroke-opacity=".35"/><line x1="408" y1="153" x2="408" y2="169" stroke="#000" stroke-opacity=".35"/><line x1="455" y1="153" x2="455" y2="169" stroke="#000" stroke-opacity=".35"/>

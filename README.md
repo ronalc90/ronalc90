@@ -355,7 +355,8 @@ currently_working_on:
 </div>
 
 <!-- GUESTBOOK:START -->
-<p align="center"><sub>Aún no hay firmas. ¡La caravana espera a su primer viajero!</sub></p>
+<p align="center"><a href="https://github.com/ronalc90" title="@ronalc90 · viajero"><img src="https://github.com/ronalc90.png?size=64" width="34" height="34" alt="@ronalc90"/></a></p>
+<p align="center"><sub>Últimas firmas · 1 en total</sub></p>
 <!-- GUESTBOOK:END -->
 
 ### 🎲 Aventura de texto
