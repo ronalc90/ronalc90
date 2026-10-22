@@ -299,12 +299,12 @@ currently_working_on:
 
 <sub>Sí: se puede jugar desde este perfil. Los ataques y firmas abren un *issue* prellenado; un GitHub Action lo procesa y actualiza este README.</sub>
 
-### 🔥 CENIZA · esquiva la furia del coloso
+### 🔥 CENIZA · sobrevive a la furia del coloso
 
 <div align="center">
-  <a href="https://ronalc90.github.io/ronalc90/"><img src="assets/ceniza-preview.webp" width="100%" alt="CENIZA: mini juego donde esquivas los láseres del coloso. Clic para jugar"/></a>
+  <a href="https://ronalc90.github.io/ronalc90/"><img src="assets/ceniza-preview.webp" width="100%" alt="CENIZA: mini juego con armas, jefes intermedios y árbol de habilidades. Clic para jugar"/></a>
   <br/>
-  <sub>Mini juego en el navegador (PC y móvil) · esquiva láseres, escombros y ondas · recoge fragmentos para hacer combos</sub>
+  <sub>Mini juego en el navegador (PC y móvil) · <b>4 armas</b> (hoja, arco, martillo y lanza) · <b>3 jefes intermedios</b> con cofres de mejoras · dash con esquiva perfecta · <b>árbol de habilidades</b> que crece cada vez que caes</sub>
 </div>
 
 ### ⚔️ Raid comunitario contra el coloso
