@@ -261,9 +261,9 @@ switch, y del que dependen la contabilidad, la facturación de redes y la report
     </td>
     <td width="50%" valign="top">
       <a href="https://github.com/ronalc90/Lenia"><img src="assets/proyectos/bioluma.webp" alt="Bioluma: criaturas de vida artificial en la placa" /></a>
-      <h3>🧬 <a href="https://github.com/ronalc90/Lenia">Bioluma — Vida artificial</a></h3>
-      Simulación de <b>Lenia</b> (vida artificial continua) en el navegador: criaturas que nacen, se mueven y evolucionan. Versión web, escritorio y móvil, con más de 1.100 pruebas y CI.<br/><br/>
-      <code>TypeScript</code> <code>Vite</code> <code>Vitest</code> <code>Electron</code> <code>Capacitor</code><br/><br/>
+      <h3>🧬 <a href="https://github.com/ronalc90/Lenia">Bioluma — Juego de vida artificial</a></h3>
+      Juego incremental de vida artificial: siembras luz y nacen criaturas <b>Lenia</b> reales, simuladas en vivo en la GPU del navegador. 7 mundos, árbol de mejoras y bestiario; web (PWA), escritorio y móvil, con más de 1.100 pruebas.<br/><br/>
+      <code>TypeScript</code> <code>WebGL2</code> <code>Vite</code> <code>Vitest</code> <code>PWA</code><br/><br/>
       🌐 <a href="https://bioluma-xi.vercel.app">bioluma-xi.vercel.app</a>
     </td>
   </tr>
