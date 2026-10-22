@@ -9,7 +9,7 @@
 <img src="assets/header.svg" width="100%" alt="Ronald Cipagauta — Full Stack Developer · Backend · AI & Chatbots"/>
 
 <a href="https://koptup.com">
-  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=22&duration=2600&pause=900&color=E3A04F&center=true&vCenter=true&width=820&height=48&lines=Hola%2C+soy+Ronald+%F0%9F%91%8B+%E2%80%94+Full+Stack+Developer;React+%C2%B7+TypeScript+%C2%B7+Node.js+%C2%B7+Java+%C2%B7+Python;Chatbots+con+OpenAI%2C+embeddings+y+RAG+%F0%9F%A4%96;Backend+bancario%3A+SQL+Server+%26+stored+procedures+%F0%9F%8F%A6;Flujos+de+datos+con+Apache+NiFi+%F0%9F%93%A1;Sobreviviendo+al+desierto+del+c%C3%B3digo+legacy+%E2%9A%94%EF%B8%8F" alt="Typing SVG"/>
+  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=22&duration=2600&pause=900&color=E3A04F&center=true&vCenter=true&width=820&height=48&lines=Hola%2C+soy+Ronald+%F0%9F%91%8B+%E2%80%94+Full+Stack+Developer;React+%C2%B7+TypeScript+%C2%B7+Node.js+%C2%B7+Java+%C2%B7+Python;Chatbots+con+OpenAI%2C+embeddings+y+RAG+%F0%9F%A4%96;Backend+bancario%3A+SQL+Server+%26+stored+procedures+%F0%9F%8F%A6;Flujos+de+datos+con+Apache+NiFi+%F0%9F%93%A1" alt="Typing SVG"/>
 </a>
 
 <p>
@@ -37,8 +37,12 @@
 
 Desarrollador de software que diseña e implementa soluciones **modernas, escalables y centradas en el usuario**. Combino **React/TypeScript** en el frontend con **Node.js, Java y Python** en el backend, sobre arquitecturas **REST y microservicios**. Últimamente me especialicé en **backend para chatbots inteligentes** con OpenAI, recuperación semántica, embeddings y vector stores.
 
-- 🏦 **Ahora mismo:** Backend en **SII Group** para **Falabella** (conciliación bancaria · SQL Server)
-- 📡 **También:** flujos de datos con **Apache NiFi** en **Claro**
+<div align="center">
+  <img src="assets/quests.svg" width="100%" alt="Misiones activas: conciliación bancaria para Falabella (SII Group), flujos de datos con Apache NiFi (Claro), Koptup y Bioluma"/>
+</div>
+
+<br/>
+
 - 🌱 **Explorando:** agentes de IA, RAG avanzado y juegos con WebGL2
 - 💬 **Hablemos de:** APIs, arquitectura backend, chatbots e integración de IA en productos reales
 
@@ -95,6 +99,26 @@ currently_working_on:
 
 <div align="center">
 
+<img src="assets/orbit.svg" width="100%" alt="Órbita animada de tecnologías: frontend, backend, datos, cloud e IA"/>
+
+<img src="https://img.shields.io/badge/🤖_OpenAI_API-16100B?style=for-the-badge" alt="OpenAI API"/>
+<img src="https://img.shields.io/badge/🧬_Embeddings_&_Vector_Stores-16100B?style=for-the-badge" alt="Embeddings & Vector Stores"/>
+<img src="https://img.shields.io/badge/🔎_RAG_·_Búsqueda_semántica-16100B?style=for-the-badge" alt="RAG"/>
+<br/>
+<img src="https://img.shields.io/badge/Apache_NiFi-16100B?style=for-the-badge&logo=apachenifi&logoColor=E3A04F" alt="Apache NiFi"/>
+<img src="https://img.shields.io/badge/Oracle-16100B?style=for-the-badge" alt="Oracle"/>
+<img src="https://img.shields.io/badge/SQL_Server-16100B?style=for-the-badge" alt="SQL Server"/>
+<img src="https://img.shields.io/badge/Stored_Procedures-16100B?style=for-the-badge" alt="Stored Procedures"/>
+<img src="https://img.shields.io/badge/JWT-16100B?style=for-the-badge&logo=jsonwebtokens&logoColor=E3A04F" alt="JWT"/>
+<img src="https://img.shields.io/badge/Jira-16100B?style=for-the-badge&logo=jira&logoColor=E3A04F" alt="Jira"/>
+
+</div>
+
+<details>
+<summary><b>Ver arsenal por categoría</b></summary>
+<br/>
+<div align="center">
+
 **💻 Lenguajes**<br/><br/>
 <img src="https://skillicons.dev/icons?i=java,ts,js,py,cs,cpp,html,css&theme=dark" alt="Java, TypeScript, JavaScript, Python, C#, C++, HTML, CSS"/>
 
@@ -102,23 +126,13 @@ currently_working_on:
 <img src="https://skillicons.dev/icons?i=react,angular,nodejs,express,spring,hibernate,dotnet&theme=dark" alt="React, Angular, Node.js, Express, Spring Boot, Hibernate, .NET"/>
 
 **🗄️ Bases de Datos**<br/><br/>
-<img src="https://skillicons.dev/icons?i=mysql,mongodb,postgres&theme=dark" alt="MySQL, MongoDB, PostgreSQL"/><br/>
-<img src="https://img.shields.io/badge/Oracle-16100B?style=for-the-badge" alt="Oracle"/>
-<img src="https://img.shields.io/badge/SQL_Server-16100B?style=for-the-badge" alt="SQL Server"/>
-<img src="https://img.shields.io/badge/Stored_Procedures-16100B?style=for-the-badge" alt="Stored Procedures"/>
+<img src="https://skillicons.dev/icons?i=mysql,mongodb,postgres&theme=dark" alt="MySQL, MongoDB, PostgreSQL"/>
 
 **☁️ Cloud / DevOps / Herramientas**<br/><br/>
-<img src="https://skillicons.dev/icons?i=aws,vercel,docker,githubactions,git,github,bitbucket&theme=dark" alt="AWS, Vercel, Docker, GitHub Actions, Git, GitHub, Bitbucket"/><br/>
-<img src="https://img.shields.io/badge/Apache_NiFi-16100B?style=for-the-badge&logo=apachenifi&logoColor=E3A04F" alt="Apache NiFi"/>
-<img src="https://img.shields.io/badge/Jira-16100B?style=for-the-badge&logo=jira&logoColor=E3A04F" alt="Jira"/>
-<img src="https://img.shields.io/badge/JWT-16100B?style=for-the-badge&logo=jsonwebtokens&logoColor=E3A04F" alt="JWT"/>
-
-**🤖 IA & Chatbots**<br/><br/>
-<img src="https://img.shields.io/badge/🤖_OpenAI_API-16100B?style=for-the-badge" alt="OpenAI API"/>
-<img src="https://img.shields.io/badge/🧬_Embeddings_&_Vector_Stores-16100B?style=for-the-badge" alt="Embeddings & Vector Stores"/>
-<img src="https://img.shields.io/badge/🔎_RAG_·_Búsqueda_semántica-16100B?style=for-the-badge" alt="RAG"/>
+<img src="https://skillicons.dev/icons?i=aws,vercel,docker,githubactions,git,github,bitbucket&theme=dark" alt="AWS, Vercel, Docker, GitHub Actions, Git, GitHub, Bitbucket"/>
 
 </div>
+</details>
 
 <img src="assets/divider.svg" width="100%" alt=""/>
 
