@@ -1,0 +1,14 @@
+{
+ "raid": {
+  "level": 1,
+  "hp": 300,
+  "maxHp": 300,
+  "prevHp": 300,
+  "kills": 0,
+  "totalAttacks": 0,
+  "players": {},
+  "events": [],
+  "fallen": []
+ },
+ "guestbook": []
+}
