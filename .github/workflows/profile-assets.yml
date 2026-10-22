@@ -10,7 +10,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/profile-assets.yml"
-      - ".github/kenshi-3d.json"
+      - ".github/theme-3d.json"
 
 permissions:
   contents: write
@@ -29,12 +29,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: 🧱 Contribuciones 3D (paleta Kenshi)
+      - name: 🧱 Contribuciones 3D (paleta propia)
         uses: yoshi389111/github-profile-3d-contrib@v0.9.3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USERNAME: ${{ github.repository_owner }}
-          SETTING_JSON: .github/kenshi-3d.json
+          SETTING_JSON: .github/theme-3d.json
 
       - name: 📊 Tarjeta de estadísticas
         continue-on-error: true
