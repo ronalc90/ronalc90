@@ -1,8 +1,7 @@
 <!-- ================================================================
-     🏜️  README de perfil — estilo "Kenshi": desierto, óxido y ocre
-     Assets animados propios en /assets · stats y 3D generados por
-     GitHub Actions en /profile y /profile-3d-contrib · arcade en la
-     rama `output`.
+     README de perfil · assets animados propios en /assets
+     Stats y 3D generados por GitHub Actions en /profile y
+     /profile-3d-contrib · arcade en la rama `output`.
 ================================================================= -->
 
 <div align="center">
@@ -197,7 +196,7 @@ currently_working_on:
 ### 🧱 Contribuciones en 3D
 
 <div align="center">
-  <img src="profile-3d-contrib/profile-kenshi.svg" width="100%" alt="Calendario de contribuciones en 3D"/>
+  <img src="profile-3d-contrib/profile-3d.svg" width="100%" alt="Calendario de contribuciones en 3D"/>
 </div>
 
 ### 🕹️ Arcade de contribuciones
