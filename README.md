@@ -1,26 +1,51 @@
+<!-- ================================================================
+     🏜️  README de perfil — estilo "Kenshi": desierto, óxido y ocre
+     Assets animados propios en /assets · stats y 3D generados por
+     GitHub Actions en /profile y /profile-3d-contrib · arcade en la
+     rama `output`.
+================================================================= -->
+
 <div align="center">
 
-<!-- Typing SVG -->
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=28&duration=3000&pause=800&color=00D9FF&center=true&vCenter=true&width=750&height=65&lines=👋+Hola%2C+soy+Ronald+Cipagauta;Full+Stack+Developer+🚀;React+%7C+TypeScript+%7C+Node.js+%7C+Java;AI+%26+Chatbots+con+OpenAI+🤖;Microservicios+%7C+AWS+%7C+CI%2FCD+☁️;Apasionado+por+el+código+limpio+✨)](https://git.io/typing-svg)
+<img src="assets/header.svg" width="100%" alt="Ronald Cipagauta — Full Stack Developer · Backend · AI & Chatbots"/>
 
-<br/>
+<a href="https://koptup.com">
+  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=22&duration=2600&pause=900&color=E3A04F&center=true&vCenter=true&width=820&height=48&lines=Hola%2C+soy+Ronald+%F0%9F%91%8B+%E2%80%94+Full+Stack+Developer;React+%C2%B7+TypeScript+%C2%B7+Node.js+%C2%B7+Java+%C2%B7+Python;Chatbots+con+OpenAI%2C+embeddings+y+RAG+%F0%9F%A4%96;Backend+bancario%3A+SQL+Server+%26+stored+procedures+%F0%9F%8F%A6;Flujos+de+datos+con+Apache+NiFi+%F0%9F%93%A1;Sobreviviendo+al+desierto+del+c%C3%B3digo+legacy+%E2%9A%94%EF%B8%8F" alt="Typing SVG"/>
+</a>
 
 <p>
-  <img src="https://komarev.com/ghpvc/?username=ronalc90&label=Profile+Views&color=0e75b6&style=for-the-badge" alt="profile views"/>
-  <img src="https://img.shields.io/github/followers/ronalc90?label=Followers&style=for-the-badge&color=0077B5&logo=github&logoColor=white" alt="followers"/>
-  <a href="https://koptup.com"><img src="https://img.shields.io/badge/🌐_Portfolio-koptup.com-FF5722?style=for-the-badge" alt="portfolio"/></a>
+  <img src="https://komarev.com/ghpvc/?username=ronalc90&label=Visitantes&color=b4532a&style=for-the-badge&abbreviated=true" alt="Visitantes"/>
+  <a href="https://github.com/ronalc90?tab=followers"><img src="https://img.shields.io/github/followers/ronalc90?label=Seguidores&style=for-the-badge&logo=github&logoColor=EFE2C6&labelColor=16100B&color=B4532A" alt="Seguidores"/></a>
+  <a href="https://koptup.com"><img src="https://img.shields.io/badge/Portafolio-koptup.com-E06B2D?style=for-the-badge&labelColor=16100B&logo=vercel&logoColor=E3A04F" alt="Portafolio"/></a>
 </p>
 <p>
-  <img src="https://img.shields.io/badge/📍_Colombia-🇨🇴-FFCD00?style=flat-square&labelColor=003087" />
-  <img src="https://img.shields.io/badge/💼_Experiencia-6+_años-0077B5?style=flat-square" />
-  <img src="https://img.shields.io/badge/🟢_Estado-Disponible-success?style=flat-square" />
+  <img src="https://img.shields.io/badge/📍_Colombia-🇨🇴-C8923A?style=flat-square&labelColor=16100B" alt="Colombia"/>
+  <img src="https://img.shields.io/badge/⚔️_Experiencia-6+_años-B4532A?style=flat-square&labelColor=16100B" alt="Experiencia"/>
+  <img src="https://img.shields.io/badge/🟢_Estado-Disponible_para_proyectos-9AA38A?style=flat-square&labelColor=16100B" alt="Disponible"/>
 </p>
 
 </div>
 
----
+<img src="assets/divider.svg" width="100%" alt=""/>
 
-## 🧑‍💻 Sobre Mí
+## 🏜️ Sobre mí
+
+<div align="center">
+  <img src="assets/terminal.svg" width="100%" alt="Terminal animada: ronald@koptup — neofetch con mi stack y experiencia"/>
+</div>
+
+<br/>
+
+Desarrollador de software que diseña e implementa soluciones **modernas, escalables y centradas en el usuario**. Combino **React/TypeScript** en el frontend con **Node.js, Java y Python** en el backend, sobre arquitecturas **REST y microservicios**. Últimamente me especialicé en **backend para chatbots inteligentes** con OpenAI, recuperación semántica, embeddings y vector stores.
+
+- 🏦 **Ahora mismo:** Backend en **SII Group** para **Falabella** (conciliación bancaria · SQL Server)
+- 📡 **También:** flujos de datos con **Apache NiFi** en **Claro**
+- 🌱 **Explorando:** agentes de IA, RAG avanzado y juegos con WebGL2
+- 💬 **Hablemos de:** APIs, arquitectura backend, chatbots e integración de IA en productos reales
+
+<details>
+<summary><b>📜 Ver ficha técnica (YAML)</b></summary>
+<br/>
 
 ```yaml
 name: Ronald Demian Cipagauta Penagos
@@ -29,14 +54,6 @@ location: Colombia 🇨🇴
 email: ronalddemiancipagauta@gmail.com
 phone: "+57 302 479 4842"
 portfolio: koptup.com
-
-about: >
-  Desarrollador de software con experiencia en diseño e implementación de
-  soluciones modernas, escalables y centradas en el usuario. Combino
-  desarrollo full stack con React/TypeScript en frontend, y Node.js, Java
-  y Python en backend, integrando arquitecturas REST y microservicios.
-  Recientemente especializado en backend para chatbots inteligentes con
-  OpenAI, recuperación semántica, embeddings y vector stores.
 
 focus:
   - ⚛️  Frontend: React, TypeScript, Angular
@@ -51,9 +68,11 @@ currently_working_on:
   - "Claro — Flujos de datos con Apache NiFi"
 ```
 
----
+</details>
 
-## 💡 Lo que ofrezco
+<img src="assets/divider.svg" width="100%" alt=""/>
+
+## ⚔️ Lo que ofrezco
 
 <div align="center">
 
@@ -71,99 +90,80 @@ currently_working_on:
 
 </div>
 
----
+<img src="assets/divider.svg" width="100%" alt=""/>
 
-## 🛠️ Tech Stack
+## 🛠️ Arsenal
 
 <div align="center">
 
-**💻 Lenguajes**
+**💻 Lenguajes**<br/><br/>
+<img src="https://skillicons.dev/icons?i=java,ts,js,py,cs,cpp,html,css&theme=dark" alt="Java, TypeScript, JavaScript, Python, C#, C++, HTML, CSS"/>
 
-![Java](https://img.shields.io/badge/Java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
-![Python](https://img.shields.io/badge/Python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-![C++](https://img.shields.io/badge/C++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
-![SQL](https://img.shields.io/badge/SQL-%2307405e.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+**⚙️ Frameworks & Librerías**<br/><br/>
+<img src="https://skillicons.dev/icons?i=react,angular,nodejs,express,spring,hibernate,dotnet&theme=dark" alt="React, Angular, Node.js, Express, Spring Boot, Hibernate, .NET"/>
 
-**⚙️ Frameworks & Librerías**
+**🗄️ Bases de Datos**<br/><br/>
+<img src="https://skillicons.dev/icons?i=mysql,mongodb,postgres&theme=dark" alt="MySQL, MongoDB, PostgreSQL"/><br/>
+<img src="https://img.shields.io/badge/Oracle-16100B?style=for-the-badge" alt="Oracle"/>
+<img src="https://img.shields.io/badge/SQL_Server-16100B?style=for-the-badge" alt="SQL Server"/>
+<img src="https://img.shields.io/badge/Stored_Procedures-16100B?style=for-the-badge" alt="Stored Procedures"/>
 
-![React](https://img.shields.io/badge/React-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
-![Angular](https://img.shields.io/badge/Angular-%23DD0031.svg?style=for-the-badge&logo=angular&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
-![Express](https://img.shields.io/badge/Express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white)
-![.NET](https://img.shields.io/badge/.NET-5C2D91?style=for-the-badge&logo=.net&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens)
+**☁️ Cloud / DevOps / Herramientas**<br/><br/>
+<img src="https://skillicons.dev/icons?i=aws,vercel,docker,githubactions,git,github,bitbucket,linux,postman,idea,vscode&theme=dark" alt="AWS, Vercel, Docker, GitHub Actions, Git, GitHub, Bitbucket, Linux, Postman, IntelliJ, VS Code"/><br/>
+<img src="https://img.shields.io/badge/Apache_NiFi-16100B?style=for-the-badge&logo=apachenifi&logoColor=E3A04F" alt="Apache NiFi"/>
+<img src="https://img.shields.io/badge/Jira-16100B?style=for-the-badge&logo=jira&logoColor=E3A04F" alt="Jira"/>
+<img src="https://img.shields.io/badge/JWT-16100B?style=for-the-badge&logo=jsonwebtokens&logoColor=E3A04F" alt="JWT"/>
 
-**🗄️ Bases de Datos**
-
-![Oracle](https://img.shields.io/badge/Oracle-F80000?style=for-the-badge&logo=oracle&logoColor=white)
-![SQL Server](https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoft%20sql%20server&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
-
-**☁️ Cloud / DevOps**
-
-![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
-![Vercel](https://img.shields.io/badge/Vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![Apache NiFi](https://img.shields.io/badge/Apache%20NiFi-728E9B?style=for-the-badge&logo=apache&logoColor=white)
-![Git](https://img.shields.io/badge/Git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
-![GitHub](https://img.shields.io/badge/GitHub-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
-![Bitbucket](https://img.shields.io/badge/Bitbucket-%230047B3.svg?style=for-the-badge&logo=bitbucket&logoColor=white)
-![JIRA](https://img.shields.io/badge/Jira-%230A0FFF.svg?style=for-the-badge&logo=jira&logoColor=white)
-
-**🤖 IA & Chatbots**
-
-![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)
-![Embeddings](https://img.shields.io/badge/Embeddings_%26_Vector_Stores-3670A0?style=for-the-badge&logo=python&logoColor=white)
-![Semantic Search](https://img.shields.io/badge/Semantic_Search-FF6F00?style=for-the-badge&logo=elasticsearch&logoColor=white)
+**🤖 IA & Chatbots**<br/><br/>
+<img src="https://img.shields.io/badge/🤖_OpenAI_API-16100B?style=for-the-badge" alt="OpenAI API"/>
+<img src="https://img.shields.io/badge/🧬_Embeddings_&_Vector_Stores-16100B?style=for-the-badge" alt="Embeddings & Vector Stores"/>
+<img src="https://img.shields.io/badge/🔎_RAG_·_Búsqueda_semántica-16100B?style=for-the-badge" alt="RAG"/>
+<img src="https://img.shields.io/badge/LangChain-16100B?style=for-the-badge&logo=langchain&logoColor=E3A04F" alt="LangChain"/>
 
 </div>
 
----
+<img src="assets/divider.svg" width="100%" alt=""/>
 
-## 💼 Experiencia Profesional
+## 🗺️ Travesía profesional
 
 <table width="100%">
   <tr>
-    <td width="13%" align="center"><b>2026<br/>Actual</b></td>
+    <td width="14%" align="center"><b>2026</b><br/><sub>🟢 Actual</sub></td>
     <td>
       <b>📡 Claro — Desarrollador de Flujos de Datos (Apache NiFi)</b><br/>
       Diseño y desarrollo de flujos en Apache NiFi para la ingesta, transformación y enrutamiento de datos entre sistemas.
     </td>
   </tr>
   <tr>
-    <td width="13%" align="center"><b>2026<br/>Actual</b></td>
+    <td width="14%" align="center"><b>2026</b><br/><sub>🟢 Actual</sub></td>
     <td>
       <b>🏦 SII Group — Desarrollador Backend (para Falabella)</b><br/>
       Continuidad en el proyecto de conciliación bancaria de Falabella tras el cambio de proveedor a SII Group. Validaciones end-to-end y mantenimiento de stored procedures con lógica bancaria sobre SQL Server.
     </td>
   </tr>
   <tr>
-    <td width="13%" align="center"><b>2025<br/>2026</b></td>
+    <td width="14%" align="center"><b>2025</b><br/><sub>→ 2026</sub></td>
     <td>
       <b>🏦 BC Tecnología — Desarrollador Backend (para Falabella)</b><br/>
       Validaciones end-to-end en procesos de conciliación de transacciones bancarias. Corrección de stored procedures con lógica bancaria sobre SQL Server, garantizando consistencia, exactitud y trazabilidad de los datos.
     </td>
   </tr>
   <tr>
-    <td width="13%" align="center"><b>2024<br/>2025</b></td>
+    <td width="14%" align="center"><b>2024</b><br/><sub>→ 2025</sub></td>
     <td>
       <b>🤖 Globa — Desarrollador Full Stack</b><br/>
       React + TypeScript en frontend y Node.js/TypeScript en backend. Chatbots inteligentes con OpenAI API, embeddings, vector stores y recuperación semántica. Procesamiento de documentos (PDF, DOCX, HTML, TXT), microservicios, AWS (S3), JWT y pipelines CI/CD.
     </td>
   </tr>
   <tr>
-    <td width="13%" align="center"><b>2023<br/>2024</b></td>
+    <td width="14%" align="center"><b>2023</b><br/><sub>→ 2024</sub></td>
     <td>
       <b>🎓 Universitas XXI — Desarrollador Full Stack</b><br/>
       Arquitectura modular por capas con Java EE y REST sobre WebLogic. Interfaces en Oracle APEX, pruebas unitarias con JUnit, CI/CD, Git/Bitbucket, JIRA y soporte en entornos preproductivos y productivos.
     </td>
   </tr>
   <tr>
-    <td width="13%" align="center"><b>2020<br/>2023</b></td>
+    <td width="14%" align="center"><b>2020</b><br/><sub>→ 2023</sub></td>
     <td>
       <b>🌐 Koptup — Desarrollador Full Stack & Consultor Tecnológico</b><br/>
       Soluciones a medida con React, Angular, TypeScript. Apps de escritorio WPF + SQL Server, integraciones AWS S3, autenticación JWT, despliegues en Vercel, eCommerce personalizados y consultoría técnica.
@@ -171,9 +171,7 @@ currently_working_on:
   </tr>
 </table>
 
----
-
-## 🎓 Educación
+## 📜 Educación
 
 <div align="center">
 
@@ -184,97 +182,121 @@ currently_working_on:
 
 </div>
 
----
+<img src="assets/divider.svg" width="100%" alt=""/>
 
-## 📊 GitHub Stats
-
-<div align="center">
-
-<img height="175" src="https://github-readme-stats.vercel.app/api?username=ronalc90&show_icons=true&theme=tokyonight&hide_border=true&count_private=true&include_all_commits=true&rank_icon=github" alt="GitHub Stats"/>
-<img height="175" src="https://streak-stats.demolab.com?user=ronalc90&theme=tokyonight&hide_border=true&date_format=j%20M%5B%20Y%5D" alt="GitHub Streak"/>
-
-<br/>
-
-<img height="155" src="https://github-readme-stats.vercel.app/api/top-langs/?username=ronalc90&layout=compact&theme=tokyonight&hide_border=true&langs_count=8" alt="Top Languages"/>
-
-</div>
-
----
-
-## 📈 Actividad
+## 📊 Estadísticas del viajero
 
 <div align="center">
 
-[![Activity Graph](https://github-readme-activity-graph.vercel.app/graph?username=ronalc90&theme=tokyo-night&hide_border=true&area=true)](https://github.com/ronalc90)
+<img height="180" src="profile/stats.svg" alt="Estadísticas de GitHub"/>
+<img height="180" src="https://streak-stats.demolab.com?user=ronalc90&locale=es&border_radius=12&background=110B07&border=4A3A2C&stroke=4A3A2C&ring=E06B2D&fire=E3A04F&currStreakNum=EFE2C6&sideNums=EFE2C6&currStreakLabel=E06B2D&sideLabels=D6B98C&dates=9AA38A&date_format=j%20M%5B%20Y%5D" alt="Racha de contribuciones"/>
+
+<img height="165" src="profile/top-langs.svg" alt="Lenguajes más usados"/>
 
 </div>
 
----
+### 🧱 Contribuciones en 3D
 
-## 🐍 Snake de contribuciones
+<div align="center">
+  <img src="profile-3d-contrib/profile-kenshi.svg" width="100%" alt="Calendario de contribuciones en 3D"/>
+</div>
+
+### 🕹️ Arcade de contribuciones
 
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ronalc90/ronalc90/output/github-snake-dark.svg" />
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ronalc90/ronalc90/output/github-snake.svg" />
-  <img alt="github-snake" src="https://raw.githubusercontent.com/ronalc90/ronalc90/output/github-snake.svg" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ronalc90/ronalc90/output/github-snake-dark.svg"/>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ronalc90/ronalc90/output/github-snake.svg"/>
+  <img alt="Snake comiéndose mis contribuciones" src="https://raw.githubusercontent.com/ronalc90/ronalc90/output/github-snake.svg" width="100%"/>
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ronalc90/ronalc90/output/pacman-contribution-graph-dark.svg"/>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ronalc90/ronalc90/output/pacman-contribution-graph.svg"/>
+  <img alt="Pac-Man comiéndose mis contribuciones" src="https://raw.githubusercontent.com/ronalc90/ronalc90/output/pacman-contribution-graph.svg" width="100%"/>
 </picture>
 
 </div>
 
----
+<img src="assets/divider.svg" width="100%" alt=""/>
 
-## 🚀 Proyectos Destacados
+## 🏗️ Proyectos destacados
+
+<table width="100%">
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🌐 <a href="https://github.com/ronalc90/koptup">Koptup</a></h3>
+      Catálogo de <b>27 demos enterprise interactivos</b>: chatbots RAG con IA, e-commerce, ERP, CRM, telemedicina, facturación electrónica multi-país, voice AI y más.<br/><br/>
+      <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
+      <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React"/>
+      <img src="https://img.shields.io/badge/IA_·_RAG-E06B2D?style=flat-square" alt="IA"/>
+      <a href="https://koptup.com"><img src="https://img.shields.io/badge/Demo-koptup.com-16100B?style=flat-square&logo=vercel" alt="Demo"/></a>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🧫 <a href="https://github.com/ronalc90/Lenia">Bioluma</a></h3>
+      Juego incremental de <b>vida artificial</b>: siembra materia en una placa de Lenia, descubre especies y vuelve con mejores genes.<br/><br/>
+      <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
+      <img src="https://img.shields.io/badge/WebGL2-990000?style=flat-square&logo=webgl&logoColor=white" alt="WebGL2"/>
+      <img src="https://img.shields.io/badge/PWA-5A0FC8?style=flat-square&logo=pwa&logoColor=white" alt="PWA"/>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🔎 <a href="https://github.com/ronalc90/RAG-test">RAG Test</a></h3>
+      <b>Retrieval Augmented Generation</b> con embeddings, vector stores y OpenAI para búsqueda semántica sobre documentos.<br/><br/>
+      <img src="https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54" alt="Python"/>
+      <img src="https://img.shields.io/badge/Embeddings-E06B2D?style=flat-square" alt="Embeddings"/>
+      <img src="https://img.shields.io/badge/Vector_Stores-B4532A?style=flat-square" alt="Vector Stores"/>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🩺 <a href="https://github.com/ronalc90/saludsalta-disease-predictor">SaludSalta</a></h3>
+      Predictor de enfermedades con <b>modelos de Machine Learning</b> integrado en un sistema de salud real.<br/><br/>
+      <img src="https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54" alt="Python"/>
+      <img src="https://img.shields.io/badge/Machine_Learning-FF6F00?style=flat-square&logo=tensorflow&logoColor=white" alt="ML"/>
+      <img src="https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white" alt="MongoDB"/>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🛒 <a href="https://github.com/ronalc90/santiago">Santiago</a></h3>
+      Plataforma de <b>e-commerce/dropshipping</b>: spy de anuncios, generador de landings con IA y dashboard.<br/><br/>
+      <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
+      <img src="https://img.shields.io/badge/IA_generativa-E06B2D?style=flat-square" alt="IA"/>
+      <img src="https://img.shields.io/badge/Dashboard-C8923A?style=flat-square" alt="Dashboard"/>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🔐 <a href="https://github.com/ronalc90/Sprintboot-in-java-hibernate-JWT-API-Rest-Ajax">Spring Boot JWT API</a></h3>
+      API REST completa con <b>autenticación JWT</b>, Hibernate ORM y frontend Ajax integrado.<br/><br/>
+      <img src="https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java"/>
+      <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot"/>
+      <img src="https://img.shields.io/badge/Hibernate-59666C?style=flat-square&logo=hibernate&logoColor=white" alt="Hibernate"/>
+      <img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT"/>
+    </td>
+  </tr>
+</table>
+
+<img src="assets/divider.svg" width="100%" alt=""/>
+
+## 📡 Contacto
 
 <div align="center">
 
-### 🔗 [Spring Boot + Java + Hibernate + JWT + API REST](https://github.com/ronalc90/Sprintboot-in-java-hibernate-JWT-API-Rest-Ajax)
+<a href="https://www.linkedin.com/in/ronald-demian-cipagauta-penagos-384944209/"><img src="https://skillicons.dev/icons?i=linkedin" height="44" alt="LinkedIn"/></a>&nbsp;
+<a href="mailto:ronalddemiancipagauta@gmail.com"><img src="https://skillicons.dev/icons?i=gmail" height="44" alt="Gmail"/></a>&nbsp;
+<a href="https://github.com/ronalc90"><img src="https://skillicons.dev/icons?i=github&theme=dark" height="44" alt="GitHub"/></a>
 
-![Java](https://img.shields.io/badge/Java-%23ED8B00.svg?style=flat-square&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-%236DB33F.svg?style=flat-square&logo=spring&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-black?style=flat-square&logo=JSON%20web%20tokens)
-![Hibernate](https://img.shields.io/badge/Hibernate-59666C?style=flat-square&logo=hibernate&logoColor=white)
+<br/>
 
-API REST completa con autenticación JWT, Hibernate ORM y frontend Ajax integrado.
-
----
-
-### 🔗 [SaludSalta — Disease Predictor](https://github.com/ronalc90/saludsalta-disease-predictor)
-
-![Python](https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54)
-![ML](https://img.shields.io/badge/Machine%20Learning-FF6F00?style=flat-square&logo=tensorflow&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=flat-square&logo=mongodb&logoColor=white)
-
-Predictor de enfermedades con modelos de ML integrado en sistema de salud real.
-
----
-
-### 🔗 [RAG Test — Retrieval Augmented Generation](https://github.com/ronalc90/RAG-test)
-
-![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat-square&logo=openai&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-6DA55F?style=flat-square&logo=node.js&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=flat-square&logo=typescript&logoColor=white)
-
-RAG con embeddings, vector stores y OpenAI para búsqueda semántica sobre documentos.
+<a href="https://koptup.com"><img src="https://img.shields.io/badge/🌐_Portafolio-koptup.com-E06B2D?style=for-the-badge&labelColor=16100B" alt="Portafolio"/></a>
+<a href="https://wa.me/573024794842"><img src="https://img.shields.io/badge/WhatsApp-+57_302_479_4842-25D366?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=16100B" alt="WhatsApp"/></a>
+<a href="mailto:ronalddemiancipagauta@gmail.com"><img src="https://img.shields.io/badge/Email-ronalddemiancipagauta%40gmail.com-B4532A?style=for-the-badge&logo=gmail&logoColor=white&labelColor=16100B" alt="Email"/></a>
 
 </div>
 
----
-
-## 🌐 Contacto & Redes
+<br/>
 
 <div align="center">
-
-[![Portfolio](https://img.shields.io/badge/🌐_Portfolio-koptup.com-FF5722?style=for-the-badge)](https://koptup.com)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Ronald_Cipagauta-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ronald-demian-cipagauta-penagos-384944209/)
-[![GitHub](https://img.shields.io/badge/GitHub-ronalc90-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ronalc90)
-[![Email](https://img.shields.io/badge/Gmail-ronalddemiancipagauta%40gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:ronalddemiancipagauta@gmail.com)
-
-</div>
-
----
-
-<div align="center">
-  <sub>⭐ Si mis repos te son útiles, ¡deja una estrella! &nbsp;|&nbsp; Happy coding! 🚀</sub>
+  <img src="assets/footer.svg" width="100%" alt="Gracias por pasar, viajero"/>
+  <sub>⭐ Si mis repos te son útiles, ¡deja una estrella! &nbsp;·&nbsp; Happy coding 🚀</sub>
 </div>
