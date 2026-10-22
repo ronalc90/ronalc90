@@ -41,7 +41,7 @@ jobs:
         uses: stats-organization/github-readme-stats-action@v2
         with:
           card: stats
-          options: "username=${{ github.repository_owner }}&show_icons=true&include_all_commits=true&count_private=true&rank_icon=github&locale=es&custom_title=Estadísticas del viajero&${{ env.CARD_COLORS }}"
+          options: "username=${{ github.repository_owner }}&show_icons=true&include_all_commits=true&count_private=true&rank_icon=github&hide=contribs&locale=es&custom_title=Estadísticas del viajero&${{ env.CARD_COLORS }}"
           path: profile/stats.svg
           token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: "true"
