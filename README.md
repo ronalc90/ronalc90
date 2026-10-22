@@ -109,7 +109,7 @@ currently_working_on:
 <img src="https://img.shields.io/badge/Stored_Procedures-16100B?style=for-the-badge" alt="Stored Procedures"/>
 
 **☁️ Cloud / DevOps / Herramientas**<br/><br/>
-<img src="https://skillicons.dev/icons?i=aws,vercel,docker,githubactions,git,github,bitbucket,linux,postman,idea,vscode&theme=dark" alt="AWS, Vercel, Docker, GitHub Actions, Git, GitHub, Bitbucket, Linux, Postman, IntelliJ, VS Code"/><br/>
+<img src="https://skillicons.dev/icons?i=aws,vercel,docker,githubactions,git,github,bitbucket&theme=dark" alt="AWS, Vercel, Docker, GitHub Actions, Git, GitHub, Bitbucket"/><br/>
 <img src="https://img.shields.io/badge/Apache_NiFi-16100B?style=for-the-badge&logo=apachenifi&logoColor=E3A04F" alt="Apache NiFi"/>
 <img src="https://img.shields.io/badge/Jira-16100B?style=for-the-badge&logo=jira&logoColor=E3A04F" alt="Jira"/>
 <img src="https://img.shields.io/badge/JWT-16100B?style=for-the-badge&logo=jsonwebtokens&logoColor=E3A04F" alt="JWT"/>
@@ -118,7 +118,6 @@ currently_working_on:
 <img src="https://img.shields.io/badge/🤖_OpenAI_API-16100B?style=for-the-badge" alt="OpenAI API"/>
 <img src="https://img.shields.io/badge/🧬_Embeddings_&_Vector_Stores-16100B?style=for-the-badge" alt="Embeddings & Vector Stores"/>
 <img src="https://img.shields.io/badge/🔎_RAG_·_Búsqueda_semántica-16100B?style=for-the-badge" alt="RAG"/>
-<img src="https://img.shields.io/badge/LangChain-16100B?style=for-the-badge&logo=langchain&logoColor=E3A04F" alt="LangChain"/>
 
 </div>
 
