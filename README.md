@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- Typing SVG -->
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=28&duration=3000&pause=800&color=00D9FF&center=true&vCenter=true&width=750&height=65&lines=👋+Hola%2C+soy+Ronald+Cipagauta;Full+Stack+Developer+🚀;React+%7C+TypeScript+%7C+Node.js+%7C+Java;AI+%26+Chatbots+con+OpenAI+🤖;Microservicios+%7C+AWS+%7C+CI%2FCD+☁️;Apasionado+por+el+código+limpio+✨)](https://git.io/typing-svg)
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=28&duration=3000&pause=800&color=00D9FF&center=true&vCenter=true&width=750&height=65&lines=👋+Hola%2C+soy+Ronald+Cipagauta;Desarrollador+Full+Stack+🚀;Conciliación+transaccional+en+banca+🏦;SQL+Server+%7C+T-SQL+%7C+Python+%7C+GitLab+CI;Integraciones+con+Apache+NiFi+y+Vault+🔐;React+%7C+TypeScript+%7C+Node.js+%7C+Java;IA+y+chatbots+con+OpenAI+🤖)](https://git.io/typing-svg)
 
 <br/>
 
@@ -24,31 +24,33 @@
 
 ```yaml
 name: Ronald Demian Cipagauta Penagos
-role: Full Stack Developer
-location: Colombia 🇨🇴
+role: Desarrollador Full Stack
+location: Bogotá, Colombia 🇨🇴
 email: ronalddemiancipagauta@gmail.com
 phone: "+57 302 479 4842"
 portfolio: koptup.com
 
 about: >
   Desarrollador de software con experiencia en diseño e implementación de
-  soluciones modernas, escalables y centradas en el usuario. Combino
-  desarrollo full stack con React/TypeScript en frontend, y Node.js, Java
-  y Python en backend, integrando arquitecturas REST y microservicios.
-  Recientemente especializado en backend para chatbots inteligentes con
-  OpenAI, recuperación semántica, embeddings y vector stores.
+  soluciones modernas, escalables y centradas en el usuario. Hoy trabajo en
+  dos frentes: la conciliación transaccional de un banco (procesos batch de
+  alto volumen en SQL Server y T-SQL, con entregas en GitLab CI) y flujos de
+  integración en Apache NiFi para un operador de telecomunicaciones. Combino
+  eso con desarrollo full stack (React/TypeScript en frontend; Node.js, Java
+  y Python en backend) y chatbots con OpenAI, embeddings y vector stores.
 
 focus:
+  - 🏦  Banca: conciliación transaccional y medios de pago
+  - 🔀  Integración: Apache NiFi, Vault, Keycloak
+  - 🗄️  Databases: SQL Server (T-SQL), Oracle, MySQL, MongoDB
   - ⚛️  Frontend: React, TypeScript, Angular
   - 🖥️  Backend: Node.js, Java, Python, .NET
   - 🤖  AI/Chatbots: OpenAI API, embeddings, vector stores
-  - ☁️  Cloud: AWS (S3), Vercel, CI/CD pipelines
-  - 🔀  Data Flows: Apache NiFi
-  - 🗄️  Databases: Oracle, SQL Server, MySQL, MongoDB
+  - ☁️  DevOps: Git, GitLab CI/CD, AWS (S3), Vercel
 
 currently_working_on:
-  - "SII Group — Backend Developer para Falabella"
-  - "Claro — Flujos de datos con Apache NiFi"
+  - "Blautech — Desarrollador de integración · cliente: Claro CENAM"
+  - "SII Group — Desarrollador Full Stack · cliente: Banco Falabella Colombia"
 ```
 
 ---
@@ -67,7 +69,7 @@ currently_working_on:
 |:------------------:|:-----------------:|:---------------:|
 | AWS S3, Vercel | Oracle, SQL Server | WPF + .NET |
 | CI/CD Pipelines | MySQL, MongoDB | Apps empresariales |
-| Git, Bitbucket, JIRA | Stored Procedures | SQL Server integrado |
+| Git, GitLab CI, Jira | Stored Procedures, T-SQL | SQL Server integrado |
 
 </div>
 
@@ -109,10 +111,15 @@ currently_working_on:
 ![Vercel](https://img.shields.io/badge/Vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Apache NiFi](https://img.shields.io/badge/Apache%20NiFi-728E9B?style=for-the-badge&logo=apache&logoColor=white)
+![Vault](https://img.shields.io/badge/Vault-FFEC6E?style=for-the-badge&logo=vault&logoColor=black)
+![Keycloak](https://img.shields.io/badge/Keycloak-4D4D4D?style=for-the-badge&logo=keycloak&logoColor=white)
+![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
 ![Git](https://img.shields.io/badge/Git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
+![GitLab CI](https://img.shields.io/badge/GitLab_CI-FC6D26?style=for-the-badge&logo=gitlab&logoColor=white)
 ![GitHub](https://img.shields.io/badge/GitHub-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
 ![Bitbucket](https://img.shields.io/badge/Bitbucket-%230047B3.svg?style=for-the-badge&logo=bitbucket&logoColor=white)
 ![JIRA](https://img.shields.io/badge/Jira-%230A0FFF.svg?style=for-the-badge&logo=jira&logoColor=white)
+![Confluence](https://img.shields.io/badge/Confluence-172B4D?style=for-the-badge&logo=confluence&logoColor=white)
 
 **🤖 IA & Chatbots**
 
@@ -126,28 +133,54 @@ currently_working_on:
 
 ## 💼 Experiencia Profesional
 
+### 📡 Desarrollador de integración — Blautech
+
+**Cliente:** Claro CENAM (multi-país) &nbsp;·&nbsp; 🗓️ may. 2026 – actualidad
+
+Flujos de integración para la **activación automática de servicios de streaming** en clientes de
+telecomunicaciones de varios países.
+
+- 🔀 Desarrollo y mantenimiento de flujos de integración en **Apache NiFi**
+- 🛡️ Mejoras de resiliencia: **reintentos con alertas a monitoreo**, logging por registro y manejo de casos borde
+- 🗄️ Integración con bases de datos **Oracle** (SQL) y validación de APIs con **Postman**
+- 🔐 Migración de microservicios a gestión centralizada de secretos con **Vault**, sin credenciales en los archivos de configuración
+- 🔁 Flujo de trabajo con **Git / GitHub Enterprise**: pull requests, revisión de código y Conventional Commits
+
+![Apache NiFi](https://img.shields.io/badge/Apache_NiFi-728E9B?style=flat-square&logo=apache&logoColor=white)
+![Oracle](https://img.shields.io/badge/Oracle_SQL-F80000?style=flat-square&logo=oracle&logoColor=white)
+![Vault](https://img.shields.io/badge/Vault-FFEC6E?style=flat-square&logo=vault&logoColor=black)
+![Keycloak](https://img.shields.io/badge/Keycloak-4D4D4D?style=flat-square&logo=keycloak&logoColor=white)
+![Java](https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white)
+![Postman](https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=postman&logoColor=white)
+![GitHub](https://img.shields.io/badge/GitHub_Enterprise-181717?style=flat-square&logo=github&logoColor=white)
+
+### 🏦 Desarrollador Full Stack — SII Group <sub>(antes BC Tecnología)</sub>
+
+**Cliente:** Banco Falabella Colombia &nbsp;·&nbsp; 📍 Bogotá, Colombia &nbsp;·&nbsp; 🗓️ nov. 2025 – actualidad
+
+<sub>SII Group desde jun. 2026 · BC Tecnología de nov. 2025 a jun. 2026: el mismo proyecto y el mismo cliente, tras el cambio de proveedor.</sub>
+
+Trabajo en el **sistema de conciliación transaccional** del banco. Es el proceso diario que cruza las
+transacciones de tarjetas reportadas por Redeban, Mastercard, cajeros, POS e internet contra el
+switch, y del que dependen la contabilidad, la facturación de redes y la reportería.
+
+- 🔁 Reglas de conciliación y postconciliación en **T-SQL** sobre procesos batch de alto volumen
+- ⚡ Optimización de rendimiento: planes de ejecución, índices y reescritura de consultas
+- 🚀 Despliegues versionados con **Git y GitLab CI**, con scripts de reverso y trazabilidad en auditoría
+- 🐍 Herramienta en **Python** para validar scripts SQL antes de ejecutarlos
+- 🔍 Revisión de pares, diagnóstico de defectos y documentación técnica y funcional
+
+![SQL Server](https://img.shields.io/badge/SQL_Server-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white)
+![T-SQL](https://img.shields.io/badge/T--SQL-CC2927?style=flat-square)
+![Python](https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54)
+![Git](https://img.shields.io/badge/Git-F05033?style=flat-square&logo=git&logoColor=white)
+![GitLab CI](https://img.shields.io/badge/GitLab_CI-FC6D26?style=flat-square&logo=gitlab&logoColor=white)
+![Jira](https://img.shields.io/badge/Jira-0052CC?style=flat-square&logo=jira&logoColor=white)
+![Confluence](https://img.shields.io/badge/Confluence-172B4D?style=flat-square&logo=confluence&logoColor=white)
+
+### Experiencia anterior
+
 <table width="100%">
-  <tr>
-    <td width="13%" align="center"><b>2026<br/>Actual</b></td>
-    <td>
-      <b>📡 Claro — Desarrollador de Flujos de Datos (Apache NiFi)</b><br/>
-      Diseño y desarrollo de flujos en Apache NiFi para la ingesta, transformación y enrutamiento de datos entre sistemas.
-    </td>
-  </tr>
-  <tr>
-    <td width="13%" align="center"><b>2026<br/>Actual</b></td>
-    <td>
-      <b>🏦 SII Group — Desarrollador Backend (para Falabella)</b><br/>
-      Continuidad en el proyecto de conciliación bancaria de Falabella tras el cambio de proveedor a SII Group. Validaciones end-to-end y mantenimiento de stored procedures con lógica bancaria sobre SQL Server.
-    </td>
-  </tr>
-  <tr>
-    <td width="13%" align="center"><b>2025<br/>2026</b></td>
-    <td>
-      <b>🏦 BC Tecnología — Desarrollador Backend (para Falabella)</b><br/>
-      Validaciones end-to-end en procesos de conciliación de transacciones bancarias. Corrección de stored procedures con lógica bancaria sobre SQL Server, garantizando consistencia, exactitud y trazabilidad de los datos.
-    </td>
-  </tr>
   <tr>
     <td width="13%" align="center"><b>2024<br/>2025</b></td>
     <td>
@@ -196,16 +229,6 @@ currently_working_on:
 <br/>
 
 <img height="155" src="https://github-readme-stats.vercel.app/api/top-langs/?username=ronalc90&layout=compact&theme=tokyonight&hide_border=true&langs_count=8" alt="Top Languages"/>
-
-</div>
-
----
-
-## 📈 Actividad
-
-<div align="center">
-
-[![Activity Graph](https://github-readme-activity-graph.vercel.app/graph?username=ronalc90&theme=tokyo-night&hide_border=true&area=true)](https://github.com/ronalc90)
 
 </div>
 
