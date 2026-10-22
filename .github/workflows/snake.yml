@@ -1,4 +1,4 @@
-name: "🕹️ Arcade: Snake + Pac-Man"
+name: "Arcade: Snake + Pac-Man"
 
 # Genera las animaciones de la culebrita y Pac-Man comiéndose las contribuciones
 # y las publica en la rama `output` (el README las lee desde ahí).
@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: 🐍 Snake (paleta propia)
+      - name: Snake (paleta propia)
         uses: Platane/snk/svg-only@v3
         with:
           github_user_name: ${{ github.repository_owner }}
@@ -31,18 +31,18 @@ jobs:
             dist/github-snake.svg?color_snake=#b4532a&color_dots=#efe2c6,#e8c99a,#d99a55,#c8642c,#8b2a1c
             dist/github-snake-dark.svg?palette=github-dark&color_snake=#e3a04f&color_dots=#21180f,#5c3a20,#8e4a24,#c8642c,#f4c47c
 
-      - name: 👻 Pac-Man
+      - name: Pac-Man
         continue-on-error: true
         uses: abozanona/pacman-contribution-graph@main
         with:
           github_user_name: ${{ github.repository_owner }}
           games: pacman
 
-      - name: 🚀 Publicar en la rama output
+      - name: Publicar en la rama output
         uses: crazy-max/ghaction-github-pages@v4
         with:
           target_branch: output
           build_dir: dist
-          commit_message: "🕹️ Actualiza arcade de contribuciones"
+          commit_message: "Actualiza arcade de contribuciones"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
