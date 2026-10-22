@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 34" width="1200" height="34" role="img" aria-label="separador">
+<defs>
+  <linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#b4532a" stop-opacity="0"/><stop offset="1" stop-color="#e3a04f"/></linearGradient>
+  <linearGradient id="rg" x1="0" x2="1"><stop offset="0" stop-color="#e3a04f"/><stop offset="1" stop-color="#b4532a" stop-opacity="0"/></linearGradient>
+  <radialGradient id="gl"><stop offset="0" stop-color="#fff6e0"/><stop offset="1" stop-color="#fff6e0" stop-opacity="0"/></radialGradient>
+  <style>
+    .gem{animation:spin 8s linear infinite;transform-origin:600.0px 17.0px}
+    @keyframes spin{0%,70%{transform:rotate(45deg)}100%{transform:rotate(405deg)}}
+    .halo{animation:pulse 3s ease-in-out infinite;transform-origin:600.0px 17.0px}
+    @keyframes pulse{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:.7;transform:scale(1.25)}}
+  </style>
+</defs>
+<rect x="60" y="16.25" width="510.0" height="1.5" fill="url(#lg)"/>
+<rect x="630.0" y="16.25" width="510.0" height="1.5" fill="url(#rg)"/>
+<circle cx="578.0" cy="17.0" r="2" fill="#c8923a"/><circle cx="622.0" cy="17.0" r="2" fill="#c8923a"/>
+<circle class="halo" cx="600.0" cy="17.0" r="13" fill="#e06b2d" fill-opacity=".35"/>
+<rect class="gem" x="594.0" y="11.0" width="12" height="12" fill="#e06b2d" stroke="#efe2c6" stroke-width="1.2"/>
+<ellipse cx="570.0" cy="17.0" rx="26" ry="2" fill="url(#gl)" opacity="0">
+  <animate attributeName="cx" values="570.0;70" dur="2.4s" begin="0s;g2.end+1.6s" id="g1" fill="freeze"/>
+  <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.1;.75;1" dur="2.4s" begin="g1.begin" fill="freeze"/>
+</ellipse>
+<ellipse cx="630.0" cy="17.0" rx="26" ry="2" fill="url(#gl)" opacity="0">
+  <animate attributeName="cx" values="630.0;1130" dur="2.4s" begin="g1.begin" id="g2" fill="freeze"/>
+  <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.1;.75;1" dur="2.4s" begin="g1.begin" fill="freeze"/>
+</ellipse>
+</svg>
