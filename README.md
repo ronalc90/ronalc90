@@ -22,6 +22,9 @@
   <img src="https://img.shields.io/badge/⚔️_Experiencia-6+_años-B4532A?style=flat-square&labelColor=16100B" alt="Experiencia"/>
   <img src="https://img.shields.io/badge/🟢_Estado-Disponible_para_proyectos-9AA38A?style=flat-square&labelColor=16100B" alt="Disponible"/>
 </p>
+<p>
+  <a href="#juegos"><img src="https://img.shields.io/badge/🕹️_Juega_en_mi_perfil-Raid_·_Caravana_·_Aventura_·_CENIZA-E2372A?style=for-the-badge&labelColor=16100B" alt="Juega en mi perfil"/></a>
+</p>
 
 </div>
 
@@ -287,6 +290,175 @@ currently_working_on:
     </td>
   </tr>
 </table>
+
+<img src="assets/divider.svg" width="100%" alt=""/>
+
+<a name="juegos"></a>
+
+## 🕹️ Zona de juegos
+
+<sub>Sí: se puede jugar desde este perfil. Los ataques y firmas abren un *issue* prellenado; un GitHub Action lo procesa y actualiza este README.</sub>
+
+### 🔥 CENIZA · esquiva la furia del coloso
+
+<div align="center">
+  <a href="https://ronalc90.github.io/ronalc90/"><img src="assets/ceniza-preview.webp" width="100%" alt="CENIZA: mini juego donde esquivas los láseres del coloso. Clic para jugar"/></a>
+  <br/>
+  <sub>Mini juego en el navegador (PC y móvil) · esquiva láseres, escombros y ondas · recoge fragmentos para hacer combos</sub>
+</div>
+
+### ⚔️ Raid comunitario contra el coloso
+
+<div align="center">
+
+<img src="games/raid.svg" width="100%" alt="Estado del raid comunitario contra el coloso"/>
+
+**Elige tu arma y ataca:**
+
+<a href="https://github.com/ronalc90/ronalc90/issues/new?title=raid%3A%20espada&body=%E2%9A%94%EF%B8%8F%20%2A%2A%C2%A1No%20cambies%20el%20t%C3%ADtulo%21%2A%2A%20Solo%20pulsa%20%2A%2ACreate%2A%2A%20para%20lanzar%20tu%20ataque.%0A%0AEl%20bot%20lo%20procesar%C3%A1%20en%20unos%20segundos%2C%20te%20responder%C3%A1%20aqu%C3%AD%20con%20el%20da%C3%B1o%20que%20hiciste%20y%20actualizar%C3%A1%20el%20perfil.%0A%0A_Cada%20guerrero%20puede%20atacar%20una%20vez%20cada%2020%20minutos._"><img src="https://img.shields.io/badge/%F0%9F%97%A1%EF%B8%8F%20Espada-B4532A?style=for-the-badge&labelColor=16100B" alt="Atacar con espada"/></a>
+<a href="https://github.com/ronalc90/ronalc90/issues/new?title=raid%3A%20arco&body=%E2%9A%94%EF%B8%8F%20%2A%2A%C2%A1No%20cambies%20el%20t%C3%ADtulo%21%2A%2A%20Solo%20pulsa%20%2A%2ACreate%2A%2A%20para%20lanzar%20tu%20ataque.%0A%0AEl%20bot%20lo%20procesar%C3%A1%20en%20unos%20segundos%2C%20te%20responder%C3%A1%20aqu%C3%AD%20con%20el%20da%C3%B1o%20que%20hiciste%20y%20actualizar%C3%A1%20el%20perfil.%0A%0A_Cada%20guerrero%20puede%20atacar%20una%20vez%20cada%2020%20minutos._"><img src="https://img.shields.io/badge/%F0%9F%8F%B9%20Arco-C8923A?style=for-the-badge&labelColor=16100B" alt="Atacar con arco"/></a>
+<a href="https://github.com/ronalc90/ronalc90/issues/new?title=raid%3A%20bomba&body=%E2%9A%94%EF%B8%8F%20%2A%2A%C2%A1No%20cambies%20el%20t%C3%ADtulo%21%2A%2A%20Solo%20pulsa%20%2A%2ACreate%2A%2A%20para%20lanzar%20tu%20ataque.%0A%0AEl%20bot%20lo%20procesar%C3%A1%20en%20unos%20segundos%2C%20te%20responder%C3%A1%20aqu%C3%AD%20con%20el%20da%C3%B1o%20que%20hiciste%20y%20actualizar%C3%A1%20el%20perfil.%0A%0A_Cada%20guerrero%20puede%20atacar%20una%20vez%20cada%2020%20minutos._"><img src="https://img.shields.io/badge/%F0%9F%92%A3%20Bomba-E2372A?style=for-the-badge&labelColor=16100B" alt="Atacar con bomba"/></a>
+
+<sub>Espada: daño estable · Arco: daño variable · Bomba: mucho daño, pero a veces la mecha se apaga</sub>
+
+</div>
+
+<!-- RAID:START -->
+<div align="center">
+
+*Todavía nadie ha atacado. ¡Estrena el ranking!*
+
+</div>
+
+
+<!-- RAID:END -->
+
+### 🏕️ Libro de visitas · únete a la caravana
+
+<div align="center">
+
+<img src="games/caravan.svg" width="100%" alt="Caravana animada con los visitantes que firmaron el libro"/>
+
+**Firma como:**
+
+<a href="https://github.com/ronalc90/ronalc90/issues/new?title=firma%3A%20viajero&body=%F0%9F%8F%95%EF%B8%8F%20%2A%2A%C2%A1No%20cambies%20el%20t%C3%ADtulo%21%2A%2A%20Solo%20pulsa%20%2A%2ACreate%2A%2A%20para%20firmar%20el%20libro%20de%20visitas.%0A%0ATu%20avatar%20se%20unir%C3%A1%20a%20la%20caravana%20que%20cruza%20el%20desierto%20en%20el%20perfil.%20%C2%A1Gracias%20por%20pasar%2C%20viajero%21"><img src="https://img.shields.io/badge/%F0%9F%A7%AD%20Viajero-C8923A?style=for-the-badge&labelColor=16100B" alt="Firmar como viajero"/></a>
+<a href="https://github.com/ronalc90/ronalc90/issues/new?title=firma%3A%20mercader&body=%F0%9F%8F%95%EF%B8%8F%20%2A%2A%C2%A1No%20cambies%20el%20t%C3%ADtulo%21%2A%2A%20Solo%20pulsa%20%2A%2ACreate%2A%2A%20para%20firmar%20el%20libro%20de%20visitas.%0A%0ATu%20avatar%20se%20unir%C3%A1%20a%20la%20caravana%20que%20cruza%20el%20desierto%20en%20el%20perfil.%20%C2%A1Gracias%20por%20pasar%2C%20viajero%21"><img src="https://img.shields.io/badge/%F0%9F%8E%92%20Mercader-9A3F1C?style=for-the-badge&labelColor=16100B" alt="Firmar como mercader"/></a>
+<a href="https://github.com/ronalc90/ronalc90/issues/new?title=firma%3A%20guerrero&body=%F0%9F%8F%95%EF%B8%8F%20%2A%2A%C2%A1No%20cambies%20el%20t%C3%ADtulo%21%2A%2A%20Solo%20pulsa%20%2A%2ACreate%2A%2A%20para%20firmar%20el%20libro%20de%20visitas.%0A%0ATu%20avatar%20se%20unir%C3%A1%20a%20la%20caravana%20que%20cruza%20el%20desierto%20en%20el%20perfil.%20%C2%A1Gracias%20por%20pasar%2C%20viajero%21"><img src="https://img.shields.io/badge/%E2%9A%94%EF%B8%8F%20Guerrero-E2372A?style=for-the-badge&labelColor=16100B" alt="Firmar como guerrero"/></a>
+<a href="https://github.com/ronalc90/ronalc90/issues/new?title=firma%3A%20explorador&body=%F0%9F%8F%95%EF%B8%8F%20%2A%2A%C2%A1No%20cambies%20el%20t%C3%ADtulo%21%2A%2A%20Solo%20pulsa%20%2A%2ACreate%2A%2A%20para%20firmar%20el%20libro%20de%20visitas.%0A%0ATu%20avatar%20se%20unir%C3%A1%20a%20la%20caravana%20que%20cruza%20el%20desierto%20en%20el%20perfil.%20%C2%A1Gracias%20por%20pasar%2C%20viajero%21"><img src="https://img.shields.io/badge/%F0%9F%8F%AE%20Explorador-5B7A99?style=for-the-badge&labelColor=16100B" alt="Firmar como explorador"/></a>
+
+</div>
+
+<!-- GUESTBOOK:START -->
+<p align="center"><sub>Aún no hay firmas. ¡La caravana espera a su primer viajero!</sub></p>
+<!-- GUESTBOOK:END -->
+
+### 🎲 Aventura de texto
+
+<details>
+<summary><b>🎲 Jugar «La travesía del viajero»</b> · aventura de texto: elige tu camino (haz clic)</summary>
+<br/>
+
+> *Despiertas sobre una duna tibia. El cielo es de ceniza y, en el horizonte, un coloso de hierro duerme con un ojo rojo entreabierto. En tu mochila hay un portátil, café frío y una terminal que parpadea:*
+>
+> `ronald@koptup:~$ ¿hacia dónde vamos?`
+
+<details>
+<summary>🏙️ <b>Camino I</b> · Caminar hacia las luces de la ciudad de cristal</summary>
+<br/>
+
+> *En la ciudad, las fachadas cambian según quién las mira: son interfaces vivas. Un mercader te detiene: necesita una tienda que funcione en cualquier pantalla, que cargue rápido y que no se rompa cuando lleguen mil clientes a la vez.*
+
+<details>
+<summary>⚛️ Construir la tienda con React y TypeScript</summary>
+<br/>
+
+> *Tipas cada componente como si fuera una armadura. La tienda abre al amanecer y no cae ni una vez. El mercader te paga en monedas de cobre… y en una reseña de cinco estrellas.*
+>
+> ### 🏆 FINAL · El Arquitecto de Interfaces
+> Así trabajo en el frontend: **React + TypeScript**, también **Angular**, apps responsivas, integraciones **eCommerce** y despliegues en **Vercel**.
+> Mira 27 demos enterprise en [**koptup.com**](https://koptup.com) · [repo](https://github.com/ronalc90/koptup)
+
+</details>
+
+<details>
+<summary>🗺️ Dibujar primero el mapa de componentes</summary>
+<br/>
+
+> *Antes de poner una piedra, trazas el plano: capas, módulos y contratos claros. Cuando la ciudad crece, nada se derrumba, porque cada pieza sabe exactamente cuál es su lugar.*
+>
+> ### 🏆 FINAL · El Cartógrafo
+> Arquitectura **modular por capas** (Java EE + REST sobre WebLogic en Universitas XXI), **Oracle APEX**, apps de escritorio **WPF + .NET** con SQL Server y pruebas con **JUnit**.
+
+</details>
+</details>
+
+<details>
+<summary>🏦 <b>Camino II</b> · Entrar a la fortaleza del banco, donde los números no cuadran</summary>
+<br/>
+
+> *Los guardianes del oro tienen un problema: miles de transacciones que no concilian y un libro mayor que nadie se atreve a abrir. Te entregan una antorcha y una consola de SQL.*
+
+<details>
+<summary>🔍 Revisar los stored procedures uno por uno</summary>
+<br/>
+
+> *Línea por línea encuentras el error escondido en una lógica bancaria de hace años. Lo corriges, validas de punta a punta y, por primera vez en meses, el libro mayor cuadra al centavo.*
+>
+> ### 🏆 FINAL · El Guardián del Libro Mayor
+> Hoy hago justo esto: **conciliación bancaria para Falabella** con **SII Group** (antes con BC Tecnología): validaciones **end-to-end** y **stored procedures** sobre **SQL Server**, cuidando consistencia, exactitud y trazabilidad.
+
+</details>
+
+<details>
+<summary>🔀 Construir un río de datos que lo ordene todo</summary>
+<br/>
+
+> *En lugar de pelear con cada gota, cavas cauces: los datos entran, se transforman y llegan solos a su destino. El caos se vuelve corriente.*
+>
+> ### 🏆 FINAL · El Maestro de los Flujos
+> En **Claro** diseño flujos con **Apache NiFi** para la ingesta, transformación y enrutamiento de datos entre sistemas.
+
+</details>
+</details>
+
+<details>
+<summary>🔮 <b>Camino III</b> · Bajar hasta el oráculo que vive bajo el coloso</summary>
+<br/>
+
+> *Entre las piernas del gigante habita un oráculo que responde cualquier pregunta… pero olvida todo lo que lee. A su alrededor hay montañas de documentos: PDF, DOCX, HTML, TXT.*
+
+<details>
+<summary>🧬 Darle memoria con embeddings y vector stores</summary>
+<br/>
+
+> *Conviertes cada documento en vectores y le enseñas a buscar por significado, no por palabras. El oráculo por fin recuerda, y responde citando sus fuentes.*
+>
+> ### 🏆 FINAL · El Tejedor de Memorias
+> Backend para **chatbots inteligentes** con **OpenAI**, **embeddings**, **vector stores** y **RAG** (en Globa, con React + Node.js/TypeScript, AWS S3, JWT y CI/CD).
+> Experimento: [**RAG-test**](https://github.com/ronalc90/RAG-test)
+
+</details>
+
+<details>
+<summary>🤖 Despertar al coloso</summary>
+<br/>
+
+> *Conectas tu terminal al ojo rojo del gigante. Tras siglos de silencio, el coloso parpadea… y escribe en tu pantalla:*
+>
+> ```
+> > HOLA, VIAJERO. ¿CONSTRUIMOS ALGO JUNTOS?
+> ```
+>
+> ### 🏆 FINAL SECRETO · El que despertó al coloso
+> Llegaste al final más raro de la travesía. Si buscas a alguien que mezcle **backend sólido**, **frontend moderno** e **IA aplicada**, hablemos:
+> [**LinkedIn**](https://www.linkedin.com/in/ronald-demian-cipagauta-penagos-384944209/) · [**Email**](mailto:ronalddemiancipagauta@gmail.com) · [**WhatsApp**](https://wa.me/573024794842)
+
+</details>
+</details>
+
+<sub>Para volver a jugar, cierra los desplegables y elige otro camino. Hay 6 finales; uno es secreto.</sub>
+
+</details>
 
 <img src="assets/divider.svg" width="100%" alt=""/>
 
