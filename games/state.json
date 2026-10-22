@@ -1,13 +1,31 @@
 {
  "raid": {
   "level": 1,
-  "hp": 300,
+  "hp": 255,
   "maxHp": 300,
   "prevHp": 300,
   "kills": 0,
-  "totalAttacks": 0,
-  "players": {},
-  "events": [],
+  "totalAttacks": 1,
+  "players": {
+   "ronalc90": {
+    "dmg": 45,
+    "attacks": 1,
+    "kills": 0,
+    "last": 1792704148476,
+    "avatar": "https://avatars.githubusercontent.com/u/36252532?v=4"
+   }
+  },
+  "events": [
+   {
+    "user": "ronalc90",
+    "weapon": "espada",
+    "dmg": 45,
+    "crit": false,
+    "miss": false,
+    "t": 1792704148476,
+    "level": 1
+   }
+  ],
   "fallen": []
  },
  "guestbook": []

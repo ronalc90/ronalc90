@@ -326,11 +326,17 @@ currently_working_on:
 <!-- RAID:START -->
 <div align="center">
 
-*Todavía nadie ha atacado. ¡Estrena el ranking!*
+| | Guerrero | Daño | Ataques | Golpes finales |
+|:-:|:--|--:|--:|--:|
+| 🥇 | <img src="https://github.com/ronalc90.png?size=40" width="20" height="20"/> [@ronalc90](https://github.com/ronalc90) | 45 | 1 | 0 |
 
 </div>
 
+<details><summary><b>Bitácora de batalla</b></summary>
 
+- 🗡️ [@ronalc90](https://github.com/ronalc90) hizo **−45** contra el Nv. 1 · <sub>hace 1 min</sub>
+
+</details>
 <!-- RAID:END -->
 
 ### 🏕️ Libro de visitas · únete a la caravana
