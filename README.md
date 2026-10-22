@@ -250,38 +250,54 @@ switch, y del que dependen la contabilidad, la facturación de redes y la report
 
 ## 🚀 Proyectos Destacados
 
-<div align="center">
-
-### 🔗 [Spring Boot + Java + Hibernate + JWT + API REST](https://github.com/ronalc90/Sprintboot-in-java-hibernate-JWT-API-Rest-Ajax)
-
-![Java](https://img.shields.io/badge/Java-%23ED8B00.svg?style=flat-square&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-%236DB33F.svg?style=flat-square&logo=spring&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-black?style=flat-square&logo=JSON%20web%20tokens)
-![Hibernate](https://img.shields.io/badge/Hibernate-59666C?style=flat-square&logo=hibernate&logoColor=white)
-
-API REST completa con autenticación JWT, Hibernate ORM y frontend Ajax integrado.
-
----
-
-### 🔗 [SaludSalta — Disease Predictor](https://github.com/ronalc90/saludsalta-disease-predictor)
-
-![Python](https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54)
-![ML](https://img.shields.io/badge/Machine%20Learning-FF6F00?style=flat-square&logo=tensorflow&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=flat-square&logo=mongodb&logoColor=white)
-
-Predictor de enfermedades con modelos de ML integrado en sistema de salud real.
-
----
-
-### 🔗 [RAG Test — Retrieval Augmented Generation](https://github.com/ronalc90/RAG-test)
-
-![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat-square&logo=openai&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-6DA55F?style=flat-square&logo=node.js&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=flat-square&logo=typescript&logoColor=white)
-
-RAG con embeddings, vector stores y OpenAI para búsqueda semántica sobre documentos.
-
-</div>
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="https://github.com/ronalc90/koptup"><img src="assets/proyectos/koptup.webp" alt="KopTup: demo RAG respondiendo con la fuente citada" /></a>
+      <h3>🤖 <a href="https://github.com/ronalc90/koptup">KopTup — Sistemas RAG</a></h3>
+      IA que responde con los documentos de una empresa y <b>cita la fuente</b>: carga de PDF/DOCX/web, búsqueda BM25 y OpenAI. Incluye 28 demos, panel de administración y CI con pruebas E2E.<br/><br/>
+      <code>Next.js</code> <code>Express</code> <code>MongoDB</code> <code>OpenAI</code> <code>Playwright</code><br/><br/>
+      🌐 <a href="https://www.koptup.com">koptup.com</a> · 🧪 <a href="https://www.koptup.com/demo/chatbot">Probar la demo</a>
+    </td>
+    <td width="50%" valign="top">
+      <a href="https://github.com/ronalc90/Lenia"><img src="assets/proyectos/bioluma.webp" alt="Bioluma: criaturas de vida artificial en la placa" /></a>
+      <h3>🧬 <a href="https://github.com/ronalc90/Lenia">Bioluma — Vida artificial</a></h3>
+      Simulación de <b>Lenia</b> (vida artificial continua) en el navegador: criaturas que nacen, se mueven y evolucionan. Versión web, escritorio y móvil, con más de 1.100 pruebas y CI.<br/><br/>
+      <code>TypeScript</code> <code>Vite</code> <code>Vitest</code> <code>Electron</code> <code>Capacitor</code><br/><br/>
+      🌐 <a href="https://bioluma-xi.vercel.app">bioluma-xi.vercel.app</a>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="https://github.com/ronalc90/motattomotocicletas"><img src="assets/proyectos/motatto.webp" alt="Motatto: portada del sitio" /></a>
+      <h3>🏍️ <a href="https://github.com/ronalc90/motattomotocicletas">Motatto — Talleres de motos y carros</a></h3>
+      Plataforma <b>multitenant</b> para talleres: cuentas de cobro por WhatsApp, PDF y link público, inventario con fotos, clientes y vehículos, caja del día y asistente por voz con IA.<br/><br/>
+      <code>React</code> <code>Vite</code> <code>Node.js</code> <code>MongoDB</code> <code>OpenAI</code><br/><br/>
+      🌐 <a href="https://motattomotocicletas.com">motattomotocicletas.com</a>
+    </td>
+    <td width="50%" valign="top">
+      <a href="https://github.com/ronalc90/koptup-comercio-electronico"><img src="assets/proyectos/koptup-comercio.webp" alt="koptup Comercio Electrónico: dashboard del negocio" /></a>
+      <h3>🛒 <a href="https://github.com/ronalc90/koptup-comercio-electronico">koptup Comercio — SaaS multi-negocio</a></h3>
+      Pedidos desde WhatsApp o voz con <b>IA que valida contra el stock</b>, inventario por variante, despachos con guías, catálogo público y proveedores. Aislamiento por negocio con RLS.<br/><br/>
+      <code>Next.js</code> <code>Supabase</code> <code>PostgreSQL</code> <code>OpenAI</code> <code>Vitest</code><br/><br/>
+      🌐 <a href="https://koptup-comercio-electronico.vercel.app">koptup-comercio-electronico.vercel.app</a>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="https://github.com/ronalc90/saludSalta_Noa"><img src="assets/proyectos/salud-salta-noa.webp" alt="Salud Para Salta y NOA: portada" /></a>
+      <h3>🩺 <a href="https://github.com/ronalc90/saludSalta_Noa">Salud Para Salta y NOA</a></h3>
+      Plataforma <b>accesible</b> de educación en salud para personas mayores: clases en video, calculadora de IMC y orientación por síntomas con machine learning.<br/><br/>
+      <code>Next.js</code> <code>Express</code> <code>MongoDB</code> <code>FastAPI</code> <code>scikit-learn</code><br/><br/>
+      🌐 <a href="https://www.saludadultomayor.org">saludadultomayor.org</a>
+    </td>
+    <td width="50%" valign="top">
+      <h3>📂 Más proyectos</h3>
+      El resto de mis repositorios son pruebas técnicas, ejercicios y proyectos anteriores; los que ya no mantengo están archivados.<br/><br/>
+      👉 <a href="https://github.com/ronalc90?tab=repositories">Ver todos los repositorios</a>
+    </td>
+  </tr>
+</table>
 
 ---
 
