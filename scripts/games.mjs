@@ -330,7 +330,7 @@ async function renderCaravan() {
   }
   const empty = n === 0 ? `<text class="nm" x="${W / 2}" y="236" text-anchor="middle" style="font-size:17px">La caravana espera a su primer viajero…</text>` : "";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-labelledby="t">
-<title id="t">Libro de visitas: ${n} viajeros en la caravana</title>
+<title id="t">Libro de visitas: ${n} ${n === 1 ? "viajero" : "viajeros"} en la caravana</title>
 <defs><style>${fontCss()}
 .cz{font-family:'Cinzel',serif;font-weight:700}
 .nm{font-family:'JBM',monospace;font-weight:700;font-size:11px;fill:#efe2c6;paint-order:stroke;stroke:#0a0604;stroke-width:3px}
