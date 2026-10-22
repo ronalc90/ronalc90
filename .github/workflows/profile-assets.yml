@@ -1,0 +1,70 @@
+name: "🏜️ Profile assets: stats + 3D"
+
+# Genera las tarjetas de estadísticas y el calendario 3D directamente en el repo,
+# así el README no depende de instancias públicas de Vercel (que se caen o se limitan).
+on:
+  schedule:
+    - cron: "37 5 * * *" # todos los días 00:37 hora Colombia
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/profile-assets.yml"
+      - ".github/kenshi-3d.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: profile-assets
+  cancel-in-progress: false
+
+env:
+  CARD_COLORS: "bg_color=110b07&title_color=e06b2d&text_color=efe2c6&icon_color=e3a04f&border_color=4a3a2c&ring_color=e06b2d&border_radius=12"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: 🧱 Contribuciones 3D (paleta Kenshi)
+        uses: yoshi389111/github-profile-3d-contrib@v0.9.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USERNAME: ${{ github.repository_owner }}
+          SETTING_JSON: .github/kenshi-3d.json
+
+      - name: 📊 Tarjeta de estadísticas
+        continue-on-error: true
+        uses: stats-organization/github-readme-stats-action@v2
+        with:
+          card: stats
+          options: "username=${{ github.repository_owner }}&show_icons=true&include_all_commits=true&count_private=true&rank_icon=github&locale=es&custom_title=Estadísticas del viajero&${{ env.CARD_COLORS }}"
+          path: profile/stats.svg
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_error: "true"
+
+      - name: 🗣️ Tarjeta de lenguajes
+        continue-on-error: true
+        uses: stats-organization/github-readme-stats-action@v2
+        with:
+          card: top-langs
+          options: "username=${{ github.repository_owner }}&layout=compact&langs_count=8&locale=es&custom_title=Lenguajes más usados&${{ env.CARD_COLORS }}"
+          path: profile/top-langs.svg
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_error: "true"
+
+      - name: 💾 Guardar cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add profile-3d-contrib profile 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Sin cambios"
+            exit 0
+          fi
+          git commit -m "🏜️ Actualiza stats y contribuciones 3D"
+          git pull --rebase --autostash origin main
+          git push
