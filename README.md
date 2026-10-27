@@ -70,8 +70,8 @@ focus:
   - 🗄️  Databases: Oracle, SQL Server, MySQL, MongoDB
 
 currently_working_on:
-  - "SII Group — Backend Developer para Falabella"
-  - "Blautech, para Claro CENAM — Flujos de datos con Apache NiFi"
+  - "Blautech — Desarrollador de integración · cliente: Claro CENAM"
+  - "SII Group — Desarrollador Full Stack · cliente: Banco Falabella Colombia"
 ```
 
 </details>
@@ -246,7 +246,7 @@ currently_working_on:
     <td width="50%" valign="top">
       <a href="https://www.koptup.com"><img src="assets/proyectos/koptup.webp" width="100%" alt="Koptup: demo RAG respondiendo con la fuente citada"/></a>
       <h3>🌐 <a href="https://github.com/ronalc90/koptup">Koptup</a></h3>
-      Sistemas <b>RAG</b>: IA que responde con los documentos de la empresa y <b>cita la fuente</b>. Catálogo de <b>28 demos</b> interactivos.<br/><br/>
+      Sistemas <b>RAG</b>: IA que responde con los documentos de la empresa y <b>cita la fuente</b>. Catálogo de <b>28 demos</b> interactivas.<br/><br/>
       <img src="https://img.shields.io/badge/Next.js-B4532A?style=flat-square&logo=nextdotjs&logoColor=EFE2C6&labelColor=16100B" alt="Next.js"/>
       <img src="https://img.shields.io/badge/Express-E06B2D?style=flat-square&logo=express&logoColor=EFE2C6&labelColor=16100B" alt="Express"/>
       <img src="https://img.shields.io/badge/MongoDB-C8923A?style=flat-square&logo=mongodb&logoColor=EFE2C6&labelColor=16100B" alt="MongoDB"/>
@@ -317,9 +317,9 @@ currently_working_on:
 ### 🔥 CENIZA · sobrevive a la furia del coloso
 
 <div align="center">
-  <a href="https://ronalc90.github.io/ronalc90/"><img src="assets/ceniza-preview.webp" width="100%" alt="CENIZA: mini juego con armas, jefes intermedios y árbol de habilidades. Clic para jugar"/></a>
+  <a href="https://ronalc90.github.io/ronalc90/"><img src="assets/ceniza-preview.webp" width="100%" alt="CENIZA: minijuego con armas, jefes intermedios y árbol de habilidades. Clic para jugar"/></a>
   <br/>
-  <sub>Mini juego en el navegador (PC y móvil) · <b>4 armas</b> (hoja, arco, martillo y lanza) · <b>3 jefes intermedios</b> con cofres de mejoras · dash con esquiva perfecta · <b>árbol de habilidades</b> que crece cada vez que caes</sub>
+  <sub>Minijuego en el navegador (PC y móvil) · <b>4 armas</b> (hoja, arco, martillo y lanza) · <b>3 jefes intermedios</b> con cofres de mejoras · dash con esquiva perfecta · <b>árbol de habilidades</b> que crece cada vez que caes</sub>
 </div>
 
 ### ⚔️ Raid comunitario contra el coloso
