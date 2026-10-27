@@ -41,7 +41,7 @@
 Desarrollador de software que diseña e implementa soluciones **modernas, escalables y centradas en el usuario**. Combino **React/TypeScript** en el frontend con **Node.js, Java y Python** en el backend, sobre arquitecturas **REST y microservicios**. Últimamente me especialicé en **backend para chatbots inteligentes** con OpenAI, recuperación semántica, embeddings y vector stores.
 
 <div align="center">
-  <img src="assets/quests.svg" width="100%" alt="Misiones activas: conciliación bancaria para Falabella (SII Group), flujos de datos con Apache NiFi (Claro), Koptup y Bioluma"/>
+  <img src="assets/quests.svg" width="100%" alt="Misiones activas: conciliación bancaria para Falabella (SII Group), flujos de datos con Apache NiFi (Blautech, para Claro CENAM), Koptup y Bioluma"/>
 </div>
 
 <br/>
@@ -71,7 +71,7 @@ focus:
 
 currently_working_on:
   - "SII Group — Backend Developer para Falabella"
-  - "Claro — Flujos de datos con Apache NiFi"
+  - "Blautech, para Claro CENAM — Flujos de datos con Apache NiFi"
 ```
 
 </details>
@@ -143,24 +143,27 @@ currently_working_on:
 
 <table width="100%">
   <tr>
-    <td width="14%" align="center"><b>2026</b><br/><sub>🟢 Actual</sub></td>
+    <td width="14%" align="center"><b>may. 2026</b><br/><sub>🟢 Actualidad</sub></td>
     <td>
-      <b>📡 Claro — Desarrollador de Flujos de Datos (Apache NiFi)</b><br/>
-      Diseño y desarrollo de flujos en Apache NiFi para la ingesta, transformación y enrutamiento de datos entre sistemas.
+      <b>📡 Blautech — Desarrollador de integración para Claro CENAM</b><br/>
+      Flujos en Apache NiFi para la activación automática de servicios de streaming en clientes de telecomunicaciones de varios países, con reintentos, alertas a monitoreo y logging por registro. Integración con Oracle y validación de APIs con Postman, migración de secretos a Vault y pull requests en GitHub Enterprise con Conventional Commits.<br/>
+      <sub>Apache NiFi · Oracle SQL · Vault · Keycloak · Java · Postman · Git/GitHub</sub>
     </td>
   </tr>
   <tr>
-    <td width="14%" align="center"><b>2026</b><br/><sub>🟢 Actual</sub></td>
+    <td width="14%" align="center"><b>jun. 2026</b><br/><sub>🟢 Actualidad</sub></td>
     <td>
-      <b>🏦 SII Group — Desarrollador Backend (para Falabella)</b><br/>
-      Continuidad en el proyecto de conciliación bancaria de Falabella tras el cambio de proveedor a SII Group. Validaciones end-to-end y mantenimiento de stored procedures con lógica bancaria sobre SQL Server.
+      <b>🏦 SII Group — Desarrollador Full Stack (cliente: Banco Falabella Colombia)</b><br/>
+      Continuidad en el sistema de conciliación transaccional del banco tras el cambio de proveedor: el mismo proyecto y el mismo cliente. Reglas de conciliación y postconciliación en T-SQL sobre procesos batch de alto volumen, optimización de rendimiento (planes de ejecución, índices y reescritura de consultas) y despliegues versionados con Git y GitLab CI, con scripts de reverso y trazabilidad en auditoría.<br/>
+      <sub>SQL Server · T-SQL · Python · Git · GitLab CI · Jira · Confluence</sub>
     </td>
   </tr>
   <tr>
-    <td width="14%" align="center"><b>2025</b><br/><sub>→ 2026</sub></td>
+    <td width="14%" align="center"><b>nov. 2025</b><br/><sub>→ jun. 2026</sub></td>
     <td>
-      <b>🏦 BC Tecnología — Desarrollador Backend (para Falabella)</b><br/>
-      Validaciones end-to-end en procesos de conciliación de transacciones bancarias. Corrección de stored procedures con lógica bancaria sobre SQL Server, garantizando consistencia, exactitud y trazabilidad de los datos.
+      <b>🏦 BC Tecnología — Desarrollador Full Stack (cliente: Banco Falabella Colombia)</b><br/>
+      Sistema de conciliación transaccional del banco: el proceso diario que cruza las transacciones de tarjetas reportadas por Redeban, Mastercard, cajeros, POS e internet contra el switch, y del que dependen la contabilidad, la facturación de redes y la reportería. Reglas de conciliación en T-SQL, herramienta en Python para validar scripts SQL antes de ejecutarlos, revisión de pares, diagnóstico de defectos y documentación técnica y funcional.<br/>
+      <sub>SQL Server · T-SQL · Python · Git · GitLab CI · Jira · Confluence</sub>
     </td>
   </tr>
   <tr>
@@ -241,52 +244,64 @@ currently_working_on:
 <table width="100%">
   <tr>
     <td width="50%" valign="top">
+      <a href="https://www.koptup.com"><img src="assets/proyectos/koptup.webp" width="100%" alt="Koptup: demo RAG respondiendo con la fuente citada"/></a>
       <h3>🌐 <a href="https://github.com/ronalc90/koptup">Koptup</a></h3>
-      Catálogo de <b>27 demos enterprise interactivos</b>: chatbots RAG con IA, e-commerce, ERP, CRM, telemedicina, facturación electrónica multi-país, voice AI y más.<br/><br/>
-      <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
-      <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React"/>
-      <img src="https://img.shields.io/badge/IA_·_RAG-E06B2D?style=flat-square" alt="IA"/>
-      <a href="https://koptup.com"><img src="https://img.shields.io/badge/Demo-koptup.com-16100B?style=flat-square&logo=vercel" alt="Demo"/></a>
+      Sistemas <b>RAG</b>: IA que responde con los documentos de la empresa y <b>cita la fuente</b>. Catálogo de <b>28 demos</b> interactivos.<br/><br/>
+      <img src="https://img.shields.io/badge/Next.js-B4532A?style=flat-square&logo=nextdotjs&logoColor=EFE2C6&labelColor=16100B" alt="Next.js"/>
+      <img src="https://img.shields.io/badge/Express-E06B2D?style=flat-square&logo=express&logoColor=EFE2C6&labelColor=16100B" alt="Express"/>
+      <img src="https://img.shields.io/badge/MongoDB-C8923A?style=flat-square&logo=mongodb&logoColor=EFE2C6&labelColor=16100B" alt="MongoDB"/>
+      <img src="https://img.shields.io/badge/OpenAI-B4532A?style=flat-square" alt="OpenAI"/>
+      <a href="https://www.koptup.com"><img src="https://img.shields.io/badge/🌐_Demo-koptup.com-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
     </td>
     <td width="50%" valign="top">
+      <a href="https://bioluma-xi.vercel.app"><img src="assets/proyectos/bioluma.webp" width="100%" alt="Bioluma: criaturas de vida artificial en la placa"/></a>
       <h3>🧫 <a href="https://github.com/ronalc90/Lenia">Bioluma</a></h3>
-      Juego incremental de <b>vida artificial</b>: siembra materia en una placa de Lenia, descubre especies y vuelve con mejores genes.<br/><br/>
-      <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
-      <img src="https://img.shields.io/badge/WebGL2-990000?style=flat-square&logo=webgl&logoColor=white" alt="WebGL2"/>
-      <img src="https://img.shields.io/badge/PWA-5A0FC8?style=flat-square&logo=pwa&logoColor=white" alt="PWA"/>
+      Juego incremental de <b>vida artificial</b>: criaturas Lenia simuladas en vivo en la <b>GPU</b> del navegador con WebGL2. Web instalable (PWA).<br/><br/>
+      <img src="https://img.shields.io/badge/TypeScript-B4532A?style=flat-square&logo=typescript&logoColor=EFE2C6&labelColor=16100B" alt="TypeScript"/>
+      <img src="https://img.shields.io/badge/WebGL2-E06B2D?style=flat-square&logo=webgl&logoColor=EFE2C6&labelColor=16100B" alt="WebGL2"/>
+      <img src="https://img.shields.io/badge/PWA-C8923A?style=flat-square&logo=pwa&logoColor=EFE2C6&labelColor=16100B" alt="PWA"/>
+      <a href="https://bioluma-xi.vercel.app"><img src="https://img.shields.io/badge/🌐_Demo-bioluma--xi.vercel.app-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <h3>🔎 <a href="https://github.com/ronalc90/RAG-test">RAG Test</a></h3>
-      <b>Retrieval Augmented Generation</b> con embeddings, vector stores y OpenAI para búsqueda semántica sobre documentos.<br/><br/>
-      <img src="https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54" alt="Python"/>
-      <img src="https://img.shields.io/badge/Embeddings-E06B2D?style=flat-square" alt="Embeddings"/>
-      <img src="https://img.shields.io/badge/Vector_Stores-B4532A?style=flat-square" alt="Vector Stores"/>
+      <a href="https://motattomotocicletas.com"><img src="assets/proyectos/motatto.webp" width="100%" alt="Motatto: portada del sitio"/></a>
+      <h3>🏍️ <a href="https://github.com/ronalc90/motattomotocicletas">Motatto</a></h3>
+      Plataforma <b>multitenant</b> para talleres de motos y carros: cuentas de cobro por WhatsApp y PDF, inventario, caja y reportes.<br/><br/>
+      <img src="https://img.shields.io/badge/React-B4532A?style=flat-square&logo=react&logoColor=EFE2C6&labelColor=16100B" alt="React"/>
+      <img src="https://img.shields.io/badge/Node.js-E06B2D?style=flat-square&logo=nodedotjs&logoColor=EFE2C6&labelColor=16100B" alt="Node.js"/>
+      <img src="https://img.shields.io/badge/MongoDB-C8923A?style=flat-square&logo=mongodb&logoColor=EFE2C6&labelColor=16100B" alt="MongoDB"/>
+      <img src="https://img.shields.io/badge/OpenAI-B4532A?style=flat-square" alt="OpenAI"/>
+      <a href="https://motattomotocicletas.com"><img src="https://img.shields.io/badge/🌐_Demo-motattomotocicletas.com-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
     </td>
     <td width="50%" valign="top">
-      <h3>🩺 <a href="https://github.com/ronalc90/saludsalta-disease-predictor">SaludSalta</a></h3>
-      Predictor de enfermedades con <b>modelos de Machine Learning</b> integrado en un sistema de salud real.<br/><br/>
-      <img src="https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54" alt="Python"/>
-      <img src="https://img.shields.io/badge/Machine_Learning-FF6F00?style=flat-square&logo=tensorflow&logoColor=white" alt="ML"/>
-      <img src="https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white" alt="MongoDB"/>
+      <a href="https://meraki-wine.vercel.app"><img src="assets/proyectos/koptup-comercio.webp" width="100%" alt="Koptup Comercio: dashboard del negocio"/></a>
+      <h3>🛒 <a href="https://github.com/ronalc90/koptup-comercio-electronico">Koptup Comercio</a></h3>
+      SaaS para comercios: pedidos por WhatsApp o voz con <b>IA que valida el stock</b>, inventario por variante, despachos y finanzas.<br/><br/>
+      <img src="https://img.shields.io/badge/Next.js_16-B4532A?style=flat-square&logo=nextdotjs&logoColor=EFE2C6&labelColor=16100B" alt="Next.js 16"/>
+      <img src="https://img.shields.io/badge/Supabase_·_RLS-E06B2D?style=flat-square&logo=supabase&logoColor=EFE2C6&labelColor=16100B" alt="Supabase con RLS"/>
+      <img src="https://img.shields.io/badge/OpenAI-C8923A?style=flat-square" alt="OpenAI"/>
+      <a href="https://meraki-wine.vercel.app"><img src="https://img.shields.io/badge/🌐_Demo-meraki--wine.vercel.app-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <h3>🛒 <a href="https://github.com/ronalc90/santiago">Santiago</a></h3>
-      Plataforma de <b>e-commerce/dropshipping</b>: spy de anuncios, generador de landings con IA y dashboard.<br/><br/>
-      <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
-      <img src="https://img.shields.io/badge/IA_generativa-E06B2D?style=flat-square" alt="IA"/>
-      <img src="https://img.shields.io/badge/Dashboard-C8923A?style=flat-square" alt="Dashboard"/>
+      <a href="https://www.saludadultomayor.org"><img src="assets/proyectos/salud-salta-noa.webp" width="100%" alt="Salud Adulto Mayor: portada de la plataforma"/></a>
+      <h3>🩺 <a href="https://github.com/ronalc90/saludSalta_Noa">Salud Adulto Mayor</a></h3>
+      Plataforma <b>accesible</b> de educación en salud para personas mayores de Salta: clases en video, IMC y orientación por síntomas con <b>ML</b>.<br/><br/>
+      <img src="https://img.shields.io/badge/Next.js-B4532A?style=flat-square&logo=nextdotjs&logoColor=EFE2C6&labelColor=16100B" alt="Next.js"/>
+      <img src="https://img.shields.io/badge/FastAPI-E06B2D?style=flat-square&logo=fastapi&logoColor=EFE2C6&labelColor=16100B" alt="FastAPI"/>
+      <img src="https://img.shields.io/badge/scikit--learn-C8923A?style=flat-square&logo=scikitlearn&logoColor=EFE2C6&labelColor=16100B" alt="scikit-learn"/>
+      <a href="https://www.saludadultomayor.org"><img src="https://img.shields.io/badge/🌐_Demo-saludadultomayor.org-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
     </td>
     <td width="50%" valign="top">
-      <h3>🔐 <a href="https://github.com/ronalc90/Sprintboot-in-java-hibernate-JWT-API-Rest-Ajax">Spring Boot JWT API</a></h3>
-      API REST completa con <b>autenticación JWT</b>, Hibernate ORM y frontend Ajax integrado.<br/><br/>
-      <img src="https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java"/>
-      <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot"/>
-      <img src="https://img.shields.io/badge/Hibernate-59666C?style=flat-square&logo=hibernate&logoColor=white" alt="Hibernate"/>
-      <img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT"/>
+      <a href="https://github.com/ronalc90/Visual-code-Latigo-Claude#readme"><img src="assets/proyectos/latigo.webp" width="100%" alt="Látigo para Claude Code: el latigazo revienta sobre la conversación y el effort sube a high"/></a>
+      <h3>⚡ <a href="https://github.com/ronalc90/Visual-code-Latigo-Claude">Látigo para Claude Code</a></h3>
+      <b>Plugin de Claude Code</b> + <b>extensión de VS Code</b> + <b>app de Mac</b>: cada latigazo sobre la conversación sube el effort de Claude un nivel.<br/><br/>
+      <img src="https://img.shields.io/badge/TypeScript-B4532A?style=flat-square&logo=typescript&logoColor=EFE2C6&labelColor=16100B" alt="TypeScript"/>
+      <img src="https://img.shields.io/badge/Swift-E06B2D?style=flat-square&logo=swift&logoColor=EFE2C6&labelColor=16100B" alt="Swift"/>
+      <img src="https://img.shields.io/badge/Claude_Code-C8923A?style=flat-square&logo=claude&logoColor=EFE2C6&labelColor=16100B" alt="Claude Code"/>
+      <a href="https://github.com/ronalc90/Visual-code-Latigo-Claude#readme"><img src="https://img.shields.io/badge/📖_Demo-README-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
     </td>
   </tr>
 </table>
@@ -383,7 +398,7 @@ currently_working_on:
 >
 > ### 🏆 FINAL · El Arquitecto de Interfaces
 > Así trabajo en el frontend: **React + TypeScript**, también **Angular**, apps responsivas, integraciones **eCommerce** y despliegues en **Vercel**.
-> Mira 27 demos enterprise en [**koptup.com**](https://koptup.com) · [repo](https://github.com/ronalc90/koptup)
+> Mira 28 demos en [**koptup.com**](https://koptup.com) · [repo](https://github.com/ronalc90/koptup)
 
 </details>
 
@@ -423,7 +438,7 @@ currently_working_on:
 > *En lugar de pelear con cada gota, cavas cauces: los datos entran, se transforman y llegan solos a su destino. El caos se vuelve corriente.*
 >
 > ### 🏆 FINAL · El Maestro de los Flujos
-> En **Claro** diseño flujos con **Apache NiFi** para la ingesta, transformación y enrutamiento de datos entre sistemas.
+> En **Blautech**, para **Claro CENAM**, diseño flujos con **Apache NiFi** para la ingesta, transformación y enrutamiento de datos entre sistemas.
 
 </details>
 </details>
