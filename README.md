@@ -151,14 +151,6 @@ currently_working_on:
     </td>
   </tr>
   <tr>
-    <td width="14%" align="center"><b>jun. 2026</b><br/><sub>🟢 Actualidad</sub></td>
-    <td>
-      <b>🏦 SII Group — Desarrollador Full Stack (cliente: Banco Falabella Colombia)</b><br/>
-      Continuidad en el sistema de conciliación transaccional del banco tras el cambio de proveedor: el mismo proyecto y el mismo cliente. Reglas de conciliación y postconciliación en T-SQL sobre procesos batch de alto volumen, optimización de rendimiento (planes de ejecución, índices y reescritura de consultas) y despliegues versionados con Git y GitLab CI, con scripts de reverso y trazabilidad en auditoría.<br/>
-      <sub>SQL Server · T-SQL · Python · Git · GitLab CI · Jira · Confluence</sub>
-    </td>
-  </tr>
-  <tr>
     <td width="14%" align="center"><b>nov. 2025</b><br/><sub>→ jun. 2026</sub></td>
     <td>
       <b>🏦 BC Tecnología — Desarrollador Full Stack (cliente: Banco Falabella Colombia)</b><br/>
