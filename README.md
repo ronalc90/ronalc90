@@ -341,7 +341,7 @@ currently_working_on:
 
 <details><summary><b>Bitácora de batalla</b></summary>
 
-- 🗡️ [@ronalc90](https://github.com/ronalc90) hizo **−45** contra el Nv. 1 · <sub>hace 1 min</sub>
+- 🗡️ [@ronalc90](https://github.com/ronalc90) hizo **−45** contra el Nv. 1 · <sub>hace 8 d</sub>
 
 </details>
 <!-- RAID:END -->
@@ -362,7 +362,7 @@ currently_working_on:
 </div>
 
 <!-- GUESTBOOK:START -->
-<p align="center"><a href="https://github.com/ronalc90" title="@ronalc90 · viajero"><img src="https://github.com/ronalc90.png?size=64" width="34" height="34" alt="@ronalc90"/></a></p>
+<p align="center"><a href="https://github.com/ronalc90" title="@ronalc90 · explorador"><img src="https://github.com/ronalc90.png?size=64" width="34" height="34" alt="@ronalc90"/></a></p>
 <p align="center"><sub>Últimas firmas · 1 en total</sub></p>
 <!-- GUESTBOOK:END -->
 
