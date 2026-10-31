@@ -9,7 +9,7 @@
         aria-labelledby="descId"
       >
         <title id="titleId">Estad&#237;sticas del viajero, Rank: B</title>
-        <desc id="descId">Estrellas totales: 4, Commits totales  : 940, PRs totales: 238, Issues totales: 31</desc>
+        <desc id="descId">Estrellas totales: 4, Commits totales  : 940, PRs totales: 238, Issues totales: 32</desc>
         <style>
           .header {
             font: 600 18px 'Segoe UI', Ubuntu, Sans-Serif;
@@ -73,7 +73,7 @@
         stroke-dashoffset: 251.32741228718345;
       }
       to {
-        stroke-dashoffset: 134.32598848794495;
+        stroke-dashoffset: 134.08351727671376;
       }
     }
   
@@ -214,7 +214,7 @@
         x="224.01"
         y="12.5"
         data-testid="issues"
-      >31</text>
+      >32</text>
     </g>
   </g>
     </svg>
