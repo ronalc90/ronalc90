@@ -313,6 +313,8 @@ currently_working_on:
   <sub>Minijuego en el navegador (PC y móvil) · <b>4 armas</b> (hoja, arco, martillo y lanza) · <b>3 jefes intermedios</b> con cofres de mejoras · dash con esquiva perfecta · <b>árbol de habilidades</b> que crece cada vez que caes</sub>
 </div>
 
+<!-- CENIZA:START --><!-- CENIZA:END -->
+
 ### ⚔️ Raid comunitario contra el coloso
 
 <div align="center">

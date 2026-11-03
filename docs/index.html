@@ -34,6 +34,12 @@
   #top{position:absolute;top:10px;right:12px;display:flex;gap:8px;pointer-events:auto}
   #top button,#top a{background:rgba(20,13,9,.6);border:1px solid #3b2b25;color:var(--sand);font:700 12px 'JetBrains Mono',monospace;
        padding:7px 10px;border-radius:8px;cursor:pointer;text-decoration:none}
+  #reg{position:absolute;display:none;align-items:center;justify-content:center;pointer-events:auto;touch-action:manipulation;
+       border-radius:10px;background:rgba(226,55,42,.22);border:1.5px solid #e2372a;color:var(--bone);font:800 16px 'Cinzel',serif;
+       letter-spacing:.04em;text-decoration:none;cursor:pointer;white-space:nowrap}
+  #reg.show{display:flex}
+  #reg:hover{background:rgba(226,55,42,.42)}
+  #reg:focus-visible{outline:2px solid #ffcf8a;outline-offset:3px}
 </style>
 </head>
 <body>
@@ -41,6 +47,7 @@
   <div id="ui">
     <div id="top"><button id="mute" aria-label="Sonido">♪ ON</button><a href="https://github.com/ronalc90" target="_blank" rel="noopener">GitHub</a></div>
     <div class="btn" id="bL">◀</div><div class="btn" id="bR">▶</div><div class="btn" id="bJ">▲</div><div class="btn" id="bA">ATK</div><div class="btn" id="bD">DASH</div><div class="btn" id="bC">CORTE</div>
+    <a id="reg" href="https://github.com/ronalc90/ronalc90/issues/new" target="_blank" rel="noopener">REGISTRAR EN MI PERFIL</a>
   </div>
 </div>
 <script>
@@ -58,7 +65,7 @@ function resize() {
   cv.width = Math.round(W * scale * dpr); cv.height = Math.round(H * scale * dpr);
   ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
 }
-addEventListener('resize', () => { resize(); buildLayers(); });
+addEventListener('resize', () => { resize(); buildLayers(); placeReg(); });
 resize();
 const TOUCH = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 if (TOUCH) document.body.classList.add('touch');
@@ -169,6 +176,7 @@ const map = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'J
   ShiftLeft: 'D', ShiftRight: 'D', KeyX: 'D', KeyK: 'D', KeyE: 'C', KeyC: 'C', KeyL: 'C', KeyJ: 'A', KeyZ: 'A', KeyF: 'A',
   KeyP: 'P', Escape: 'P', KeyM: 'M', Enter: 'S', KeyR: 'Rt', KeyT: 'T', Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4' };
 addEventListener('keydown', e => {
+  if (e.target === regLink) return; // enlace de registro enfocado: Enter lo activa el navegador
   const k = map[e.code]; if (!k) return;
   e.preventDefault(); audio();
   if (!e.repeat || e.code.startsWith('Arrow')) codes.add(e.code);
@@ -297,7 +305,7 @@ let shake = 0, flash = 0, flashCol = '226,55,42', time = 0, overAt = 0;
 let banners = [];
 const tipsShown = new Set();
 const ash = Array.from({ length: 110 }, () => ({ x: rnd(0, W), y: rnd(0, H), r: rnd(.6, 2), v: rnd(18, 55), o: rnd(.15, .6) }));
-let tSel = { r: 0, c: 0 }, tMsg = null, resetArm = -10, uiRings = [];
+let tSel = { r: 0, c: 0 }, tMsg = null, resetArm = -10, titleResetArm = -10, uiRings = [];
 
 function banner(text, sub, t = 2.2, col = '#f3e9d8') { banners.push({ text, sub, t, max: t, col }); }
 function tip(id, text, sub) { if (tipsShown.has(id) || DEMO) return; tipsShown.add(id); banner(text, sub, 2.6, '#ffcf8a'); }
@@ -330,7 +338,7 @@ function newRun() {
   const qw = QS.get('w');
   const weapon = DEMO ? (WEAPONS[qw] ? qw : 'hoja') : (wUnlocked(prog.weapon) ? prog.weapon : 'hoja');
   S = {
-    t: 0, score: 0, lives: 3, combo: 0, comboT: 0, phase: 1, rage: 0, meter: 0, readyNotified: false, weapon, buffs: {},
+    t: 0, score: 0, lives: 3, combo: 0, comboT: 0, phase: 1, rage: 0, meter: 0, readyNotified: false, victory: false, weapon, buffs: {},
     boss: { lvl: 1, hp: bossMax(1), max: bossMax(1), stun: 0, flash: 0 },
     p: { x: 300, y: GROUND, vx: 0, vy: 0, face: 1, ground: true, jumps: 2, inv: 0, dashT: 0, dashDir: 1, dashId: 0, charges: 2, chargeT: 0,
          phase: 0, coyote: 0, buf: 0, shield: false, magnet: 0, perfectCd: 0, trail: [], trailT: 0, airDash: true, dashX0: 300,
@@ -839,6 +847,8 @@ const titleBtns = () => [
   { id: 'play', x: W / 2 - 250, y: 340, w: 240, h: 46, label: 'JUGAR', key: 'ESPACIO', main: true },
   { id: 'tree', x: W / 2 + 10, y: 340, w: 240, h: 46, label: 'ÁRBOL Y ARMAS', key: 'T' },
 ];
+// reinicio visible en el menú principal (misma doble pulsación que el árbol)
+const titleResetBtn = () => ({ id: 'reset', x: W / 2 - 120, y: 456, w: 240, h: 30 });
 const overBtns = () => [
   { id: 'tree', x: W / 2 - 250, y: 420, w: 240, h: 46, label: 'ÁRBOL DE HABILIDADES', key: 'ESPACIO', main: true },
   { id: 'retry', x: W / 2 + 10, y: 420, w: 240, h: 46, label: 'REINTENTAR', key: 'R' },
@@ -900,6 +910,14 @@ function treeActivate(it) {
     if (time - resetArm < 3) { prog.cores = 0; prog.total = 0; prog.lv = {}; prog.weapon = 'hoja'; prog.runs = 0; saveProg(); resetArm = -10; treeMsg('Progreso borrado. Todo vuelve a empezar.', '#ff8a6a'); sfx.over(); }
     else { resetArm = time; treeMsg('¿Seguro? Pulsa otra vez para borrar núcleos y mejoras', '#ff8a6a'); sfx.deny(); }
   }
+}
+
+// reinicio desde el menú principal: primera pulsación avisa, la segunda (en 3 s) borra. Igual que el árbol.
+function titleReset() {
+  if (time - titleResetArm < 3) {
+    prog.cores = 0; prog.total = 0; prog.lv = {}; prog.weapon = 'hoja'; prog.runs = 0; saveProg(); titleResetArm = -10;
+    treeMsg('Progreso borrado. Todo vuelve a empezar.', '#ff8a6a'); sfx.over();
+  } else { titleResetArm = time; treeMsg('¿Seguro? Pulsa otra vez para borrar núcleos y mejoras', '#ff8a6a'); sfx.deny(); }
 }
 
 // ================================================================ player animation (pose, squash and stretch, scarf physics, idle)
@@ -1011,6 +1029,7 @@ function step(dtReal) {
     const b = clicks.length && titleBtns().find(b => inRect(clicks[0], b));
     if (has('Space', 'Enter') || (b && b.id === 'play')) startRun();
     else if (has('KeyT') || (b && b.id === 'tree')) { mode = 'tree'; tSel = firstAffordable() || { r: 5, c: 4 }; }
+    else if (clicks.length && inRect(clicks[0], titleResetBtn())) titleReset();
     return;
   }
   if (mode === 'tree') {
@@ -1977,6 +1996,12 @@ function drawTitle() {
   });
   centerText('Dash justo antes del golpe = ESQUIVA PERFECTA · cada caída te da núcleos para mejorar', 314, "400 12px 'JetBrains Mono'", '#9ad8ff');
   for (const b of titleBtns()) drawBtn(b);
+  const rb = titleResetBtn(), rArmed = time - titleResetArm < 3, rHot = pointer && !pointer.touch && inRect(pointer, rb);
+  rr(rb.x, rb.y, rb.w, rb.h, 8); ctx.fillStyle = rArmed ? 'rgba(226,55,42,.35)' : rHot ? 'rgba(226,55,42,.18)' : 'rgba(20,13,9,.7)'; ctx.fill();
+  ctx.strokeStyle = rArmed || rHot ? '#ff8a6a' : '#5a4034'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.textAlign = 'center'; ctx.fillStyle = rArmed ? '#f3e9d8' : '#c9a48a'; ctx.font = "700 12px 'JetBrains Mono'";
+  ctx.fillText(rArmed ? '¿SEGURO? OTRA VEZ' : 'REINICIAR PROGRESO', rb.x + rb.w / 2, rb.y + 20);
+  if (tMsg) { ctx.globalAlpha = clamp(tMsg.t * 2, 0, 1); ctx.fillStyle = tMsg.col; ctx.font = "700 12px 'JetBrains Mono'"; ctx.fillText(tMsg.text, W / 2, 506); ctx.globalAlpha = 1; }
   const wp = WEAPONS[wUnlocked(prog.weapon) ? prog.weapon : 'hoja'];
   ctx.font = "700 13px 'JetBrains Mono'";
   const info = `ARMA: ${wp.name}   ·   RÉCORD: ${best}   ·   NÚCLEOS: `;
@@ -2124,9 +2149,36 @@ function drawTree() {
   else { ctx.fillStyle = 'rgba(185,178,166,.7)'; ctx.font = "400 11px 'JetBrains Mono'"; ctx.fillText(TOUCH ? 'Toca un nodo para verlo y otra vez para mejorarlo' : 'FLECHAS elegir · ENTER mejorar o equipar · 1-4 arma · R jugar · ESC volver', 34, 520); }
 }
 
+// ================================================================ registro en GitHub al terminar una partida
+// Enlace nativo (no registra nada solo): abre un issue prellenado. Teclado (Tab + Enter), tactil y un solo clic.
+const REG_BOX = { x: W / 2 - 130, y: 478, w: 260, h: 38 }; // en coordenadas del canvas
+const regLink = document.getElementById('reg');
+let regShown = false;
+function regUrl() {
+  const stats = { arma: S.weapon, jefes: S.stats.bosses, nivel: S.boss.lvl, victoria: S.victory === true, puntos: S.final, segundos: Math.floor(S.t) };
+  const title = stats.victoria ? 'ceniza: victoria' : 'ceniza: caida';
+  const body = 'ceniza-stats: ' + JSON.stringify(stats);
+  return 'https://github.com/ronalc90/ronalc90/issues/new?title=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(body);
+}
+function placeReg() {
+  // altura minima tactil (44 px) hacia abajo: el borde superior no sube, asi no tapa los botones del canvas
+  const r = cv.getBoundingClientRect(), k = r.width / W;
+  const w = Math.max(REG_BOX.w * k, 240), h = Math.max(REG_BOX.h * k, 44);
+  Object.assign(regLink.style, { left: (r.left + W / 2 * k - w / 2) + 'px', top: (r.top + REG_BOX.y * k) + 'px',
+    width: w + 'px', height: h + 'px', fontSize: Math.max(13, 16 * k) + 'px' });
+}
+function syncReg() {
+  const want = !DEMO && mode === 'over' && time - overAt > .9; // mismo retardo que los botones del canvas
+  if (want === regShown) return;
+  regShown = want;
+  if (want) { regLink.href = regUrl(); placeReg(); }
+  regLink.classList.toggle('show', want);
+}
+
 // ================================================================ loop
 let last = performance.now(), manual = false;
 function render() {
+  syncReg();
   if (mode === 'title') drawTitle();
   else if (mode === 'tree') drawTree();
   else {

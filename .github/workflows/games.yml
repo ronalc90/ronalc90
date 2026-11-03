@@ -1,8 +1,8 @@
 name: "Juegos: raid y libro de visitas"
 
-# Cada jugada del perfil abre un issue con un titulo como "raid: espada" o "firma: viajero".
-# Este workflow procesa todos los issues de juego abiertos, responde, los cierra y
-# actualiza los SVG animados y el README.
+# Cada jugada del perfil abre un issue con un titulo como "raid: espada", "firma: viajero"
+# o "ceniza: victoria" / "ceniza: caida". Este workflow procesa todos los issues de juego
+# abiertos, responde, los cierra y actualiza los SVG animados y el README.
 on:
   issues:
     types: [opened]
@@ -21,7 +21,8 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       startsWith(github.event.issue.title, 'raid') ||
-      startsWith(github.event.issue.title, 'firma')
+      startsWith(github.event.issue.title, 'firma') ||
+      startsWith(github.event.issue.title, 'ceniza')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-// Juegos del perfil: "Raid contra el coloso" y "Libro de visitas (caravana)".
-// Procesa issues abiertos con títulos "raid: <arma>" o "firma: <clase>", actualiza
-// games/state.json, regenera los SVG animados y las secciones del README.
+// Juegos del perfil: "Raid contra el coloso", "Libro de visitas (caravana)" y "CENIZA".
+// Procesa issues abiertos con títulos "raid: <arma>", "firma: <clase>",
+// "ceniza: victoria" / "ceniza: caida" (con una línea ceniza-stats en el body) y
+// "raid: reset" (solo el dueño del repo). Actualiza games/state.json, regenera los
+// SVG animados y las secciones del README.
 // Sin dependencias: solo Node >= 18 (fetch nativo).
 //
 //   node scripts/games.mjs            -> modo real (usa GITHUB_TOKEN y GITHUB_REPOSITORY)
@@ -30,6 +32,11 @@ const CLASSES = ["viajero", "mercader", "guerrero", "explorador"];
 const BOSS_NAMES = ["Vigía de Óxido", "Centinela Carmesí", "Titán de Ceniza", "Guardián del Visor Rojo", "Coloso Primordial"];
 const COOLDOWN_MIN = 20;
 const MAX_GUESTS = 24;
+const CENIZA_COOLDOWN_MIN = 10;
+const CENIZA_ARMAS = ["hoja", "arco", "martillo", "lanza"];
+const CENIZA_CAMPOS = ["arma", "jefes", "nivel", "victoria", "puntos", "segundos"];
+const CENIZA_WINS_KEEP = 50;
+const RESET_RE = /^\s*raid\s*[:|\-]\s*reset\s*$/i;
 
 const bossHp = (lvl) => Math.round((300 * Math.pow(1.35, lvl - 1)) / 10) * 10;
 const bossName = (lvl) => (lvl <= BOSS_NAMES.length ? BOSS_NAMES[lvl - 1] : `${BOSS_NAMES.at(-1)} +${lvl - BOSS_NAMES.length}`);
@@ -42,6 +49,7 @@ const state = readJson(STATE_FILE, {
   raid: { level: 1, hp: bossHp(1), maxHp: bossHp(1), prevHp: bossHp(1), kills: 0, totalAttacks: 0, players: {}, events: [], fallen: [] },
   guestbook: [],
 });
+state.ceniza ??= { players: {}, wins: [] };
 const avatars = readJson(AVATAR_FILE, {});
 
 // ----------------------------------------------------------------------------- github api
@@ -76,6 +84,7 @@ async function reply(issue, text, labels) {
 
 async function avatarData(login, url) {
   const hit = avatars[login];
+  if (DRY) return hit?.d || null;   // la prueba en seco no sale a la red
   if (hit && NOW - hit.t < 7 * 864e5) return hit.d;
   try {
     const src = url ? `${url}${url.includes("?") ? "&" : "?"}s=72` : null;
@@ -96,6 +105,7 @@ async function avatarData(login, url) {
 const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const fmtMin = (ms) => Math.max(1, Math.ceil(ms / 60000));
 const TITLE_RE = /^\s*(raid|firma)\s*[:|\-]\s*([a-záéíóúñ]+)\s*$/i;
+const CENIZA_TITLE_RE = /^\s*ceniza\s*:\s*(victoria|caida|caída)\s*$/i;
 
 function attack(user, avatarUrl, weaponKey) {
   const r = state.raid;
@@ -147,6 +157,93 @@ function sign(user, avatarUrl, cls) {
   return again
     ? `🏕️ @${user}, actualizamos tu firma: ahora viajas como **${cls}** en la caravana.`
     : `🏕️ ¡Bienvenido a la caravana, @${user}! Ya caminas por el desierto como **${cls}**. Gracias por pasar, viajero.`;
+}
+
+function resetRaid() {
+  const hp0 = bossHp(1);
+  Object.assign(state.raid, { level: 1, hp: hp0, maxHp: hp0, prevHp: hp0, kills: 0, totalAttacks: 0, players: {}, events: [], fallen: [] });
+  return `♻️ El dueño del perfil reinició el raid: vuelve **${bossName(1)}** (Nv. 1) con **${hp0} HP**, sin guerreros ni bitácora. ¡A por él!`;
+}
+
+// ----------------------------------------------------------------------------- ceniza
+// Cuerpo esperado: una única línea `ceniza-stats: {...}` con exactamente estos campos.
+function parseCenizaBody(body, victoriaTitulo) {
+  const lines = String(body || "")
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith("ceniza-stats:"));
+  if (lines.length !== 1) return { error: lines.length ? "hay más de una línea ceniza-stats" : "no encuentro la línea ceniza-stats" };
+  let d;
+  try {
+    d = JSON.parse(lines[0].slice("ceniza-stats:".length));
+  } catch {
+    return { error: "la línea ceniza-stats no es JSON válido" };
+  }
+  if (!d || typeof d !== "object" || Array.isArray(d)) return { error: "ceniza-stats debe ser un objeto" };
+  const bad = [
+    ...CENIZA_CAMPOS.filter((k) => !(k in d)).map((k) => `falta el campo ${k}`),
+    ...Object.keys(d).filter((k) => !CENIZA_CAMPOS.includes(k)).map((k) => `campo no admitido ${k}`),
+  ];
+  if (bad.length) return { error: bad.join(", ") };
+  if (!CENIZA_ARMAS.includes(d.arma)) return { error: "arma no válida (hoja, arco, martillo o lanza)" };
+  for (const k of ["jefes", "nivel", "puntos", "segundos"]) {
+    if (!Number.isSafeInteger(d[k]) || d[k] < 0) return { error: `${k} debe ser un entero no negativo` };
+  }
+  if (typeof d.victoria !== "boolean") return { error: "victoria debe ser true o false" };
+  if (d.victoria !== victoriaTitulo) return { error: "el título y el campo victoria no coinciden" };
+  return {
+    stats: { arma: d.arma, jefes: d.jefes, nivel: d.nivel, victoria: d.victoria, puntos: d.puntos, segundos: d.segundos },
+  };
+}
+
+function cenizaPlay(user, avatarUrl, victoriaTitulo, body) {
+  const parsed = parseCenizaBody(body, victoriaTitulo);
+  if (parsed.error) {
+    return { ok: false, msg: `🤔 @${user}, no pude leer tu partida de CENIZA: ${parsed.error}. Tu resultado no se ha sumado; regístralo de nuevo desde el juego.` };
+  }
+  const s = parsed.stats;
+  const c = state.ceniza;
+  const prev = c.players[user];
+  const wait = prev ? prev.last + CENIZA_COOLDOWN_MIN * 60000 - NOW : 0;
+  if (wait > 0) {
+    return { ok: false, msg: `⏳ @${user}, ya registraste una partida de CENIZA hace poco. Podrás registrar otra en **${fmtMin(wait)} min**; esta no se ha sumado.` };
+  }
+  const p = (c.players[user] ||= { avatar: avatarUrl, last: 0, runs: 0, wins: 0, bestLevel: 0 });
+  p.avatar = avatarUrl;
+  p.last = NOW;
+  p.runs += 1;
+  p.bestLevel = Math.max(p.bestLevel, s.nivel);
+  if (s.victoria) {
+    p.wins += 1;
+    c.wins.unshift({ user, ...s, t: NOW });
+    c.wins = c.wins.slice(0, CENIZA_WINS_KEEP);
+  }
+  const msg = s.victoria
+    ? `🔥 @${user}, ¡el coloso ha caído! Victoria registrada con **${s.arma}** en el nivel ${s.nivel}: **${s.puntos} puntos** en ${s.segundos} s. Tu nombre sube en el [ranking de CENIZA](https://github.com/${OWNER}).`
+    : `🔥 @${user}, registramos tu caída en CENIZA con **${s.arma}**: nivel ${s.nivel}, ${s.jefes} jefe(s) derrotado(s) y **${s.puntos} puntos**. Levántate y vuelve a intentarlo.`;
+  return { ok: true, msg };
+}
+
+function cenizaMarkdown() {
+  const c = state.ceniza;
+  const top = Object.entries(c.players)
+    .filter(([, p]) => p.runs > 0)
+    .sort((a, b) => b[1].wins - a[1].wins || b[1].bestLevel - a[1].bestLevel || a[0].localeCompare(b[0]))
+    .slice(0, 5);
+  const medals = ["🥇", "🥈", "🥉", "4", "5"];
+  const rows = top.map(([u, p], i) =>
+    `| ${medals[i]} | <img src="https://github.com/${u}.png?size=40" width="20" height="20"/> [@${u}](https://github.com/${u}) | ${p.wins} | ${p.bestLevel} | ${p.runs} |`);
+  const wins = c.wins.slice(0, 5).map((w) =>
+    `- 🔥 [@${w.user}](https://github.com/${w.user}) derrotó al coloso con **${w.arma}** · nivel ${w.nivel} · ${w.puntos} pts · <sub>${ago(w.t)}</sub>`);
+  return [
+    "<div align=\"center\">",
+    "",
+    rows.length ? "| | Jugador | Victorias | Mejor nivel | Partidas |\n|:-:|:--|--:|--:|--:|\n" + rows.join("\n") : "*Nadie ha derrotado al coloso todavía. ¡Sé el primero!*",
+    "",
+    "</div>",
+    "",
+    wins.length ? "<details><summary><b>Últimas victorias</b></summary>\n\n" + wins.join("\n") + "\n\n</details>" : "",
+  ].join("\n");
 }
 
 // ----------------------------------------------------------------------------- svg helpers
@@ -284,7 +381,7 @@ async function renderRaid() {
 </g>
 <rect x=".75" y=".75" width="${W - 1.5}" height="${H - 1.5}" rx="15.5" fill="none" stroke="#3b2b25" stroke-width="1.5"/>
 </svg>`;
-  fs.writeFileSync(P("games", "raid.svg"), svg);
+  if (!DRY) fs.writeFileSync(P("games", "raid.svg"), svg);
 }
 
 // ----------------------------------------------------------------------------- caravan svg
@@ -368,7 +465,7 @@ async function renderCaravan() {
 </g>
 <rect x=".75" y=".75" width="${W - 1.5}" height="${H - 1.5}" rx="17.5" fill="none" stroke="#3b2b25" stroke-width="1.5"/>
 </svg>`;
-  fs.writeFileSync(P("games", "caravan.svg"), svg);
+  if (!DRY) fs.writeFileSync(P("games", "caravan.svg"), svg);
 }
 
 // ----------------------------------------------------------------------------- readme sections
@@ -413,13 +510,31 @@ async function main() {
   const issues = await openIssues();
   let changed = process.argv.includes("--render");
   for (const issue of issues) {
-    const m = TITLE_RE.exec(issue.title || "");
-    if (!m) continue;
-    const kind = m[1].toLowerCase();
-    const arg = m[2].toLowerCase();
+    const title = String(issue.title || "").trim();
     const user = issue.user.login;
     const avatarUrl = issue.user.avatar_url || `https://github.com/${user}.png`;
     try {
+      if (RESET_RE.test(title)) {
+        if (user !== OWNER) {
+          await reply(issue, `🚫 @${user}, solo el dueño del perfil puede reiniciar el raid.`, ["raid"]);
+        } else {
+          await reply(issue, resetRaid(), ["raid"]);
+          changed = true;
+        }
+        continue;
+      }
+      const cm = CENIZA_TITLE_RE.exec(title);
+      if (cm) {
+        const res = cenizaPlay(user, avatarUrl, cm[1].toLowerCase() === "victoria", issue.body);
+        const foot = res.ok ? `\n\n<sub>Tu partida aparecerá en la sección CENIZA del [perfil](https://github.com/${OWNER}) en un par de minutos.</sub>` : "";
+        await reply(issue, res.msg + foot, ["ceniza"]);
+        if (res.ok) changed = true;
+        continue;
+      }
+      const m = TITLE_RE.exec(title);
+      if (!m) continue;
+      const kind = m[1].toLowerCase();
+      const arg = m[2].toLowerCase();
       if (kind === "raid") {
         if (!WEAPONS[arg]) {
           await reply(issue, `🤔 @${user}, no conozco el arma **${arg}**. Usa uno de los botones del perfil: espada, arco o bomba.`, ["raid"]);
@@ -441,14 +556,22 @@ async function main() {
   if (!changed) { console.log("Sin jugadas nuevas"); return; }
   await renderRaid();
   await renderCaravan();
-  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 1));
-  fs.writeFileSync(AVATAR_FILE, JSON.stringify(avatars));
   const readmePath = P("README.md");
   let readme = fs.readFileSync(readmePath, "utf8");
   readme = replaceBetween(readme, "RAID", raidMarkdown());
   readme = replaceBetween(readme, "GUESTBOOK", guestMarkdown());
+  readme = replaceBetween(readme, "CENIZA", cenizaMarkdown());
+  if (DRY) {
+    // En modo prueba no se escribe nada: solo se muestra el resultado.
+    console.log("[dry] raid:", JSON.stringify({ nivel: state.raid.level, hp: state.raid.hp, maxHp: state.raid.maxHp, jugadores: Object.keys(state.raid.players).length, eventos: state.raid.events.length }));
+    console.log("[dry] ceniza:", JSON.stringify(state.ceniza));
+    console.log("[dry] sección CENIZA del README:\n" + cenizaMarkdown());
+    return;
+  }
+  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 1));
+  fs.writeFileSync(AVATAR_FILE, JSON.stringify(avatars));
   fs.writeFileSync(readmePath, readme);
-  console.log("Actualizado: raid nivel", state.raid.level, "hp", state.raid.hp, "firmas", state.guestbook.length);
+  console.log("Actualizado: raid nivel", state.raid.level, "hp", state.raid.hp, "firmas", state.guestbook.length, "ceniza", Object.keys(state.ceniza.players).length, "jugadores");
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
