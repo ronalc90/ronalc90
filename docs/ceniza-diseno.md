@@ -275,6 +275,12 @@ Valores de diseño, por calibrar en prototipo.
 
 Las armas se cambian con las teclas 1, 2 y 3. Cada arma se conserva al cambiar, y el cambio no cuesta tiempo.
 
+Decisiones de esta versión para las armas 3D (ambigüedades resueltas con la opción más simple):
+
+- Las cifras de la tabla son a maestría 0. En 3D el juego todavía no tiene maestría. Si `datos.js` recibe una maestría para un arma 3D, aplica `P(m)` con el mismo redondeo por golpe que en 2D.
+- El DPS de la escopeta supone que los 8 perdigones impactan: 8 × 10 / 0,90 = 88,9. Cada perdigón redondea su daño como un golpe 2D.
+- El DPS de referencia del plasma es solo el impacto directo. El área (20 de daño en radio 2 u) no entra en la referencia.
+
 ## 7 Balance del arco
 
 ### 7.1 Requisito y supuestos
@@ -315,7 +321,7 @@ Límite del multidisparo. La limitación fija el cooldown mínimo de la ráfaga,
 cd(m) = max( 0.23 ; techo3( n(m) * round(9*P(m)) / (0.95 * DPS_hoja(m)) ) )
 ```
 
-`techo3` redondea hacia arriba a 3 decimales. Con velocidad de cadencia `spd`, el cooldown real es `cd(m) / spd`. Como la hoja y el arco se dividen por el mismo `spd`, la razón no cambia.
+`techo3` redondea hacia arriba a 3 decimales. Para que un cociente exacto no suba una milésima por error de coma flotante, en el código es `ceil(x * 1000 - 1e-9) / 1000`. Con velocidad de cadencia `spd`, el cooldown real es `cd(m) / spd`. Como la hoja y el arco se dividen por el mismo `spd`, la razón no cambia. En `docs/ceniza/datos.js` esta regla es `cooldownArco(m)`.
 
 Garantía: `DPS_arco(m) <= 0.95 * DPS_hoja(m)` para `m = 0..3`.
 

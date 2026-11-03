@@ -32,7 +32,9 @@
 //
 // Controles: WASD o flechas (moverse), ratón con puntero bloqueado (mirar), clic izquierdo mantenido
 // (disparar), Espacio (saltar), Shift (correr), 1, 2 y 3 (cambiar de arma), R (recargar),
-// Escape o P (pausa). Táctil: pendiente, no está en esta versión.
+// Escape o P (pausa). Táctil (solo en pantallas táctiles): joystick flotante en la mitad izquierda
+// para moverse, arrastre en la mitad derecha para mirar, y botones DISPARAR, SALTAR, ARMA (cambia de
+// arma) y || (pausa).
 
 (function () {
   "use strict";
@@ -49,6 +51,9 @@
   const ANDAR = 4.2;
   const CORRER = 6.5;
   const SENSIBILIDAD = 0.0022;
+  const SENSIBILIDAD_TACTIL = 0.0032; // mirar arrastrando en la pantalla táctil (px a radianes)
+  const RADIO_JOY = 56;              // px de recorrido máximo del joystick táctil
+  const ZONA_MUERTA_JOY = 0.12;      // inclinación mínima del joystick para contar como movimiento
   const ALTURA_OJOS = 1.6;
   const RADIO_ARENA = 22;
   const COLOSO_Z = -16;
@@ -169,6 +174,20 @@
     };
   }
 
+  // Id del puntero de un evento (0 si el navegador no lo da).
+  const idPuntero = function (ev) { return ev && ev.pointerId !== undefined ? ev.pointerId : 0; };
+
+  // ¿La entrada principal es táctil o hay toques posibles? Sin window.matchMedia ni navigator, no.
+  function esPantallaTactil() {
+    try {
+      if (typeof window !== "undefined" && typeof window.matchMedia === "function" &&
+        window.matchMedia("(pointer: coarse)").matches) return true;
+    } catch (err) {
+      // Sin matchMedia usable: se mira navigator.
+    }
+    return typeof navigator !== "undefined" && !!navigator && navigator.maxTouchPoints > 0;
+  }
+
   // Bonos del personaje, saneados. La armadura queda entre 0 y ARMADURA_MAX.
   function normalizarBonos(b) {
     const o = b && typeof b === "object" ? b : {};
@@ -235,6 +254,25 @@
     ".ceniza3d-boton{font:inherit;font-size:15px;padding:9px 18px;border-radius:6px;border:1px solid #6c7490;background:#242a3a;color:#eef3f8;cursor:pointer}",
     ".ceniza3d-boton:focus-visible{outline:2px solid #ffd54a;outline-offset:2px}",
     ".ceniza3d-boton-2{background:transparent}",
+    // Controles táctiles: la capa solo se ve con la clase ceniza3d-raiz-tactil (ver activarTactil).
+    ".ceniza3d-tactil{display:none;position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none}",
+    ".ceniza3d-raiz-tactil .ceniza3d-tactil{display:block}",
+    ".ceniza3d-tactil-zona{position:absolute;top:0;bottom:0;pointer-events:auto;touch-action:none;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}",
+    ".ceniza3d-tactil-mover{left:0;width:50%}",
+    ".ceniza3d-tactil-mirar{right:0;width:50%}",
+    ".ceniza3d-joy-pista{position:absolute;left:14px;bottom:14px;width:112px;height:112px;box-sizing:border-box;border-radius:50%;border:2px dashed rgba(255,255,255,.28);pointer-events:none}",
+    ".ceniza3d-joy{position:absolute;left:0;top:0;width:112px;height:112px;margin:-56px 0 0 -56px;box-sizing:border-box;border-radius:50%;border:2px solid rgba(255,255,255,.45);background:rgba(0,0,0,.28);display:none;pointer-events:none}",
+    ".ceniza3d-joy-palo{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;box-sizing:border-box;border-radius:50%;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.7)}",
+    ".ceniza3d-tactil-btn{position:absolute;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:84px;height:84px;margin:0;padding:0;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:rgba(20,24,34,.6);color:#fff;font:700 13px system-ui,-apple-system,'Segoe UI',sans-serif;text-shadow:0 1px 2px #000;pointer-events:auto;touch-action:none;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;cursor:pointer}",
+    ".ceniza3d-tactil-disparo{right:14px;bottom:14px;width:96px;height:96px;background:rgba(190,48,38,.7)}",
+    ".ceniza3d-tactil-salto{right:124px;bottom:14px}",
+    ".ceniza3d-tactil-arma{right:124px;bottom:106px;width:64px;height:64px;font-size:12px}",
+    ".ceniza3d-tactil-pausa{right:8px;top:8px;width:40px;height:40px;font-size:18px}",
+    ".ceniza3d-raiz-tactil .ceniza3d-sup{right:64px}",
+    ".ceniza3d-raiz-tactil .ceniza3d-enemigos{top:56px;right:14px}",
+    ".ceniza3d-raiz-tactil .ceniza3d-arma{top:78px;bottom:auto;right:14px}",
+    ".ceniza3d-raiz-tactil .ceniza3d-municion{top:100px;bottom:auto;right:14px;font-size:18px}",
+    ".ceniza3d-raiz-tactil .ceniza3d-vida{top:76px;bottom:auto;left:14px}",
   ].join("\n");
 
   // ---- FIN DEL BLOQUE 1: cabecera, constantes, datos y utilidades. Sigue start().
@@ -299,6 +337,12 @@
     let destruido = false;
     let frameId = null;
     let ultimoT = null;
+
+    // ---- estado táctil: joystick flotante (f adelante, r derecha, entre -1 y 1), mirar y reinicios de botones
+    const joy = { id: null, origenX: 0, origenY: 0, f: 0, r: 0 };
+    const mirarT = { id: null, x: 0, y: 0 };
+    const reiniciadoresTactiles = [];
+    let tactilActivo = false;
 
     // ---- recursos de render
     const geo = {};
@@ -380,6 +424,7 @@
       hud.mensaje.setAttribute("aria-live", "polite");
       hud.destello = crearEl("div", "ceniza3d-destello", hud);
       hud.aviso = crearEl("div", "ceniza3d-aviso", hud);
+      construirTactil(hud);
       hud.pausa = crearEl("div", "ceniza3d-pausa", raiz);
       const caja = crearEl("div", "ceniza3d-pausa-caja", hud.pausa);
       hud.pausaTitulo = crearEl("h2", null, caja);
@@ -396,9 +441,170 @@
       contenedor.appendChild(raiz);
     }
 
+    // ---- controles táctiles. La capa va dentro del HUD (bajo el menú de pausa). Solo se ve en raiz con
+    // la clase ceniza3d-raiz-tactil. Joystick flotante: el origen es el primer toque en la mitad izquierda.
+    function construirTactil(padre) {
+      const capa = crearEl("div", "ceniza3d-tactil", padre);
+      const zonaMover = crearEl("div", "ceniza3d-tactil-zona ceniza3d-tactil-mover", capa);
+      crearEl("div", "ceniza3d-joy-pista", zonaMover);
+      hud.joyBase = crearEl("div", "ceniza3d-joy", zonaMover);
+      hud.joyPalo = crearEl("div", "ceniza3d-joy-palo", hud.joyBase);
+      const zonaMirar = crearEl("div", "ceniza3d-tactil-zona ceniza3d-tactil-mirar", capa);
+      const botonDisparo = crearBotonTactil(capa, "ceniza3d-tactil-disparo", "Disparar");
+      const botonSalto = crearBotonTactil(capa, "ceniza3d-tactil-salto", "Saltar");
+      const botonArma = crearBotonTactil(capa, "ceniza3d-tactil-arma", "Arma");
+      const botonPausa = crearBotonTactil(capa, "ceniza3d-tactil-pausa", "II");
+      botonPausa.setAttribute("aria-label", "Pausa");
+
+      escuchar(zonaMover, "pointerdown", function (ev) {
+        if (joy.id !== null || pausado || terminado || destruido) return;
+        joy.id = idPuntero(ev);
+        joy.origenX = ev.clientX || 0;
+        joy.origenY = ev.clientY || 0;
+        capturar(zonaMover, ev);
+        prevenir(ev);
+        const caja = zonaMover.getBoundingClientRect ? zonaMover.getBoundingClientRect() : null;
+        if (caja) {
+          hud.joyBase.style.left = (joy.origenX - caja.left) + "px";
+          hud.joyBase.style.top = (joy.origenY - caja.top) + "px";
+        }
+        hud.joyBase.style.display = "block";
+        moverJoy(0, 0);
+      });
+      escuchar(zonaMover, "pointermove", function (ev) {
+        if (joy.id === null || joy.id !== idPuntero(ev)) return;
+        moverJoy((ev.clientX || 0) - joy.origenX, (ev.clientY || 0) - joy.origenY);
+      });
+      const soltarJoyEv = function (ev) {
+        if (joy.id === null || joy.id !== idPuntero(ev)) return;
+        soltarJoy();
+      };
+      escuchar(zonaMover, "pointerup", soltarJoyEv);
+      escuchar(zonaMover, "pointercancel", soltarJoyEv);
+
+      escuchar(zonaMirar, "pointerdown", function (ev) {
+        if (mirarT.id !== null || pausado || terminado || destruido) return;
+        mirarT.id = idPuntero(ev);
+        mirarT.x = ev.clientX || 0;
+        mirarT.y = ev.clientY || 0;
+        capturar(zonaMirar, ev);
+        prevenir(ev);
+      });
+      escuchar(zonaMirar, "pointermove", function (ev) {
+        if (mirarT.id === null || mirarT.id !== idPuntero(ev) || pausado || terminado) return;
+        const x = ev.clientX || 0, y = ev.clientY || 0;
+        jugador.yaw -= (x - mirarT.x) * SENSIBILIDAD_TACTIL;
+        jugador.pitch = Math.max(-1.25, Math.min(1.25, jugador.pitch - (y - mirarT.y) * SENSIBILIDAD_TACTIL));
+        mirarT.x = x;
+        mirarT.y = y;
+      });
+      const soltarMirarEv = function (ev) {
+        if (mirarT.id === null || mirarT.id !== idPuntero(ev)) return;
+        mirarT.id = null;
+      };
+      escuchar(zonaMirar, "pointerup", soltarMirarEv);
+      escuchar(zonaMirar, "pointercancel", soltarMirarEv);
+
+      // Mantener pulsado: DISPARAR dispara mientras el dedo esté encima; SALTAR salta como la barra espaciadora.
+      botonTactil(botonDisparo, function () { disparando = true; }, function () { disparando = false; });
+      botonTactil(botonSalto, function () { teclas.Space = true; }, function () { teclas.Space = false; });
+
+      // Un toque: cambia al arma desbloqueada siguiente, o pausa y reanuda.
+      escuchar(botonArma, "pointerdown", function (ev) {
+        prevenir(ev);
+        if (pausado || terminado) return;
+        armaSiguiente();
+      });
+      escuchar(botonPausa, "pointerdown", function (ev) {
+        prevenir(ev);
+        alternarPausa();
+      });
+    }
+
+    function crearBotonTactil(padre, clase, texto) {
+      const b = crearEl("button", "ceniza3d-tactil-btn " + clase, padre, texto);
+      b.type = "button";
+      return b;
+    }
+
+    // Botón que se mantiene pulsado: alBajar al tocarlo y alSubir al soltarlo (mismo puntero).
+    function botonTactil(el, alBajar, alSubir) {
+      let id = null;
+      escuchar(el, "pointerdown", function (ev) {
+        if (id !== null || pausado || terminado || destruido) return;
+        id = idPuntero(ev);
+        capturar(el, ev);
+        prevenir(ev);
+        alBajar();
+      });
+      const soltar = function (ev) {
+        if (id === null || idPuntero(ev) !== id) return;
+        id = null;
+        alSubir();
+      };
+      escuchar(el, "pointerup", soltar);
+      escuchar(el, "pointercancel", soltar);
+      reiniciadoresTactiles.push(function () {
+        if (id !== null) {
+          id = null;
+          alSubir();
+        }
+      });
+    }
+
+    // Captura el puntero para seguir recibiendo sus movimientos fuera del elemento (si el navegador lo permite).
+    function capturar(el, ev) {
+      if (el && typeof el.setPointerCapture === "function" && ev && ev.pointerId !== undefined) {
+        try { el.setPointerCapture(ev.pointerId); } catch (err) {
+          // Sin captura, el toque sigue llegando al elemento donde empezó.
+        }
+      }
+    }
+
+    // Recibe el desplazamiento del dedo desde el origen y lo convierte en joy.f y joy.r (entre -1 y 1).
+    function moverJoy(dx, dy) {
+      const l = Math.hypot(dx, dy);
+      const k = l > RADIO_JOY ? RADIO_JOY / l : 1;
+      const x = dx * k, y = dy * k;
+      joy.r = x / RADIO_JOY;
+      joy.f = -y / RADIO_JOY;
+      if (Math.hypot(joy.f, joy.r) < ZONA_MUERTA_JOY) {
+        joy.f = 0;
+        joy.r = 0;
+      }
+      if (hud.joyPalo) hud.joyPalo.style.transform = "translate(" + x + "px, " + y + "px)";
+    }
+
+    function soltarJoy() {
+      joy.id = null;
+      joy.f = 0;
+      joy.r = 0;
+      if (hud.joyBase) hud.joyBase.style.display = "none";
+      if (hud.joyPalo) hud.joyPalo.style.transform = "";
+    }
+
+    // Suelta todo lo que el dedo tuviera pulsado (al pausar, al terminar o al perder el foco).
+    function soltarTactil() {
+      reiniciadoresTactiles.forEach(function (f) { f(); });
+      soltarJoy();
+      mirarT.id = null;
+    }
+
+    // Muestra la capa táctil. Se llama al arrancar si la pantalla es táctil, o al primer toque.
+    function activarTactil() {
+      if (tactilActivo || destruido || !raiz) return;
+      tactilActivo = true;
+      raiz.className = "ceniza3d-raiz ceniza3d-raiz-tactil";
+    }
+
+    function alPrimerToque(ev) {
+      if (ev && ev.pointerType === "touch") activarTactil();
+    }
+
     function mostrarPausa() {
       hud.pausaTitulo.textContent = haJugado ? "Pausa" : "Ceniza · Fase 3D";
-      hud.pausaTexto.textContent = "Clic para jugar · WASD mueve · Ratón mira · Clic dispara · 1, 2 y 3 cambian de arma · R recarga · Esc o P pausan";
+      hud.pausaTexto.textContent = "Clic para jugar · WASD mueve · Ratón mira · Clic dispara · 1, 2 y 3 cambian de arma · R recarga · Esc o P pausan" +
+        (tactilActivo ? " · Táctil: joystick izquierdo mueve, arrastra a la derecha para mirar, y usa los botones" : "");
       hud.botonContinuar.textContent = haJugado ? "Continuar" : "Empezar";
       hud.botonContinuar.style.display = "";
       hud.botonSalir.style.display = "";
@@ -1298,15 +1504,19 @@
     function actualizarJugador(dt) {
       const correr = teclas.ShiftLeft || teclas.ShiftRight;
       const vel = (correr ? CORRER : ANDAR) * (1 + bonos.velocidad / 100);
-      const f = (teclas.KeyW || teclas.ArrowUp ? 1 : 0) - (teclas.KeyS || teclas.ArrowDown ? 1 : 0);
-      const r = (teclas.KeyD || teclas.ArrowRight ? 1 : 0) - (teclas.KeyA || teclas.ArrowLeft ? 1 : 0);
-      if (f !== 0 || r !== 0) {
+      // Teclado: -1, 0 o 1 por eje. Joystick táctil: valores analógicos entre -1 y 1, que se suman.
+      const f = (teclas.KeyW || teclas.ArrowUp ? 1 : 0) - (teclas.KeyS || teclas.ArrowDown ? 1 : 0) + joy.f;
+      const r = (teclas.KeyD || teclas.ArrowRight ? 1 : 0) - (teclas.KeyA || teclas.ArrowLeft ? 1 : 0) + joy.r;
+      const magnitud = Math.hypot(f, r);
+      if (magnitud > 0) {
+        // Dirección normalizada; con el joystick a medias, el viajero camina a medio ritmo.
+        const fn = f / magnitud, rn = r / magnitud;
+        const escala = Math.min(1, magnitud);
         const sy = Math.sin(jugador.yaw), cy = Math.cos(jugador.yaw);
-        const dx = -sy * f + cy * r;
-        const dz = -cy * f - sy * r;
-        const l = Math.hypot(dx, dz) || 1;
-        jugador.pos.x += (dx / l) * vel * dt;
-        jugador.pos.z += (dz / l) * vel * dt;
+        const dx = -sy * fn + cy * rn;
+        const dz = -cy * fn - sy * rn;
+        jugador.pos.x += dx * vel * escala * dt;
+        jugador.pos.z += dz * vel * escala * dt;
       }
       if (teclas.Space && jugador.enSuelo) {
         jugador.vy = SALTO;
@@ -1416,6 +1626,16 @@
       armaActual = id;
     }
 
+    // Botón ARMA: pasa al siguiente arma desbloqueada (en el orden de ARMAS_ORDEN).
+    function armaSiguiente() {
+      if (!armaActual || armasDesbloqueadas.length < 2) {
+        mensaje("Solo tienes un arma", 1.2);
+        return;
+      }
+      const i = armasDesbloqueadas.indexOf(armaActual);
+      cambiarArma(armasDesbloqueadas[(i + 1) % armasDesbloqueadas.length]);
+    }
+
     // ---------------------------------------------------------------- estado de la partida
 
     function textoObjetivo() {
@@ -1440,6 +1660,7 @@
       resultado = res;
       disparando = false;
       teclas = {};
+      soltarTactil();
       if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
       const r = resumen(res);
       if (res === "salida") {
@@ -1463,6 +1684,7 @@
       pausado = true;
       teclas = {};
       disparando = false;
+      soltarTactil();
       if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
       mostrarPausa();
     }
@@ -1664,6 +1886,7 @@
     construirHUD();
     iniciarRender();
     montarSector(indiceInicial);
+    if (esPantallaTactil()) activarTactil();
     mostrarPausa();
 
     escuchar(canvas, "mousedown", alPulsarRaton);
@@ -1679,6 +1902,8 @@
       observador = new ResizeObserver(ajustarAlCambiarTamano);
       observador.observe(contenedor);
     }
+
+    escuchar(window, "pointerdown", alPrimerToque);
 
     actualizarHUD();
     if (typeof window.requestAnimationFrame === "function") {

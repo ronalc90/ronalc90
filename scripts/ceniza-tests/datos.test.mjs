@@ -78,36 +78,118 @@ test("costos de forja crecientes y con la fórmula del contrato", () => {
   assert.throws(() => D.costoForja(5), esError("RangeError"));
 });
 
-test("limitarMultidisparoArco nunca devuelve más del 95 % de la hoja", () => {
-  const r = rngSemilla(7);
-  for (let i = 0; i < 5000; i++) {
-    const dpsHoja = r() * 500;
-    const dpsArco = r() * 1000;
-    const limitado = D.limitarMultidisparoArco(dpsArco, dpsHoja);
-    assert.ok(limitado <= 0.95 * dpsHoja, `hoja ${dpsHoja} arco ${dpsArco}`);
-    assert.ok(limitado <= dpsArco);
+// Tabla 7.3 de docs/ceniza-diseno.md (maestría 0 a 3), con los decimales del documento.
+const redondear = (x, decimales) => Math.round(x * 10 ** decimales) / 10 ** decimales;
+const porcentaje = (parte, total) => redondear((100 * parte) / total, 1);
+const TABLA_7_3 = {
+  golpes: [[14, 14, 22], [15, 15, 24], [17, 17, 26], [18, 18, 29]],
+  onda: [13, 14, 16, 17],
+  cicloDano: [63, 68, 76, 82],
+  dpsHoja: [68.48, 73.91, 82.61, 89.13],
+  topeArco: [65.05, 70.22, 78.48, 84.67],
+  arcoSinTopeDps: [39.13, 86.96, 143.48, 156.52],
+  arcoSinTopePorc: [57.1, 117.6, 173.7, 175.6],
+  cooldownTope: [0.23, 0.285, 0.421, 0.426],
+  arcoTopeDps: [39.13, 70.18, 78.38, 84.51],
+  arcoTopePorc: [57.1, 94.9, 94.9, 94.8],
+};
+
+test("hoja (tabla 7.3): combo 14, 14, 22 y onda 13 con maestría; ciclo de 0,92 s", () => {
+  assert.equal(redondear(D.cicloHoja, 2), 0.92);
+  for (let m = 0; m <= 3; m++) {
+    const d = plano(D.danoHoja(m));
+    assert.deepEqual(d.golpes, TABLA_7_3.golpes[m], `golpes con maestría ${m}`);
+    assert.equal(d.onda, TABLA_7_3.onda[m], `onda con maestría ${m}`);
+    assert.equal(d.golpes.reduce((s, x) => s + x, 0) + d.onda, TABLA_7_3.cicloDano[m], `daño por ciclo ${m}`);
+    assert.equal(redondear(D.dpsArma("hoja", m), 2), TABLA_7_3.dpsHoja[m], `DPS de la hoja con maestría ${m}`);
   }
-  assert.ok(Math.abs(D.limitarMultidisparoArco(100, 100) - 95) < 1e-9);
-  assert.equal(D.limitarMultidisparoArco(50, 100), 50);
-  assert.throws(() => D.limitarMultidisparoArco(-1, 10), esError("RangeError"));
 });
 
-test("balance del arco: DPS <= 95 % de la hoja en maestría 0 a 3", () => {
+test("arco sin tope (tabla 7.3, columnas actuales): supera el 95 % desde maestría 1", () => {
+  for (let m = 0; m <= 3; m++) {
+    const dps = (D.MULTIDISPARO_ARCO[m] * D.danoPorGolpe("arco", m)) / D.armas.arco.cadencia;
+    assert.equal(redondear(dps, 2), TABLA_7_3.arcoSinTopeDps[m], `DPS sin tope, maestría ${m}`);
+    assert.equal(porcentaje(dps, D.dpsArma("hoja", m)), TABLA_7_3.arcoSinTopePorc[m], `% sin tope, maestría ${m}`);
+  }
+});
+
+test("arco con tope (tabla 7.3): cooldown 0,230 / 0,285 / 0,421 / 0,426 (CA-04)", () => {
+  const cooldowns = [0, 1, 2, 3].map((m) => redondear(D.cooldownArco(m), 3));
+  assert.deepEqual(cooldowns, TABLA_7_3.cooldownTope);
+});
+
+test("arco con tope (tabla 7.3): DPS 39,13 / 70,18 / 78,38 / 84,51 y 57,1 / 94,9 / 94,9 / 94,8 % de la hoja", () => {
+  for (let m = 0; m <= 3; m++) {
+    const arco = D.dpsArma("arco", m);
+    assert.equal(redondear(arco, 2), TABLA_7_3.arcoTopeDps[m], `DPS con tope, maestría ${m}`);
+    assert.equal(porcentaje(arco, D.dpsArma("hoja", m)), TABLA_7_3.arcoTopePorc[m], `% con tope, maestría ${m}`);
+  }
+});
+
+test("tope del 95 %: el DPS del arco nunca supera el 95 % de la hoja con la misma maestría (CA-03)", () => {
   for (let m = 0; m <= 3; m++) {
     const hoja = D.dpsArma("hoja", m);
     const arco = D.dpsArma("arco", m);
-    assert.ok(arco <= 0.95 * hoja, `maestría ${m}: arco ${arco} frente a hoja ${hoja}`);
+    assert.ok(arco <= 0.95 * hoja + 1e-9, `maestría ${m}: arco ${arco} frente a hoja ${hoja}`);
+    assert.equal(redondear(0.95 * hoja, 2), TABLA_7_3.topeArco[m], `tope de la hoja con maestría ${m}`);
   }
 });
 
-test("el límite recorta el multidisparo, no el daño base por flecha", () => {
-  const arco = D.armas.arco;
-  // Sin maestría no hay límite que aplicar: el DPS es el de una flecha.
-  assert.equal(D.dpsArma("arco", 0), arco.dano * arco.cadencia);
-  for (let m = 0; m <= 3; m++) {
-    const efectivo = D.multidisparoEfectivo(m);
-    assert.ok(efectivo >= 1 - 1e-9 && efectivo <= D.MULTIDISPARO_ARCO[m] + 1e-9, `maestría ${m}: ${efectivo}`);
+// Cada duración se redondea hacia arriba al fotograma (docs 7.5).
+const alCuadro = (segundos, hz) => Math.ceil(segundos * hz - 1e-9) / hz;
+
+test("tope a 60 y 120 Hz (docs 7.5): el arco sigue por debajo del 95 % de la hoja", () => {
+  const esperado = {
+    60: { hoja: [67.5, 72.86, 81.43, 87.86], arco: [57.1, 91.5, 93.5, 94.6] },
+    120: { hoja: [68.11, 73.51, 82.16, 88.65], arco: [56.6, 93.3, 94.5, 93.7] },
+  };
+  for (const hz of [60, 120]) {
+    const cicloHz = D.armas.hoja.cadencias.reduce((s, c) => s + alCuadro(c, hz), 0);
+    for (let m = 0; m <= 3; m++) {
+      const d = plano(D.danoHoja(m));
+      const hoja = (d.golpes.reduce((s, x) => s + x, 0) + d.onda) / cicloHz;
+      const arco = (D.MULTIDISPARO_ARCO[m] * D.danoPorGolpe("arco", m)) / alCuadro(D.cooldownArco(m), hz);
+      assert.equal(redondear(hoja, 2), esperado[hz].hoja[m], `hoja a ${hz} Hz, maestría ${m}`);
+      assert.equal(porcentaje(arco, hoja), esperado[hz].arco[m], `arco a ${hz} Hz, maestría ${m}`);
+      assert.ok(porcentaje(arco, hoja) <= 95, `arco a ${hz} Hz, maestría ${m}`);
+    }
   }
+});
+
+test("el tope recorta el espaciado de la ráfaga: flechas y daño por flecha no cambian", () => {
+  assert.deepEqual(plano(D.MULTIDISPARO_ARCO), [1, 2, 3, 3]);
+  assert.deepEqual([0, 1, 2, 3].map((m) => D.danoPorGolpe("arco", m)), [9, 10, 11, 12]);
+  for (let m = 0; m <= 3; m++) assert.ok(D.cooldownArco(m) >= D.armas.arco.cadencia);
+  assert.equal(D.cooldownArco(0), D.armas.arco.cadencia, "sin tope activo a maestría 0");
+});
+
+test("armas 2D y 3D (tablas 6.1 y 6.2): DPS de referencia y datos de cada arma", () => {
+  assert.equal(redondear(D.dpsArma("arco", 0), 1), 39.1);
+  assert.equal(redondear(D.dpsArma("martillo", 0), 1), 38.9);
+  assert.equal(redondear(D.dpsArma("lanza", 0), 1), 34.8);
+  // 3D: rifle 18 a 0,20 s; escopeta 8 perdigones de 10 a 0,90 s; plasma 45 directo y 20 de área a 0,60 s.
+  assert.equal(D.armas.rifle.dano, 18);
+  assert.equal(D.armas.rifle.cadencia, 0.2);
+  assert.equal(D.armas.rifle.rango, 60);
+  assert.equal(D.armas.escopeta.perdigones, 8);
+  assert.equal(D.armas.escopeta.dano, 10);
+  assert.equal(D.armas.escopeta.cadencia, 0.9);
+  assert.equal(D.armas.escopeta.rango, 14);
+  assert.equal(D.armas.plasma.dano, 45);
+  assert.equal(D.armas.plasma.danoArea, 20);
+  assert.equal(D.armas.plasma.radioArea, 2);
+  assert.equal(D.armas.plasma.cadencia, 0.6);
+  assert.equal(D.armas.plasma.rango, 50);
+  assert.equal(redondear(D.dpsArma("rifle", 0), 1), 90);
+  assert.equal(redondear(D.dpsArma("escopeta", 0), 1), 88.9);
+  assert.equal(redondear(D.dpsArma("plasma", 0), 1), 75);
+});
+
+test("armas: nombres, maestrías y daño por golpe inválidos lanzan RangeError", () => {
+  assert.throws(() => D.dpsArma("constructor", 0), esError("RangeError"));
+  assert.throws(() => D.dpsArma("arco", 4), esError("RangeError"));
+  assert.throws(() => D.danoPorGolpe("hoja", 0), esError("RangeError"));
+  assert.throws(() => D.cooldownArco(-1), esError("RangeError"));
 });
 
 test("validarPersonaje acepta el personaje por defecto y rechaza un color inventado", () => {

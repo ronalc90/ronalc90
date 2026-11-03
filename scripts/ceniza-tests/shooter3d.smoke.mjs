@@ -241,3 +241,81 @@ test("destruir no lanza excepciones y estado sigue respondiendo", () => {
   juego.destruir();
   assert.equal(typeof juego.estado().vida, "number");
 });
+
+// Toque simulado: llama a los oyentes de ese tipo registrados en el elemento falso.
+const toque = (el, tipo, datos = {}) => {
+  const ev = { pointerId: 1, pointerType: "touch", clientX: 0, clientY: 0, preventDefault() {}, ...datos };
+  for (const [t, f] of el.oyentes.slice()) if (t === tipo) f(ev);
+};
+// Busca el elemento cuya clase contiene el texto dado (las clases táctiles son compuestas).
+const conClase = (contenedor, texto) =>
+  buscar(contenedor, (el) => typeof el.className === "string" && el.className.indexOf(texto) >= 0);
+
+test("API: Ceniza3D y el control devuelven las claves documentadas en la cabecera", () => {
+  const { juego, C } = nuevoJuego();
+  assert.deepEqual(Object.keys(C).sort(), ["ARMAS", "ORDEN", "SECTORES", "start", "version"]);
+  assert.deepEqual(Object.keys(juego).sort(), ["destruir", "estado", "pausar", "reanudar", "step"]);
+  assert.deepEqual(Object.keys(juego.estado()).sort(), [
+    "armaNombre", "armas", "arma", "enemigosDerrotados", "enemigosVivos", "fase", "municion", "objetivo",
+    "pausado", "resultado", "sector", "sectorNombre", "terminado", "tiempo", "vida", "vidaMax", "webgl", "xp",
+  ].sort());
+  juego.destruir();
+});
+
+test("controles táctiles: la capa solo aparece en pantallas táctiles", () => {
+  const { juego, contenedor, ventana } = nuevoJuego();
+  const raiz = contenedor.hijos[0];
+  assert.equal(raiz.className, "ceniza3d-raiz");
+  ventana.emitir("pointerdown", { pointerType: "mouse", pointerId: 1, preventDefault() {} });
+  assert.equal(raiz.className, "ceniza3d-raiz", "un ratón no activa los controles");
+  ventana.emitir("pointerdown", { pointerType: "touch", pointerId: 2, preventDefault() {} });
+  assert.equal(raiz.className, "ceniza3d-raiz ceniza3d-raiz-tactil");
+  juego.destruir();
+});
+
+test("joystick táctil: empujar hacia arriba avanza como W y crea la oleada de la primera puerta", () => {
+  const { juego, contenedor, ventana } = nuevoJuego();
+  juego.reanudar();
+  ventana.emitir("pointerdown", { pointerType: "touch", pointerId: 2, preventDefault() {} });
+  const zona = conClase(contenedor, "ceniza3d-tactil-mover");
+  assert.ok(zona, "existe la zona del joystick");
+  toque(zona, "pointerdown", { pointerId: 3, clientX: 100, clientY: 300 });
+  toque(zona, "pointermove", { pointerId: 3, clientX: 100, clientY: 150 }); // 150 px arriba: se recorta al radio
+  const e = juego.step(240);
+  toque(zona, "pointerup", { pointerId: 3, clientX: 100, clientY: 150 });
+  assert.equal(e.enemigosVivos, 4);
+  assert.match(e.objetivo, /^Elimina a los enemigos: 4$/);
+  juego.destruir();
+});
+
+test("botón DISPARAR táctil: dispara mientras se mantiene pulsado", () => {
+  const { juego, contenedor, ventana } = nuevoJuego();
+  juego.reanudar();
+  ventana.emitir("pointerdown", { pointerType: "touch", pointerId: 2, preventDefault() {} });
+  const boton = conClase(contenedor, "ceniza3d-tactil-disparo");
+  toque(boton, "pointerdown", { pointerId: 4 });
+  let e = juego.step(1);
+  assert.equal(e.municion.cargador, 29);
+  toque(boton, "pointerup", { pointerId: 4 });
+  e = juego.step(120);
+  assert.equal(e.municion.cargador, 29, "al soltar no sigue disparando");
+  juego.destruir();
+});
+
+test("botones ARMA y pausa táctiles: cambian de arma y pausan y reanudan", () => {
+  const { juego, contenedor, ventana } = nuevoJuego({ sectorInicial: "S2" });
+  juego.reanudar();
+  ventana.emitir("pointerdown", { pointerType: "touch", pointerId: 2, preventDefault() {} });
+  const antes = juego.estado().arma;
+  const arma = conClase(contenedor, "ceniza3d-tactil-arma");
+  toque(arma, "pointerdown", { pointerId: 5 });
+  assert.notEqual(juego.estado().arma, antes);
+  toque(arma, "pointerdown", { pointerId: 5 });
+  assert.equal(juego.estado().arma, antes);
+  const pausa = conClase(contenedor, "ceniza3d-tactil-pausa");
+  toque(pausa, "pointerdown", { pointerId: 6 });
+  assert.equal(juego.estado().pausado, true);
+  toque(pausa, "pointerdown", { pointerId: 7 });
+  assert.equal(juego.estado().pausado, false);
+  juego.destruir();
+});

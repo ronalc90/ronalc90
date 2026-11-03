@@ -171,46 +171,81 @@
   const TIEMPOS_OBJETIVO = congelar({ fase2D: 82, fase3D: 48, total: 130, minimoExigido: 120 });
 
   // ----------------------------------------------------------------- armas y maestría
-  // dano: por golpe o disparo. cadencia: golpes por segundo.
+  // Valores de docs/ceniza-diseno.md, secciones 6.1 y 6.2 (maestría 0, sin filo ni crítico).
+  // cadencia: segundos entre golpes o disparos (en el documento, "Cadencia (s)").
+  // hoja: combo de 3 golpes; cadencias[k] es la espera tras el golpe k. onda: daño de la onda del golpe 3.
+  // arco: cadencia es el cooldown base de la ráfaga; cooldownArco le aplica el tope del 95 %.
+  // escopeta: dano es por perdigón y perdigones por disparo.
+  // plasma: danoArea y radioArea no entran en el DPS directo.
   // rango: píxeles en 2D (alcance del juego actual) o metros en 3D.
-  // La hoja promedia el combo de 3 golpes (14, 14, 22).
-  // multidisparo: el arco gana flechas por maestría (1 + min(nivel, 2)); ver limitarMultidisparoArco.
+  // MULTIDISPARO_ARCO: flechas por ráfaga = 1 + min(maestría, 2). El tope recorta el espaciado, no este número.
   const MULTIDISPARO_ARCO = congelar([1, 2, 3, 3]);
   const ARMAS = congelar({
-    hoja: { nombre: "Hoja", tipo: "2d", dano: 17, cadencia: 3.2, rango: 86 },
-    arco: { nombre: "Arco", tipo: "2d", dano: 9, cadencia: 4.3, rango: 640, multidisparo: true },
-    martillo: { nombre: "Martillo", tipo: "2d", dano: 28, cadencia: 1.4, rango: 84 },
-    lanza: { nombre: "Lanza", tipo: "2d", dano: 16, cadencia: 2.2, rango: 240 },
-    rifle: { nombre: "Rifle", tipo: "3d", dano: 18, cadencia: 6, rango: 60, sector: "S1" },
-    escopeta: { nombre: "Escopeta", tipo: "3d", dano: 34, cadencia: 1.2, rango: 14, sector: "S2" },
-    plasma: { nombre: "Plasma", tipo: "3d", dano: 26, cadencia: 2.4, rango: 45, sector: "S3" },
+    hoja: { nombre: "Hoja", tipo: "2d", golpes: [14, 14, 22], cadencias: [0.25, 0.25, 0.42], onda: 13, rango: 86 },
+    arco: { nombre: "Arco", tipo: "2d", dano: 9, cadencia: 0.23, rango: 640, multidisparo: true },
+    martillo: { nombre: "Martillo", tipo: "2d", dano: 28, cadencia: 0.72, rango: 84 },
+    lanza: { nombre: "Lanza", tipo: "2d", dano: 16, cadencia: 0.46, rango: 240 },
+    rifle: { nombre: "Rifle", tipo: "3d", dano: 18, cadencia: 0.2, rango: 60, sector: "S1" },
+    escopeta: { nombre: "Escopeta", tipo: "3d", dano: 10, perdigones: 8, cadencia: 0.9, rango: 14, sector: "S2" },
+    plasma: { nombre: "Plasma", tipo: "3d", dano: 45, danoArea: 20, radioArea: 2, cadencia: 0.6, rango: 50, sector: "S3" },
   });
+  // Duración del ciclo completo de la hoja: 0,25 + 0,25 + 0,42 = 0,92 s.
+  const CICLO_HOJA = ARMAS.hoja.cadencias.reduce((s, c) => s + c, 0);
 
-  // DPS de un arma con su maestría (multiplicador 1 + 0,10 * nivel).
-  // El arco se limita al 95 % de la hoja con la misma maestría.
+  // Multiplicador de daño por maestría: P(m) = 1 + 0,10 * m (docs 7.2).
+  const multiplicadorDano = (maestria) => 1 + CRECIMIENTO_MAESTRIA * maestria;
+
+  // Daño de un golpe ya redondeado, igual que strike() del juego: Math.round por golpe.
+  const danoGolpe = (base, maestria) => Math.round(base * multiplicadorDano(maestria));
+
+  function validarArma(nombre) {
+    if (typeof nombre !== "string" || !tiene(ARMAS, nombre)) throw new RangeError("Arma desconocida: " + nombre);
+  }
+
+  // Daño de cada golpe de la hoja con maestría m: los tres golpes del combo y la onda (tabla 7.3).
+  function danoHoja(maestria) {
+    validarMaestria(maestria);
+    return {
+      golpes: ARMAS.hoja.golpes.map((b) => danoGolpe(b, maestria)),
+      onda: danoGolpe(ARMAS.hoja.onda, maestria),
+    };
+  }
+
+  // Daño de un golpe o flecha ya redondeado. La hoja no tiene uno solo: usa danoHoja.
+  function danoPorGolpe(nombre, maestria) {
+    validarArma(nombre);
+    validarMaestria(maestria);
+    if (!tiene(ARMAS[nombre], "dano")) throw new RangeError(nombre + " no tiene daño por golpe; usa danoHoja");
+    return danoGolpe(ARMAS[nombre].dano, maestria);
+  }
+
+  // DPS de la hoja: golpes y onda redondeados, sumados y divididos entre el ciclo de 0,92 s.
+  function dpsHoja(maestria) {
+    const d = danoHoja(maestria);
+    return (d.golpes.reduce((s, x) => s + x, 0) + d.onda) / CICLO_HOJA;
+  }
+
+  // Techo a 3 decimales. La tolerancia de 1e-9 evita que un cociente exacto suba una milésima por coma flotante.
+  const techo3 = (x) => Math.ceil(x * 1000 - 1e-9) / 1000;
+
+  // Cooldown de la ráfaga del arco (docs 7.2). No baja de la cadencia base (0,23 s). El tope lo sube hasta
+  // que la ráfaga no supere el 95 % del DPS de la hoja con la misma maestría. Se limita el espaciado
+  // y no el número de flechas: MULTIDISPARO_ARCO se conserva.
+  function cooldownArco(maestria) {
+    validarMaestria(maestria);
+    const rafaga = MULTIDISPARO_ARCO[maestria] * danoPorGolpe("arco", maestria);
+    return Math.max(ARMAS.arco.cadencia, techo3(rafaga / (LIMITE_ARCO * dpsHoja(maestria))));
+  }
+
+  // DPS de un arma con su maestría. Arco: con el tope de cooldownArco. Escopeta: suma de sus perdigones.
+  // Plasma: solo impacto directo.
   function dpsArma(nombre, maestria) {
-    if (!tiene(ARMAS, nombre)) throw new RangeError("Arma desconocida: " + nombre);
+    validarArma(nombre);
     validarMaestria(maestria);
+    if (nombre === "hoja") return dpsHoja(maestria);
+    if (nombre === "arco") return MULTIDISPARO_ARCO[maestria] * danoPorGolpe("arco", maestria) / cooldownArco(maestria);
     const arma = ARMAS[nombre];
-    const porDisparo = arma.dano * arma.cadencia * (1 + CRECIMIENTO_MAESTRIA * maestria);
-    if (!arma.multidisparo) return porDisparo;
-    return limitarMultidisparoArco(porDisparo * MULTIDISPARO_ARCO[maestria], dpsArma("hoja", maestria));
-  }
-
-  // Flechas efectivas por disparo del arco después de la limitación (1 = sin multidisparo).
-  function multidisparoEfectivo(maestria) {
-    validarMaestria(maestria);
-    const arco = ARMAS.arco;
-    return dpsArma("arco", maestria) / (arco.dano * arco.cadencia * (1 + CRECIMIENTO_MAESTRIA * maestria));
-  }
-
-  // Regla de balance: el DPS del arco con su multidisparo nunca supera el 95 % del DPS de la hoja.
-  // Solo recorta el multidisparo; el daño por flecha base no cambia.
-  function limitarMultidisparoArco(dpsArco, dpsHoja) {
-    if (!Number.isFinite(dpsArco) || dpsArco < 0 || !Number.isFinite(dpsHoja) || dpsHoja < 0) {
-      throw new RangeError("Los DPS deben ser números finitos y no negativos");
-    }
-    return Math.min(dpsArco, LIMITE_ARCO * dpsHoja);
+    return danoPorGolpe(nombre, maestria) * (arma.perdigones || 1) / arma.cadencia;
   }
 
   // ----------------------------------------------------------------- forja
@@ -494,9 +529,11 @@
     abrirCofre,
     armas: ARMAS,
     MULTIDISPARO_ARCO,
+    cicloHoja: CICLO_HOJA,
+    danoHoja,
+    danoPorGolpe,
     dpsArma,
-    multidisparoEfectivo,
-    limitarMultidisparoArco,
+    cooldownArco,
     opcionesPersonaje,
     personajePorDefecto,
     validarPersonaje,
