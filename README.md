@@ -41,7 +41,7 @@
 Desarrollador de software que diseña e implementa soluciones **modernas, escalables y centradas en el usuario**. Combino **React/TypeScript** en el frontend con **Node.js, Java y Python** en el backend, sobre arquitecturas **REST y microservicios**. Últimamente me especialicé en **backend para chatbots inteligentes** con OpenAI, recuperación semántica, embeddings y vector stores.
 
 <div align="center">
-  <img src="assets/quests.svg" width="100%" alt="Misiones activas: conciliación bancaria para Falabella (SII Group), flujos de datos con Apache NiFi (Blautech, para Claro CENAM), Koptup y Bioluma"/>
+  <img src="assets/quests.svg" width="100%" alt="Misiones activas: flujos de datos con Apache NiFi (Blautech, para Claro CENAM), Koptup y Bioluma"/>
 </div>
 
 <br/>
@@ -71,7 +71,6 @@ focus:
 
 currently_working_on:
   - "Blautech — Desarrollador de integración · cliente: Claro CENAM"
-  - "SII Group — Desarrollador Full Stack · cliente: Banco Falabella Colombia"
 ```
 
 </details>
@@ -419,7 +418,7 @@ currently_working_on:
 > *Línea por línea encuentras el error escondido en una lógica bancaria de hace años. Lo corriges, validas de punta a punta y, por primera vez en meses, el libro mayor cuadra al centavo.*
 >
 > ### 🏆 FINAL · El Guardián del Libro Mayor
-> Hoy hago justo esto: **conciliación bancaria para Falabella** con **SII Group** (antes con BC Tecnología): validaciones **end-to-end** y **stored procedures** sobre **SQL Server**, cuidando consistencia, exactitud y trazabilidad.
+> Esto hice en **BC Tecnología**: **conciliación bancaria para Banco Falabella Colombia**, con validaciones **end-to-end** y **stored procedures** sobre **SQL Server**, cuidando consistencia, exactitud y trazabilidad.
 
 </details>
 
