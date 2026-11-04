@@ -141,14 +141,17 @@
 
   // ----------------------------------------------------------------- personaje
   // Copia solo con los campos conocidos, en un orden fijo (así se compara con JSON).
+  // Usa la forma de datos.js (9.2 y 9.3): versión v, patron en la raíz y la capa con on.
   function copiarPersonaje(p) {
     return {
+      v: 1,
       nombre: p.nombre,
-      traje: { color: p.traje.color, tono: p.traje.tono, brillo: p.traje.brillo, patron: p.traje.patron },
+      traje: { color: p.traje.color, tono: p.traje.tono, brillo: p.traje.brillo },
       visor: { color: p.visor.color },
       casco: { estilo: p.casco.estilo },
-      capa: { color: p.capa.color, activa: p.capa.activa },
+      capa: { color: p.capa.color, on: p.capa.on },
       emblema: { icono: p.emblema.icono },
+      patron: p.patron,
     };
   }
 
@@ -156,6 +159,7 @@
   function mezclar(base, cambios) {
     const resultado = copiarPersonaje(base);
     if (tiene(cambios, "nombre")) resultado.nombre = cambios.nombre;
+    if (tiene(cambios, "patron")) resultado.patron = cambios.patron;
     for (const parte of SECCIONES_PERSONAJE) {
       if (tiene(cambios, parte)) Object.assign(resultado[parte], cambios[parte]);
     }
@@ -422,9 +426,9 @@
 
     const capa = crear(doc, "button", { type: "button", class: "cp-boton", "aria-label": "Capa visible" }, "Capa visible");
     enlazar(capa, "click", () => {
-      if (aplicarPersonaje({ capa: { activa: !actual().capa.activa } })) actualizarMarcas();
+      if (aplicarPersonaje({ capa: { on: !actual().capa.on } })) actualizarMarcas();
     });
-    activo.marcas.push({ boton: capa, esActivo: () => actual().capa.activa });
+    activo.marcas.push({ boton: capa, esActivo: () => actual().capa.on });
 
     return hijos(
       crear(doc, "div", { class: "cp-pestana" }),
@@ -457,8 +461,8 @@
             "Patrón del traje",
             op.traje.patrones,
             null,
-            (id) => actual().traje.patron === id,
-            (id) => aplicarPersonaje({ traje: { patron: id } }),
+            (id) => actual().patron === id,
+            (id) => aplicarPersonaje({ patron: id }),
           ),
         ),
       ),

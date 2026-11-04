@@ -40,6 +40,9 @@
   #reg.show{display:flex}
   #reg:hover{background:rgba(226,55,42,.42)}
   #reg:focus-visible{outline:2px solid #ffcf8a;outline-offset:3px}
+  #aventura{position:fixed;inset:0;z-index:30;background:var(--ink);overflow:auto}
+  #aventura[hidden]{display:none}
+  #reg.en-aventura{position:absolute;z-index:5;left:50%;bottom:28px;transform:translateX(-50%);height:44px;padding:0 18px;font-size:16px}
 </style>
 </head>
 <body>
@@ -50,6 +53,13 @@
     <a id="reg" href="https://github.com/ronalc90/ronalc90/issues/new" target="_blank" rel="noopener">REGISTRAR EN MI PERFIL</a>
   </div>
 </div>
+<div id="aventura" role="region" aria-label="Aventura de Ceniza" hidden></div>
+<!-- Aventura (FASE 1 en 2D). Three.js y shooter3d.js no se cargan aquí: se piden al entrar en la fase 3D. -->
+<script src="ceniza/datos.js"></script>
+<script src="ceniza/mundo.js"></script>
+<script src="ceniza/personaje-ui.js"></script>
+<script src="ceniza/aventura-nucleo.js"></script>
+<script src="ceniza/aventura-ui.js"></script>
 <script>
 (() => {
 'use strict';
@@ -174,9 +184,10 @@ const sfx = {
 const keys = new Set(), pressed = new Set(), codes = new Set();
 const map = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'J', KeyW: 'J', Space: 'J', ArrowDown: 'Dn', KeyS: 'Dn',
   ShiftLeft: 'D', ShiftRight: 'D', KeyX: 'D', KeyK: 'D', KeyE: 'C', KeyC: 'C', KeyL: 'C', KeyJ: 'A', KeyZ: 'A', KeyF: 'A',
-  KeyP: 'P', Escape: 'P', KeyM: 'M', Enter: 'S', KeyR: 'Rt', KeyT: 'T', Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4' };
+  KeyP: 'P', Escape: 'P', KeyM: 'M', Enter: 'S', KeyR: 'Rt', KeyT: 'T', KeyV: 'V', Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4' };
 addEventListener('keydown', e => {
   if (e.target === regLink) return; // enlace de registro enfocado: Enter lo activa el navegador
+  if (avAbierta) return; // con la aventura abierta, las teclas son de la aventura y no de la arena
   const k = map[e.code]; if (!k) return;
   e.preventDefault(); audio();
   if (!e.repeat || e.code.startsWith('Arrow')) codes.add(e.code);
@@ -849,6 +860,8 @@ const titleBtns = () => [
 ];
 // reinicio visible en el menú principal (misma doble pulsación que el árbol)
 const titleResetBtn = () => ({ id: 'reset', x: W / 2 - 120, y: 456, w: 240, h: 30 });
+// AVENTURA: junto al reinicio, en la misma franja, para no mover las opciones que ya existen.
+const titleAventuraBtn = () => ({ id: 'aventura', x: W / 2 + 136, y: 456, w: 240, h: 30 });
 const overBtns = () => [
   { id: 'tree', x: W / 2 - 250, y: 420, w: 240, h: 46, label: 'ÁRBOL DE HABILIDADES', key: 'ESPACIO', main: true },
   { id: 'retry', x: W / 2 + 10, y: 420, w: 240, h: 46, label: 'REINTENTAR', key: 'R' },
@@ -915,7 +928,7 @@ function treeActivate(it) {
 // reinicio desde el menú principal: primera pulsación avisa, la segunda (en 3 s) borra. Igual que el árbol.
 function titleReset() {
   if (time - titleResetArm < 3) {
-    prog.cores = 0; prog.total = 0; prog.lv = {}; prog.weapon = 'hoja'; prog.runs = 0; saveProg(); titleResetArm = -10;
+    prog.cores = 0; prog.total = 0; prog.lv = {}; prog.weapon = 'hoja'; prog.runs = 0; saveProg(); avBorrarGuardado(); titleResetArm = -10;
     treeMsg('Progreso borrado. Todo vuelve a empezar.', '#ff8a6a'); sfx.over();
   } else { titleResetArm = time; treeMsg('¿Seguro? Pulsa otra vez para borrar núcleos y mejoras', '#ff8a6a'); sfx.deny(); }
 }
@@ -1029,6 +1042,7 @@ function step(dtReal) {
     const b = clicks.length && titleBtns().find(b => inRect(clicks[0], b));
     if (has('Space', 'Enter') || (b && b.id === 'play')) startRun();
     else if (has('KeyT') || (b && b.id === 'tree')) { mode = 'tree'; tSel = firstAffordable() || { r: 5, c: 4 }; }
+    else if (has('KeyV') || (clicks.length && inRect(clicks[0], titleAventuraBtn()))) abrirAventura();
     else if (clicks.length && inRect(clicks[0], titleResetBtn())) titleReset();
     return;
   }
@@ -2001,6 +2015,11 @@ function drawTitle() {
   ctx.strokeStyle = rArmed || rHot ? '#ff8a6a' : '#5a4034'; ctx.lineWidth = 1; ctx.stroke();
   ctx.textAlign = 'center'; ctx.fillStyle = rArmed ? '#f3e9d8' : '#c9a48a'; ctx.font = "700 12px 'JetBrains Mono'";
   ctx.fillText(rArmed ? '¿SEGURO? OTRA VEZ' : 'REINICIAR PROGRESO', rb.x + rb.w / 2, rb.y + 20);
+  const ab = titleAventuraBtn(), aHot = pointer && !pointer.touch && inRect(pointer, ab);
+  rr(ab.x, ab.y, ab.w, ab.h, 8); ctx.fillStyle = aHot ? 'rgba(226,55,42,.42)' : 'rgba(226,55,42,.22)'; ctx.fill();
+  ctx.strokeStyle = aHot ? '#ff8a6a' : '#e2372a'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.textAlign = 'center'; ctx.fillStyle = '#f3e9d8'; ctx.font = "800 13px 'Cinzel'";
+  ctx.fillText(TOUCH ? 'AVENTURA' : 'AVENTURA  ·  V', ab.x + ab.w / 2, ab.y + 20);
   if (tMsg) { ctx.globalAlpha = clamp(tMsg.t * 2, 0, 1); ctx.fillStyle = tMsg.col; ctx.font = "700 12px 'JetBrains Mono'"; ctx.fillText(tMsg.text, W / 2, 506); ctx.globalAlpha = 1; }
   const wp = WEAPONS[wUnlocked(prog.weapon) ? prog.weapon : 'hoja'];
   ctx.font = "700 13px 'JetBrains Mono'";
@@ -2154,6 +2173,7 @@ function drawTree() {
 const REG_BOX = { x: W / 2 - 130, y: 478, w: 260, h: 38 }; // en coordenadas del canvas
 const regLink = document.getElementById('reg');
 let regShown = false;
+let regEnAventura = false; // el enlace de registro se muestra dentro de la aventura (victoria)
 function regUrl() {
   const stats = { arma: S.weapon, jefes: S.stats.bosses, nivel: S.boss.lvl, victoria: S.victory === true, puntos: S.final, segundos: Math.floor(S.t) };
   const title = stats.victoria ? 'ceniza: victoria' : 'ceniza: caida';
@@ -2161,6 +2181,7 @@ function regUrl() {
   return 'https://github.com/ronalc90/ronalc90/issues/new?title=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(body);
 }
 function placeReg() {
+  if (regEnAventura) return; // dentro de la aventura, el enlace lo coloca la hoja de estilos (.en-aventura)
   // altura minima tactil (44 px) hacia abajo: el borde superior no sube, asi no tapa los botones del canvas
   const r = cv.getBoundingClientRect(), k = r.width / W;
   const w = Math.max(REG_BOX.w * k, 240), h = Math.max(REG_BOX.h * k, 44);
@@ -2173,6 +2194,162 @@ function syncReg() {
   regShown = want;
   if (want) { regLink.href = regUrl(); placeReg(); }
   regLink.classList.toggle('show', want);
+}
+
+// ================================================================ aventura (FASE 1 en 2D y FASE 2 en 3D)
+// Módulos de docs/ceniza/ (scripts clásicos, cargados antes de este bloque). La aventura se monta en #aventura,
+// una capa a pantalla completa que tapa la arena: mientras está abierta, la arena no lee teclas ni clics.
+// La partida se guarda en localStorage (ceniza.aventura.v1, con try/catch) al descansar en una fogata y al ganar.
+const AV_CLAVE = 'ceniza.aventura.v1';
+const AV_CLAVE_PERSONAJE = 'ceniza.personaje.v1';
+const AV_3D = ['ceniza/vendor/three.min.js', 'ceniza/shooter3d.js']; // rutas relativas a docs/index.html
+const avPantalla = document.getElementById('aventura');
+let avAbierta = false, avControl = null, av3dCarga = null, av3dUltimo = null, avRegTimer = 0;
+
+function avLeer() {
+  try {
+    const texto = localStorage.getItem(AV_CLAVE);
+    if (texto === null) return null;
+    const r = globalThis.CenizaAventuraNucleo.deserializar(texto);
+    return r.ok ? r.partida : null;
+  } catch { return null; }
+}
+function avGuardar(partida) {
+  try { localStorage.setItem(AV_CLAVE, globalThis.CenizaAventuraNucleo.serializar(partida)); } catch {}
+}
+// Lo llama REINICIAR PROGRESO del menú principal: borra la partida y la personalización (docs/ceniza-diseno.md, 10.3).
+function avBorrarGuardado() {
+  try { localStorage.removeItem(AV_CLAVE); localStorage.removeItem(AV_CLAVE_PERSONAJE); } catch {}
+}
+
+// Partida al abrir: la guardada en la última fogata. Una partida ganada no se reanuda: se empieza otra con el mismo personaje.
+function avPartidaInicial() {
+  const guardada = avLeer();
+  if (guardada && guardada.faseActual !== 'victoria') return guardada;
+  const semilla = Math.floor(Math.random() * 4294967296);
+  return globalThis.CenizaAventuraNucleo.crearPartida({ personaje: guardada ? guardada.personaje : undefined, semilla });
+}
+
+// Ceniza3D.start se llama de forma síncrona al entrar en la fase 3D, así que los scripts deben estar cargados
+// antes. Se piden al llegar a la zona 4 (o al restaurar una partida en la fase 3D), no al inicio de la página.
+// Si no han llegado cuando se entra, la aventura avisa y vuelve a 2D; la fogata ofrece volver a la fase 3D.
+function cargarFase3D() {
+  if (globalThis.Ceniza3D) return Promise.resolve(true);
+  if (av3dCarga) return av3dCarga;
+  const pendientes = globalThis.THREE ? AV_3D.slice(1) : AV_3D.slice();
+  av3dCarga = pendientes.reduce((antes, src) => antes.then(() => new Promise((ok, mal) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => ok();
+    s.onerror = () => { s.remove(); mal(new Error(src)); };
+    document.head.appendChild(s);
+  })), Promise.resolve())
+    .then(() => {
+      const C3 = globalThis.Ceniza3D;
+      if (!C3) throw new Error('Ceniza3D no se cargó');
+      // onVictoria de la aventura no recibe el resumen de la fase 3D (arma y tiempo): se guarda al envolver start.
+      globalThis.Ceniza3D = Object.freeze(Object.assign({}, C3, {
+        start: (op) => C3.start(Object.assign({}, op, {
+          onVictoria: (r) => { av3dUltimo = r; op.onVictoria(r); },
+        })),
+      }));
+      return true;
+    })
+    .catch(() => { av3dCarga = null; return false; });
+  return av3dCarga;
+}
+
+// Zona 4 es el último tramo antes de la fase 3D (docs/ceniza-diseno.md, 2.2).
+function avPrecargarSiCorresponde(partida) {
+  const sala = globalThis.CenizaMundo.salaPorId(partida.sala);
+  if (partida.faseActual === '3d' || (sala && sala.zona === 4)) cargarFase3D();
+}
+
+// Enlace de registro de la aventura: mismo formato que el de la arena (título y línea ceniza-stats).
+function avUrlRegistro(stats) {
+  const title = stats.victoria ? 'ceniza: victoria' : 'ceniza: caida';
+  const body = 'ceniza-stats: ' + JSON.stringify(stats);
+  return 'https://github.com/ronalc90/ronalc90/issues/new?title=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(body);
+}
+// El enlace existente pasa a la capa de la aventura mientras dura la victoria.
+function avMostrarRegistro(url) {
+  regLink.href = url;
+  regLink.removeAttribute('style');
+  regEnAventura = true;
+  avPantalla.appendChild(regLink);
+  regLink.classList.add('show', 'en-aventura');
+}
+function avOcultarRegistro() {
+  if (!regEnAventura) return;
+  regEnAventura = false;
+  regShown = false;
+  regLink.classList.remove('show', 'en-aventura');
+  regLink.removeAttribute('style');
+  document.getElementById('ui').appendChild(regLink);
+}
+
+// Victoria (Coloso final): guarda la partida y muestra el registro. Los segundos suman la fase 2D y la 3D.
+// Como en la arena, el enlace aparece a los 0,9 s para no pulsarlo por error al terminar.
+function avAlGanar(partida) {
+  avGuardar(partida);
+  const st = avControl ? avControl.estado() : null;
+  const r3 = av3dUltimo;
+  const url = avUrlRegistro({
+    arma: r3 && r3.arma ? r3.arma : (st ? st.arma : null), // arma equipada al final de la partida
+    jefes: partida.jefesVencidos.length,
+    nivel: partida.nivel, // nivel del viajero: el Coloso no tiene nivel en el contrato
+    victoria: true,
+    puntos: partida.xp,
+    segundos: Math.floor((st ? st.tiempo : 0) + (r3 ? Number(r3.tiempo) || 0 : 0)),
+  });
+  clearTimeout(avRegTimer);
+  avRegTimer = setTimeout(() => avMostrarRegistro(url), 900);
+}
+
+function abrirAventura() {
+  if (avAbierta) return;
+  if (!globalThis.CenizaAventuraUI || !globalThis.CenizaAventuraNucleo || !globalThis.CenizaMundo || !globalThis.CenizaPersonaje) {
+    treeMsg('La aventura no está disponible en esta página.', '#ff8a6a');
+    sfx.deny();
+    return;
+  }
+  let partida;
+  try { partida = avPartidaInicial(); } catch (e) {
+    treeMsg('No se pudo empezar la aventura: ' + e.message, '#ff8a6a');
+    sfx.deny();
+    return;
+  }
+  avAbierta = true;
+  av3dUltimo = null;
+  keys.clear(); pressed.clear(); codes.clear();
+  avPantalla.hidden = false;
+  avPrecargarSiCorresponde(partida);
+  try {
+    avControl = globalThis.CenizaAventuraUI.montar({
+      contenedor: avPantalla,
+      partida,
+      onGuardar: (p) => { avGuardar(p); avPrecargarSiCorresponde(p); },
+      onFase3D: () => { cargarFase3D(); },
+      onVictoria: avAlGanar,
+      onSalir: cerrarAventura,
+    });
+  } catch (e) {
+    cerrarAventura();
+    treeMsg('No se pudo abrir la aventura: ' + e.message, '#ff8a6a');
+    sfx.deny();
+  }
+}
+
+// Cierra la aventura (Salir del menú de pausa). La partida queda en la última fogata guardada.
+function cerrarAventura() {
+  const ctl = avControl;
+  avControl = null;
+  clearTimeout(avRegTimer);
+  if (ctl) { try { ctl.destruir(); } catch {} }
+  avPantalla.hidden = true;
+  avOcultarRegistro();
+  avAbierta = false;
+  keys.clear(); pressed.clear(); codes.clear();
 }
 
 // ================================================================ loop
@@ -2189,7 +2366,7 @@ function render() {
 }
 function frame(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now;
-  if (!manual) { update(dt); render(); }
+  if (!manual && !avAbierta) { update(dt); render(); }
   requestAnimationFrame(frame);
 }
 if (DEMO) startRun();

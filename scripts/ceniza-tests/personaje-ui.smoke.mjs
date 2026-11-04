@@ -217,7 +217,7 @@ test("importar un código corrupto muestra un error sin lanzar y deja el foco en
     opcionesBase(D, { onCambio: (e) => llamadas.push(e), onImportar: (r) => resultados.push(r) }),
   );
 
-  control(contenedor, "Código para importar").value = "CENIZA1-@@@-00000000";
+  control(contenedor, "Código para importar").value = "CENIZA1.@@@.00000000";
   assert.doesNotThrow(() => boton(contenedor, "IMPORTAR código pegado").disparar("click"));
 
   const aviso = avisoDelPanel(contenedor);
@@ -345,13 +345,13 @@ test("tono, brillo y capa cambian el personaje; la capa usa aria-pressed", () =>
   control(contenedor, "Tono").disparar("input");
   assert.equal(llamadas.at(-1).personaje.traje.tono, 210);
 
-  control(contenedor, "Brillo").value = "80";
+  control(contenedor, "Brillo").value = "15";
   control(contenedor, "Brillo").disparar("input");
-  assert.equal(llamadas.at(-1).personaje.traje.brillo, 80);
+  assert.equal(llamadas.at(-1).personaje.traje.brillo, 15);
 
   assert.equal(boton(contenedor, "Capa visible").getAttribute("aria-pressed"), "true");
   boton(contenedor, "Capa visible").disparar("click");
-  assert.equal(llamadas.at(-1).personaje.capa.activa, false);
+  assert.equal(llamadas.at(-1).personaje.capa.on, false);
   assert.equal(boton(contenedor, "Capa visible").getAttribute("aria-pressed"), "false");
 
   P.cerrar();

@@ -1,6 +1,6 @@
 # Ceniza: diseño de la expansión
 
-Estado: diseño v1 (FASE 1 en 2D y FASE 2 en 3D). Este documento es la referencia de la expansión; el contrato cerrado de la ronda es la fuente de verdad.
+Estado: diseño v1 (FASE 1 en 2D y FASE 2 en 3D). Este documento es la referencia de la expansión; el contrato cerrado de la ronda es la fuente de verdad. En la ronda 3 se cerraron las discrepancias con `docs/ceniza/datos.js`; cada decisión está en su sección, marcada como «Decisión de la ronda 3».
 
 Notas sobre los números:
 
@@ -167,6 +167,8 @@ El tiempo humano varía. Explorar secretos, leer textos, repetir patrones de jef
 
 Fuentes de XP del contrato: enemigo común 5, élite 10, cofre común 30, cofre raro 75, cofre de jefe 120, jefe de zona 150 (Z1), 200 (Z2), 300 (Z3) y 400 (Z4), Coloso final 1.000.
 
+Decisión de la ronda 3 (XP del jefe de Z2): el Centinela de cristal da 200 XP, como en 2.4 y en la lista anterior. `datos.js` tenía 220 y se corrigió a 200 en `ZONAS.xpJefe`.
+
 Consecuencia de la lectura adoptada: llegar al nivel 30 necesita 9.235 XP, que equivalen a unos 1.847 enemigos comunes. Los jefes de zona y el Coloso final suman 2.050 XP fijos.
 
 Lectura no adoptada, que debe confirmar el dueño: si la curva fuera incremental (cada nivel cuesta `40 * n^1.6`), el total para llegar al nivel 30 sería 111.178 XP, unos 22.236 enemigos comunes. Con las fuentes del contrato eso es inalcanzable en 130 minutos. Ver la decisión D1 en la sección 13.
@@ -205,8 +207,14 @@ Hay 7 ranuras: arma, casco, pecho, piernas, botas, accesorio 1 y accesorio 2. La
 | Común | Gris (#8a8a8a) | 1 |
 | Poco común | Verde (#5cb85c) | 2 |
 | Raro | Azul (#4a90d9) | 2 |
-| Épico | Morado (#9b59b6) | 3 |
+| Épico | Morado (#a35bbf) | 3 |
 | Legendario | Naranja (#e67e22) | 3 |
+
+Decisión de la ronda 3 (colores y contraste):
+
+- Los colores son los de esta tabla. `datos.js` tenía otros (por ejemplo #8e24aa para épico y #43a047 para poco común) y se alinearon con el documento.
+- Contraste sobre el fondo del juego `#0b0807`, con un mínimo de 4,5:1: común 5,8:1; poco común 8,0:1; raro 6,0:1; legendario 7,0:1.
+- El morado épico no cumplía. El valor del código (#8e24aa) daba unos 2,8:1 y el del documento (#9b59b6) da 4,28:1. Se cambió a #a35bbf, que da 4,57:1. Es un morado un poco más claro, del mismo tono.
 
 ### 5.3 Modificadores
 
@@ -224,6 +232,20 @@ Cada pieza tiene un número de modificadores según su rareza. No se repite el m
 
 Escala por zona: `valor = round(rango * (1 + 0,2 * (zona - 1)))`. En Z4 el multiplicador es 1,6. Por ejemplo, vida en Z4 va de 3 a 10 HP.
 
+Rangos resultantes por zona (cada límite se redondea; `rangoModificador(id, zona)` en `datos.js`):
+
+| Modificador | Z1 (×1) | Z2 (×1,2) | Z3 (×1,4) | Z4 (×1,6) |
+|---|---|---|---|---|
+| Vida (HP) | 2 a 6 | 2 a 7 | 3 a 8 | 3 a 10 |
+| Daño (%) | 2 a 6 | 2 a 7 | 3 a 8 | 3 a 10 |
+| Armadura (%) | 1 a 4 | 1 a 5 | 1 a 6 | 2 a 6 |
+| Velocidad (%) | 1 a 4 | 1 a 5 | 1 a 6 | 2 a 6 |
+| Suerte (puntos) | 1 a 3 | 1 a 4 | 1 a 4 | 2 a 5 |
+| Núcleos (%) | 5 a 15 | 6 a 18 | 7 a 21 | 8 a 24 |
+| Chatarra (%) | 5 a 15 | 6 a 18 | 7 a 21 | 8 a 24 |
+
+Decisión de la ronda 3: la escala se aplica a los dos límites del rango, y el valor de cada modificador se tira dentro de los límites ya escalados. `datos.js` no escalaba los modificadores y tenía otros rangos (por ejemplo, daño de 3 a 8). Ahora sigue esta tabla. La unidad de suerte es «puntos», como en la tabla de arriba.
+
 ### 5.4 Sets
 
 - **Set Chatarra** (3 piezas): +10 % de daño.
@@ -234,7 +256,8 @@ Escala por zona: `valor = round(rango * (1 + 0,2 * (zona - 1)))`. En Z4 el multi
 
 - En una fogata, cada pieza sube de +0 a +5.
 - Costo en chatarra para subir de nivel `k` a `k+1`: `round(5 * (k + 1)^1.5)`.
-- Propuesta de efecto: cada nivel de forja multiplica los modificadores de la pieza por `1 + 0,10 * nivel`. Así +5 da ×1,5.
+- Efecto (decisión D8, cerrada en la ronda 3): cada nivel de forja multiplica todos los modificadores de la pieza por `1 + 0,10 * nivel`. Así +5 da ×1,5. El valor final se redondea a 2 decimales. Ejemplo: vida 10 en +3 da 13 HP y suerte 5 en +3 da 6,5 puntos.
+- `datos.js` solo subía el modificador principal, +1 % por nivel. Ahora sube todos los modificadores, como indica D8.
 
 | Subida | Valor exacto | Costo (chatarra) | Acumulado |
 |---|---:|---:|---:|
@@ -382,6 +405,15 @@ Consumibles:
 
 Un cofre abierto queda abierto en el progreso. Cada zona tiene de 2 a 4 cofres, y el cofre de jefe aparece al derrotar al jefe.
 
+Decisión de la ronda 3 (cofres): esta tabla es la referencia y `datos.js` la sigue (`tablaDeCofres`, `abrirCofre`).
+
+- XP del cofre raro: 75, no 60. El código tenía 60.
+- Núcleos y chatarra: el mismo rango en todas las zonas. El código tenía rangos por zona.
+- Probabilidad de pieza: 40 % (común), 75 % (raro) y siempre (de jefe). El código tenía 40 a 60 %, 80 a 95 % y siempre, según la zona.
+- Probabilidad de consumible: 25 % (común), 40 % (raro) y siempre (de jefe). El código tenía otras cifras.
+- La rareza de la pieza sale de 8.2. El cofre de jefe tiene «rareza mínima poco común» porque la fila de jefe de 8.2 no da común en ninguna zona.
+- Un consumible de cofre común o raro es curación o bomba a partes iguales. El documento no lo fija.
+
 ### 8.2 Probabilidad de rareza por tipo y zona (suerte 0)
 
 Pesos en porcentaje. La rareza sube con la zona.
@@ -401,9 +433,13 @@ Pesos en porcentaje. La rareza sube con la zona.
 | De jefe | Z3 | 0 | 25 | 44 | 23 | 8 |
 | De jefe | Z4 | 0 | 15 | 40 | 30 | 15 |
 
+Decisión de la ronda 3 (rareza por cofre): esta tabla es la única fuente de rareza de las piezas. `datos.js` tenía además una rareza mínima por zona (Z2 poco común, Z3 raro y Z4 épico) que contradecía la tabla. Por ejemplo, el común de Z4 da 25 % de piezas comunes. Esa rareza mínima se eliminó. `probabilidadesRareza(tipo, zona, suerte)` devuelve estas probabilidades con la suerte de 8.3 ya aplicada, y `generarPieza` las usa para tirar la rareza.
+
 ### 8.3 Efecto de la suerte
 
 Los pesos de raro, épico y legendario se multiplican por `(1 + 0,03 * suerte)`. Después se normalizan los pesos. Así la suerte sube la probabilidad de rareza alta en un 3 % relativo por punto.
+
+Decisión de la ronda 3 (suerte en puntos): la suerte se mide en puntos. Los puntos de un jugador son los del atributo Suerte (4.2) más la suma de los modificadores de Suerte de las piezas equipadas (5.3, de 1 a 3 puntos cada uno). Cada punto sube un 3 % relativo la rareza alta. `datos.js` trataba la suerte como porcentaje (0 a 100 %) y usaba otra fórmula de subida. Ahora `abrirCofre` y `generarPieza` reciben puntos, validados de 0 a 100. `bonoDeAtributos` sigue dando el bono de Suerte en % (3 por punto) para la hoja del personaje. La función `probabilidadSubidaRareza(tipo, zona, suerte)` conserva su nombre por contrato. Devuelve la probabilidad de rareza alta, que es lo que muestra la tabla de esta sección.
 
 Probabilidad de rareza alta (raro, épico o legendario):
 
@@ -429,11 +465,20 @@ Probabilidad de rareza alta (raro, épico o legendario):
 | Patrón del traje | 3: liso, rayas y celdas |
 | Nombre de viajero | Máximo 12 caracteres: letras (con tildes y ñ), números y espacios. Se recortan los espacios de los extremos y se colapsan los dobles |
 
+Decisión de la ronda 3 (personalización): `datos.js` se alineó con esta sección.
+
+- Colores del traje: las claves son ASCII (`oxido`, `carmesi`, `ambar`). El código tenía `bronce`, `acero` y `grafito` en lugar de `cobalto`, `cristal` y `ambar`. Los nuevos valores son `cobalto` #2f5f8f, `cristal` #9fc9d8 y `ambar` #c98a1b.
+- Visor: `carmesi` (#e0403a) y `blanco` (#f2efe9) reemplazan a `rojo` y `verde`.
+- Patrón del traje: `celdas`, como en el documento. El código decía `placas`.
+- Tono de 0 a 345 en pasos de 15 y brillo de -20 a +20 en pasos de 5. Valor por defecto: tono 0 y brillo 0. El código tenía brillo 50, fuera de rango.
+- Nombre: se normaliza a NFC, se recortan los espacios de los extremos y se colapsan los dobles, y después se valida (1 a 12 caracteres). Así «  Ana   Lu » se guarda como «Ana Lu». Los dígitos son los de Unicode (`\p{Nd}`).
+
 La personalización es solo visual. No cambia atributos ni estadísticas.
 
 ### 9.2 Persistencia
 
 - Clave de localStorage: `ceniza.personaje.v1`. Contiene un objeto JSON con el campo `v: 1`.
+- Decisión de la ronda 3: el objeto guardado tiene la misma forma que el JSON del código de exportación (9.3), con `capa.on` y `patron` en la raíz. La validación rechaza cualquier `v` distinto de 1.
 - Se guarda en cada cambio y se lee al iniciar. Si el dato no es válido, se usan los valores por defecto y se avisa, sin fallar.
 - Todas las lecturas y escrituras van dentro de `try/catch`. Si el almacenamiento no está disponible, el juego sigue, pero la personalización no persiste.
 
@@ -448,6 +493,14 @@ CENIZA1.<base64 del JSON en UTF-8>.<checksum>
 - `checksum` son 8 dígitos hexadecimales: FNV-1a de 32 bits sobre la parte base64.
 - El JSON tiene estas claves: `v`, `traje` (con `color`, `tono` y `brillo`), `visor`, `casco`, `capa` (con `color` y `on`), `emblema`, `patron` y `nombre`.
 - Al importar se valida el prefijo, el checksum, la base64, el JSON, los rangos, los tipos y la longitud del nombre. Si algo falla, no cambia nada y se muestra el motivo.
+
+Decisión de la ronda 3 (formato): `datos.js` se alineó con esta sección.
+
+- Separador: punto, como `CENIZA1.<base64>.<checksum>`. El código tenía guiones. El base64 no usa puntos.
+- Checksum: FNV-1a de 32 bits sobre la parte base64, no sobre el JSON. Así la suma se comprueba antes de decodificar.
+- El JSON va en UTF-8. Las tildes y la ñ se codifican como bytes UTF-8, no como escapes `\u`.
+- Claves del JSON, en este orden: `v` (1), `traje` (`color`, `tono`, `brillo`), `visor`, `casco`, `capa` (`color`, `on`), `emblema`, `patron` (en la raíz, no dentro de `traje`) y `nombre`. Se usa `on`, no `activa`.
+- Orden de validación al importar: prefijo, checksum, base64, UTF-8, JSON, `v`, rangos y tipos, y longitud del nombre.
 
 ## 10 Guardado, muerte y reinicio
 
@@ -558,4 +611,4 @@ Decisiones pendientes del dueño:
 - **D5 (onda).** La onda de la hoja cuenta en el DPS de referencia. Sin ella, el tope cambia como se indica en 7.4.
 - **D6 (cuantización).** El tope se mantiene a 60 y 120 Hz. Si el código cambia cómo se descuentan los cooldowns, hay que repetir la verificación de 7.5.
 - **D7 (uptime del coloso).** Se supuso 0,5 para calibrar los PV del Coloso final.
-- **D8 (forja).** El efecto `1 + 0,10 * nivel` es una propuesta.
+- **D8 (forja).** Cerrada en la ronda 3: el efecto es `1 + 0,10 * nivel` sobre todos los modificadores de la pieza (5.5).
