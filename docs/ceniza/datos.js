@@ -167,7 +167,7 @@
     { id: 1, nombre: "Duna tibia", jefe: "Guardián de duna", minutos: 16, xpJefe: 150, set: null },
     { id: 2, nombre: "Ciudad de cristal", jefe: "Centinela de cristal", minutos: 20, xpJefe: 200, set: "cristal" },
     { id: 3, nombre: "Fundición de lava", jefe: "El Forjador", minutos: 22, xpJefe: 300, set: null },
-    { id: 4, nombre: "Bosque de chatarra", jefe: "Guardián de chatarra", minutos: 24, xpJefe: 400, set: "chatarra", desbloquea: "FASE 2" },
+    { id: 4, nombre: "Bosque de chatarra", jefe: "Guardián de chatarra", minutos: 24, xpJefe: 400, set: "chatarra", desbloquea: "FASE 3D" },
   ]);
 
   const SECTORES = congelar([

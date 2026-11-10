@@ -19,7 +19,7 @@
 //   de jefe se suman aparte.
 // - La sala de jefe de cada zona enlaza con la primera sala de la siguiente. El
 //   Guardián de chatarra (Z4) no enlaza con ninguna sala 2D: su derrota es JEFE X
-//   y desbloquea la FASE 2 en 3D (esJefeX).
+//   y desbloquea la FASE 3D (esJefeX).
 
 (function () {
   "use strict";
@@ -51,7 +51,7 @@
 
   // ----------------------------------------------------------------- tablas de contenido
   // clase: "comun" (5 XP), "elite" (10 XP) o "jefe". jefeX marca la derrota que
-  // desbloquea la FASE 2 en 3D. Los valores de daño van en el juego, no aquí.
+  // desbloquea la FASE 3D. Los valores de daño van en el juego, no aquí.
   const TIPOS_ENEMIGO = congelar({
     "arenero": { nombre: "Arenero", clase: "comun", zona: 1 },
     "escarabajo": { nombre: "Escarabajo de duna", clase: "elite", zona: 1 },

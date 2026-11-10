@@ -39,9 +39,9 @@
   // ----------------------------------------------------------------- textos y constantes
   // Etiquetas en español de los ids de datos.js. Un id sin etiqueta se muestra tal cual.
   const ETIQUETAS = {
-    ceniza: "Ceniza", arena: "Arena", oxido: "Óxido", carmesi: "Carmesí",
-    bronce: "Bronce", musgo: "Musgo", acero: "Acero", grafito: "Grafito",
-    ambar: "Ámbar", cian: "Cian", rojo: "Rojo", verde: "Verde", violeta: "Violeta",
+    ceniza: "Ceniza", arena: "Arena", oxido: "Óxido", cobalto: "Cobalto", musgo: "Musgo",
+    cristal: "Cristal", carmesi: "Carmesí", ambar: "Ámbar", cian: "Cian", violeta: "Violeta",
+    blanco: "Blanco",
     sencillo: "Sencillo", cerrado: "Cerrado", cresta: "Cresta", rastreador: "Rastreador",
     liso: "Liso", rayas: "Rayas", placas: "Placas",
     sol: "Sol", luna: "Luna", ala: "Ala", rayo: "Rayo", espiral: "Espiral",
