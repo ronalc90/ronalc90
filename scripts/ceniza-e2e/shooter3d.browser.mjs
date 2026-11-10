@@ -140,6 +140,30 @@ async function analizarPng(navegador, png) {
 
 // ---------------------------------------------------------------- bot (entradas reales)
 
+// Fase 2 del Coloso (brazos). Todo el daño resta de los PV de la fase, pero la ventana solo se abre al romper un
+// brazo (3500 PV cada uno). Por eso el bot fija un brazo hasta romperlo, en vez de repartir el daño entre los dos.
+// Con la ventana abierta, el punto expuesto es el ojo. Las posiciones salen de vista(), como con los enemigos.
+function objetivosFase2(c, b, j, ojo) {
+  if (c.ventana > 0) {
+    const ojoAbierto = c.partes.filter((p) => p.id === "ojo" && p.activa);
+    if (ojoAbierto.length) return ojoAbierto;
+  }
+  const brazos = c.partes.filter((p) => p.id === "brazoI" || p.id === "brazoD");
+  if (!brazos.length) return c.partes;
+  if (!brazos.some((p) => p.id === b.brazoFijo)) {
+    // Brazo nuevo: el que esté más cerca de la mira en este momento.
+    let mejor = null;
+    for (const p of brazos) {
+      const dx = p.x - ojo.x, dy = p.y - ojo.y, dz = p.z - ojo.z;
+      const dyaw = envolver(Math.atan2(-dx, -dz) - j.yaw), dpitch = Math.atan2(dy, Math.hypot(dx, dz)) - j.pitch;
+      const d = Math.hypot(dyaw, dpitch);
+      if (!mejor || d < mejor.d) mejor = { id: p.id, d: d };
+    }
+    b.brazoFijo = mejor.id;
+  }
+  return brazos.filter((p) => p.id === b.brazoFijo);
+}
+
 // Decide qué pulsar en este paso a partir de vista() y estado(). Devuelve teclas, mira, fuego y arma.
 function decidir(v, e, b) {
   const j = v.jugador;
@@ -154,7 +178,8 @@ function decidir(v, e, b) {
     cands.push({ x: en.x, y: en.y, z: en.z, radio: en.radio, activa: true, cuerpo: en.tipo === "asalto" || en.tipo === "elite", nombre: en.tipo });
   }
   if (v.coloso) {
-    for (const p of v.coloso.partes) cands.push({ x: p.x, y: p.y, z: p.z, radio: p.radio, activa: p.activa, cuerpo: false, nombre: "coloso " + p.id });
+    const partes = v.coloso.fase === 2 ? objetivosFase2(v.coloso, b, j, ojo) : v.coloso.partes;
+    for (const p of partes) cands.push({ x: p.x, y: p.y, z: p.z, radio: p.radio, activa: p.activa, cuerpo: false, nombre: "coloso " + p.id });
   }
   let mejor = null;
   for (const c of cands) {
@@ -226,7 +251,11 @@ function decidir(v, e, b) {
       empujar(lx * lado, lz * lado, 3);
     }
   }
-  if (v.arena) {
+  if (v.arena && v.coloso && v.coloso.fase === 2) {
+    // Fase 2: el misil guiado vive 4 s a 9 m/s (unos 36 m) y se dispara desde unos 37 m del borde sur de la arena.
+    // Pegado a ese borde no lo alcanza. Desde allí el rifle (60 m) sigue llegando a los brazos.
+    empujar(clamp((1.2 * Math.sin(e.tiempo * 0.8) - j.x) / 2, -1, 1), clamp((22 - j.z) / 2, -1, 1), 1);
+  } else if (v.arena) {
     empujar(clamp((4 * Math.sin(e.tiempo * 1.1) - j.x) / 2, -1, 1), clamp((6 - j.z) / 3, -1, 1), 1);
   } else if (vivos > 0 || v.oleadaActiva >= 0) {
     // Se queda cerca de la entrada de la oleada activa, con los enemigos delante; la escopeta se acerca más.
@@ -331,10 +360,13 @@ async function jugar(pagina) {
   await pagina.mouse.move(CENTRO.x, CENTRO.y);
   const leer = () => pagina.evaluate(() => ({ e: globalThis.__juego.estado(), v: globalThis.__juego.vista() }));
   let obs = await leer();
-  const b = { teclas: new Set(), fuego: false, cursor: { ...CENTRO }, vacia: new Set() };
+  const b = { teclas: new Set(), fuego: false, cursor: { ...CENTRO }, vacia: new Set(), brazoFijo: null };
   const hitos = [];
   let sectorPrev = obs.e.sector, derrotadosPrev = obs.e.enemigosDerrotados;
   let poolPrev = obs.v.coloso ? obs.v.coloso.pool : null, fasePrev = obs.v.coloso ? obs.v.coloso.fase : null;
+  // Telemetría del Coloso: brazos rotos en fase 2, ventanas abiertas y momento de entrar en la fase 2.
+  const tele = { brazos: 0, ventanas: 0, faseDos: null, primerBrazo: null, faseMax: 0 };
+  let brazosPrev = 0, ventanaPrev = 0;
   let ultimoAvance = obs.e.tiempo;
   let motivo = null, pasos = 0;
   while (!obs.e.terminado) {
@@ -360,6 +392,17 @@ async function jugar(pagina) {
     if (obs.v.coloso) {
       if (poolPrev !== null && obs.v.coloso.pool < poolPrev - 1e-9) ultimoAvance = obs.e.tiempo;
       if (fasePrev !== null && obs.v.coloso.fase !== fasePrev) ultimoAvance = obs.e.tiempo;
+      const c = obs.v.coloso;
+      const brazosVivos = c.partes.filter((p) => p.id === "brazoI" || p.id === "brazoD").length;
+      if (c.fase === 2 && fasePrev !== 2) tele.faseDos = obs.e.tiempo;
+      if (c.fase === 2 && fasePrev === 2 && brazosVivos < brazosPrev) {
+        tele.brazos += brazosPrev - brazosVivos;
+        if (tele.primerBrazo === null) tele.primerBrazo = obs.e.tiempo;
+      }
+      if (c.fase === 2 && c.ventana > 0 && ventanaPrev <= 0) tele.ventanas += 1;
+      if (c.fase > tele.faseMax) tele.faseMax = c.fase;
+      if (c.fase === 2) brazosPrev = brazosVivos;
+      ventanaPrev = c.ventana;
       poolPrev = obs.v.coloso.pool;
       fasePrev = obs.v.coloso.fase;
     }
@@ -368,7 +411,13 @@ async function jugar(pagina) {
   for (const k of [...b.teclas]) await pagina.keyboard.up(k);
   b.teclas.clear();
   if (b.fuego) await pagina.mouse.up();
-  return { obs, hitos, pasos, motivo, motivoFin: motivo || (obs.e.terminado ? obs.e.resultado : null) };
+  return { obs, hitos, pasos, motivo, tele, motivoFin: motivo || (obs.e.terminado ? obs.e.resultado : null) };
+}
+
+function describirTelemetria(t) {
+  return "fase máxima vista " + t.faseMax + ", brazos rotos " + t.brazos + ", ventanas abiertas en fase 2 " + t.ventanas +
+    (t.faseDos !== null ? ", fase 2 desde los " + t.faseDos.toFixed(1) + " s de juego" : ", fase 2 no alcanzada") +
+    (t.primerBrazo !== null ? ", primer brazo roto a los " + t.primerBrazo.toFixed(1) + " s" : "");
 }
 
 // ---------------------------------------------------------------- comprobaciones
@@ -482,6 +531,7 @@ async function comprobarRecorrido(navegador, rutaPagina, errores) {
       registrar(false, id + ") " + de + " (" + arma + ") no superado: " + atascado);
     }
   }
+  info("Coloso (recorrido): " + describirTelemetria(r.tele));
   const victoria = fin.resultado === "victoria";
   if (victoria) {
     registrar(true, "4d) Coloso final derrotado con entradas reales a los " + fin.tiempo.toFixed(1) + " s de juego");
@@ -519,6 +569,7 @@ async function diagnosticoColoso(navegador, rutaPagina, errores) {
   info("Coloso aislado: fin " + r.motivoFin + " a los " + r.obs.e.tiempo.toFixed(1) + " s de juego; fase " +
     (v.coloso ? v.coloso.fase : "?") + "; PV restantes de la fase " + pool + "; vida " + r.obs.e.vida + "; munición del arma en mano " +
     JSON.stringify(r.obs.e.municion) + " (" + r.obs.e.arma + ")");
+  info("Coloso aislado: " + describirTelemetria(r.tele));
   await pagina.close();
 }
 
