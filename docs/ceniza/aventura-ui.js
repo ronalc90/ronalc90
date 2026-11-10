@@ -34,7 +34,7 @@
 //
 // Gancho de pruebas: globalThis.CENIZA_TEST solo existe si la URL contiene "prueba=1".
 // Expone estado(), avanzar(segundos), entrarSala(salaId), matarEnemigosDeSala(), vencerJefe(jefeId),
-// enemigos() y secretosDisponibles() (solo lectura), y colocar(x, y) (mueve al viajero; solo prueba).
+// enemigos(), secretosDisponibles() y cooldownArma() (solo lectura), y colocar(x, y) (mueve al viajero; solo prueba).
 //
 // Pausa y medición: la pausa (Escape o P) no avanza el tiempo de simulación. El tiempo se
 // cuenta en fotogramas fijos de 1/60 s, así que avanzar(n) es determinista con la misma semilla.
@@ -1308,6 +1308,9 @@
     const secretosDisponibles = () =>
       M.SALAS.filter((s) => s.secreto !== null && !partida.secretos.includes(s.id)).map((s) => s.id);
 
+    // Cooldown que queda para el siguiente golpe o disparo del viajero, en segundos. Solo lectura.
+    const cooldownArma = () => (viajero ? viajero.armaCd : null);
+
     // Mueve al viajero a (x, y), solo para pruebas. No cambia la partida.
     function moverViajeroPrueba(x, y) {
       viajero.x = clamp(Number(x), VIAJERO.xMin, VIAJERO.xMax);
@@ -1631,7 +1634,7 @@
       const v = viajero;
       v.invT = Math.max(0, v.invT - PASO);
       v.esquivaCd = Math.max(0, v.esquivaCd - PASO);
-      v.armaCd = Math.max(0, v.armaCd - PASO);
+      v.armaCd = D.restarFotograma(v.armaCd, PASO);
       if (v.comboT > 0) {
         v.comboT -= PASO;
         if (v.comboT <= 0) v.combo = 0;
@@ -1839,6 +1842,7 @@
       vigilar3d,
       enemigosVivos,
       secretosDisponibles,
+      cooldownArma,
       moverViajeroPrueba,
       avisar: mostrar,
       destruir,
@@ -2217,6 +2221,13 @@
       const k = claveDe(e);
       const prevenir = () => { if (typeof e.preventDefault === "function") e.preventDefault(); };
       if (k === "escape" || k === "p") {
+        // Con un cuadro de historia abierto, Escape y P no pausan ni reanudan nada. La tecla no sale de la capa 2D:
+        // la fase 3D escucha Escape y P en window (shooter3d.js) y los alternaría, reanudando el sector con el cuadro abierto.
+        if (motor.modo() === "historia") {
+          prevenir();
+          if (typeof e.stopPropagation === "function") e.stopPropagation();
+          return;
+        }
         if (!e.repeat) manejarPausa();
         prevenir();
         return;
@@ -2298,6 +2309,7 @@
       estado: () => motor.estado(),
       enemigos: () => motor.enemigosVivos(),
       secretosDisponibles: () => motor.secretosDisponibles(),
+      cooldownArma: () => motor.cooldownArma(),
       colocar: (x, y) => motor.moverViajeroPrueba(x, y),
       avanzar: (segundos) => motor.avanzar(segundos),
       entrarSala: (salaId) => motor.intentarCruzar(salaId),

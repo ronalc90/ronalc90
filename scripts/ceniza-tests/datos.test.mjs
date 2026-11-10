@@ -190,6 +190,62 @@ test("el tope recorta el espaciado de la ráfaga: flechas y daño por flecha no 
   assert.equal(D.cooldownArco(0), D.armas.arco.cadencia, "sin tope activo a maestría 0");
 });
 
+// Cuenta atrás de un cooldown por fotogramas, como en el juego (tickTimers): se resta un paso hasta
+// llegar a 0 o menos. Usa restarFotograma, la misma función que el juego.
+const fotogramasHastaCero = (cooldown, paso) => {
+  let restante = cooldown;
+  let n = 0;
+  do {
+    restante = D.restarFotograma(restante, paso);
+    n++;
+  } while (restante > 0);
+  return n;
+};
+
+test("restarFotograma: 0,25 s son 15 fotogramas a 60 Hz (sin el umbral serían 16 por coma flotante)", () => {
+  const paso = 1 / 60;
+  assert.equal(fotogramasHastaCero(0.25, paso), 15);
+  assert.equal(fotogramasHastaCero(0.25, 1 / 120), 30);
+  let restante = 0.25;
+  for (let i = 0; i < 14; i++) restante = D.restarFotograma(restante, paso);
+  assert.ok(restante > 0, "tras 14 fotogramas aún queda cooldown");
+  assert.equal(D.restarFotograma(restante, paso), 0, "el fotograma 15 llega a cero y no queda residuo");
+  assert.equal(D.restarFotograma(0, paso), 0, "sin cooldown no baja de cero");
+  assert.equal(D.restarFotograma(0.5, paso), 0.5 - paso, "un descuento normal no cambia");
+  assert.throws(() => D.restarFotograma(-0.1, paso), esError("RangeError"));
+  assert.throws(() => D.restarFotograma(Number.NaN, paso), esError("RangeError"));
+  assert.throws(() => D.restarFotograma(0.1, 0), esError("RangeError"));
+});
+
+test("CA-03 a 60 Hz con los fotogramas del juego (docs 7.5): hoja 56 fotogramas y arco 14, 18, 26, 26", () => {
+  const paso = 1 / 60;
+  const cicloHoja = D.armas.hoja.cadencias.reduce((s, c) => s + fotogramasHastaCero(c, paso), 0);
+  assert.equal(cicloHoja, 56, "ciclo de la hoja: 15 + 15 + 26 fotogramas");
+  const framesArco = [0, 1, 2, 3].map((m) => fotogramasHastaCero(D.cooldownArco(m), paso));
+  assert.deepEqual(framesArco, [14, 18, 26, 26]);
+  for (let m = 0; m <= 3; m++) {
+    const d = plano(D.danoHoja(m));
+    const dpsHoja = (d.golpes.reduce((s, x) => s + x, 0) + d.onda) / (cicloHoja * paso);
+    const dpsArco = (D.MULTIDISPARO_ARCO[m] * D.danoPorGolpe("arco", m)) / (framesArco[m] * paso);
+    assert.equal(porcentaje(dpsArco, dpsHoja), [57.1, 91.5, 93.5, 94.6][m], `arco a 60 Hz, maestría ${m}`);
+    assert.ok(dpsArco <= 0.95 * dpsHoja, `CA-03 a 60 Hz, maestría ${m}`);
+  }
+});
+
+test("CA-03 a 60 y 120 Hz con restarFotograma (docs 7.5): el arco queda por debajo del 95 % de la hoja", () => {
+  for (const hz of [60, 120]) {
+    const paso = 1 / hz;
+    const cicloHoja = D.armas.hoja.cadencias.reduce((s, c) => s + fotogramasHastaCero(c, paso), 0);
+    for (let m = 0; m <= 3; m++) {
+      const d = plano(D.danoHoja(m));
+      const dpsHoja = (d.golpes.reduce((s, x) => s + x, 0) + d.onda) / (cicloHoja * paso);
+      const framesArco = fotogramasHastaCero(D.cooldownArco(m), paso);
+      const dpsArco = (D.MULTIDISPARO_ARCO[m] * D.danoPorGolpe("arco", m)) / (framesArco * paso);
+      assert.ok(dpsArco <= 0.95 * dpsHoja, `arco a ${hz} Hz, maestría ${m}: ${porcentaje(dpsArco, dpsHoja)} %`);
+    }
+  }
+});
+
 test("armas 2D y 3D (tablas 6.1 y 6.2): DPS de referencia y datos de cada arma", () => {
   assert.equal(redondear(D.dpsArma("arco", 0), 1), 39.1);
   assert.equal(redondear(D.dpsArma("martillo", 0), 1), 38.9);

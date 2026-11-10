@@ -663,3 +663,114 @@ test("fogata: encender una fogata en otra zona guarda esa sala; el guardado al e
   assert.equal(gancho.estado().sala, "Z2.1");
   control.destruir();
 });
+
+// CA-03 con el juego real (docs 7.5). Cada fotograma se pulsa J y se avanza 1/60 s. Un ataque se reconoce
+// porque el cooldown del viajero (cooldownArma) salta hacia arriba: el valor tras un ataque es el nuevo cooldown.
+const FOTOGRAMAS_DE_PRUEBA = 600; // 10 s a 60 Hz
+function fotogramasDeAtaque(gancho, doc, tecla) {
+  const ataques = [];
+  let previo = gancho.cooldownArma();
+  for (let f = 0; f < FOTOGRAMAS_DE_PRUEBA; f++) {
+    doc.dispatch("keydown", { key: tecla });
+    gancho.avanzar(1 / 60);
+    const ahora = gancho.cooldownArma();
+    if (ahora > previo) ataques.push(f);
+    previo = ahora;
+  }
+  return ataques;
+}
+
+test("CA-03 con el juego real a 60 Hz: el arco nunca supera el 95 % de la hoja con maestría 0 a 3", () => {
+  const cuadros = { hoja: [], arco: [] };
+  for (let m = 0; m <= 3; m++) {
+    const contexto = cargar(CON_PRUEBA);
+    const D = contexto.CenizaDatos;
+    const { doc, control } = montarEn(contexto, { armas: ["hoja", "arco"], usos: { hoja: 30 * m, arco: 30 * m }, vida: 1e6 });
+    const gancho = contexto.CENIZA_TEST;
+    assert.equal(gancho.estado().maestria.hoja, m, `maestría de la hoja ${m}`);
+    // Hoja: los golpes de la combinación, de tres en tres. Ciclo medido entre el primero y el último completo.
+    const ataquesHoja = fotogramasDeAtaque(gancho, doc, "j");
+    const k = Math.floor((ataquesHoja.length - 1) / 3);
+    assert.ok(k >= 3, "se miden al menos tres ciclos de la hoja");
+    const cicloHoja = (ataquesHoja[3 * k] - ataquesHoja[0]) / k;
+    // Arco: el espaciado medio entre ráfagas.
+    doc.dispatch("keydown", { key: "2" });
+    gancho.avanzar(1 / 60);
+    assert.equal(gancho.estado().arma, "arco", "el arco está equipado");
+    const ataquesArco = fotogramasDeAtaque(gancho, doc, "j");
+    assert.ok(ataquesArco.length >= 10, "se miden al menos diez ráfagas del arco");
+    const espaciadoArco = (ataquesArco[ataquesArco.length - 1] - ataquesArco[0]) / (ataquesArco.length - 1);
+    assert.equal(cicloHoja, 56, `ciclo de la hoja a 60 Hz, maestría ${m}`);
+    assert.equal(espaciadoArco, [14, 18, 26, 26][m], `espaciado de la ráfaga a 60 Hz, maestría ${m}`);
+    const d = plano(D.danoHoja(m));
+    const dpsHoja = (d.golpes.reduce((s, x) => s + x, 0) + d.onda) / (cicloHoja / 60);
+    const dpsArco = (D.MULTIDISPARO_ARCO[m] * D.danoPorGolpe("arco", m)) / (espaciadoArco / 60);
+    const porcentaje = (100 * dpsArco) / dpsHoja;
+    cuadros.hoja.push(Math.round(dpsHoja * 100) / 100);
+    cuadros.arco.push(Math.round(dpsArco * 100) / 100);
+    assert.ok(porcentaje <= 95, `maestría ${m}: el arco llega al ${porcentaje.toFixed(2)} % de la hoja`);
+    assert.equal(gancho.estado().maestria.arco, m, `maestría del arco ${m}`);
+    control.destruir();
+  }
+  assert.deepEqual(cuadros.hoja, [67.5, 72.86, 81.43, 87.86], "DPS de la hoja a 60 Hz (docs 7.5)");
+  assert.deepEqual(cuadros.arco, [38.57, 66.67, 76.15, 83.08], "DPS del arco a 60 Hz (docs 7.5)");
+});
+
+// Escape y P con un cuadro de sector abierto en la fase 3D. shooter3d.js escucha Escape y P en window y alterna
+// su pausa (y reanuda si estaba pausada). Aquí ese oyente se simula: recibe la tecla solo si la capa 2D no la
+// detuvo con stopPropagation, que es lo que hace el documento real al bajar desde el elemento hasta window.
+test("fase 3D: Escape y P con un cuadro de sector abierto no reanudan la fase 3D; al cerrar el cuadro sí", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const f = { sector: "S1", fase: null, terminado: false, pausado: false, reanudas: 0, alternadasPorTecla: 0 };
+  contexto.Ceniza3D = {
+    start() {
+      return {
+        estado: () => ({ sector: f.sector, fase: f.fase, terminado: f.terminado }),
+        pausar() { f.pausado = true; },
+        reanudar() { f.pausado = false; f.reanudas += 1; },
+        destruir() {},
+      };
+    },
+  };
+  const { doc, contenedor, control } = montarEn(contexto);
+  const gancho = contexto.CENIZA_TEST;
+  // Documento con su oyente de window (shooter3d): el mismo orden de llamadas que el navegador.
+  doc.dispatch = (tipo, datos) => {
+    let detenida = false;
+    const e = { key: "", repeat: false, target: doc.activeElement, preventDefault() {}, stopPropagation() { detenida = true; }, ...datos };
+    for (const fn of doc.oyentes[tipo] || []) fn(e);
+    const esPausa = e.code === "Escape" || e.code === "KeyP";
+    if (tipo === "keydown" && esPausa && !detenida && !e.repeat) {
+      f.alternadasPorTecla += 1;
+      if (f.pausado) { f.pausado = false; f.reanudas += 1; } else f.pausado = true;
+    }
+  };
+  gancho.vencerJefe("guardian-chatarra");
+  cerrarHistoria(contenedor);   // caída
+  cerrarHistoria(contenedor);   // entrada y S1
+  assert.equal(gancho.estado().modo, "tres_d");
+  // Cambio a S2: la fase 3D se pausa con el cuadro abierto.
+  f.sector = "S2";
+  gancho.avanzar(1 / 60);
+  assert.equal(gancho.estado().modo, "historia");
+  assert.equal(f.pausado, true, "la fase 3D está pausada mientras hay cuadro");
+  for (const tecla of [{ key: "Escape", code: "Escape" }, { key: "p", code: "KeyP" }]) {
+    doc.dispatch("keydown", tecla);
+    gancho.avanzar(1 / 60);
+    assert.equal(gancho.estado().modo, "historia", `${tecla.key}: el cuadro sigue abierto`);
+    assert.equal(f.pausado, true, `${tecla.key}: la fase 3D sigue pausada`);
+  }
+  assert.equal(f.alternadasPorTecla, 0, "con el cuadro abierto, Escape y P no llegan a la fase 3D");
+  assert.equal(f.reanudas, 0, "ninguna reanudación antes de cerrar el cuadro");
+  cerrarHistoria(contenedor);
+  assert.equal(f.reanudas, 1, "al cerrar el cuadro, la fase 3D se reanuda una vez");
+  assert.equal(f.pausado, false);
+  assert.equal(gancho.estado().modo, "tres_d");
+  // Sin cuadro, Escape sigue pausando la fase 3D como antes.
+  doc.dispatch("keydown", { key: "Escape", code: "Escape" });
+  gancho.avanzar(1 / 60);
+  assert.equal(f.pausado, true, "Escape en la fase 3D pausa");
+  assert.equal(f.alternadasPorTecla, 1);
+  assert.equal(gancho.estado().modo, "tres_d", "la capa 2D sigue en la fase 3D");
+  control.destruir();
+});

@@ -247,6 +247,19 @@
     return Math.max(ARMAS.arco.cadencia, techo3(rafaga / (LIMITE_ARCO * dpsHoja(maestria))));
   }
 
+  // Descuento de un fotograma a un cooldown (segundos). Lo usa el juego en cada paso de simulación
+  // (aventura-ui.js, tickTimers) y las pruebas de CA-03 a 60 y 120 Hz.
+  // Un residuo de coma flotante menor que 1e-9 s cuenta como cero. Sin el umbral, la cadencia de 0,25 s
+  // de la hoja tardaba 16 fotogramas de 1/60 s en vez de 15, porque 0,25 - 15 · (1/60) = 4,9e-17 > 0.
+  // Con ese fallo la hoja iba un 3,6 % más lenta y el arco superaba el 95 % (96,9 % y 97,9 % a 60 Hz).
+  const UMBRAL_FOTOGRAMA = 1e-9;
+  function restarFotograma(restante, paso) {
+    if (!Number.isFinite(restante) || restante < 0) throw new RangeError("restarFotograma necesita un cooldown no negativo");
+    if (!(paso > 0)) throw new RangeError("restarFotograma necesita un paso positivo");
+    const resto = restante - paso;
+    return resto < UMBRAL_FOTOGRAMA ? 0 : resto;
+  }
+
   // DPS de un arma con su maestría. Arco: con el tope de cooldownArco. Escopeta: suma de sus perdigones.
   // Plasma: solo impacto directo.
   function dpsArma(nombre, maestria) {
@@ -653,6 +666,7 @@
     danoPorGolpe,
     dpsArma,
     cooldownArco,
+    restarFotograma,
     opcionesPersonaje,
     normalizarNombre,
     personajePorDefecto,
