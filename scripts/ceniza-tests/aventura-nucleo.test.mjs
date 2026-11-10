@@ -745,3 +745,50 @@ test("recogerSecreto no muta la partida y con la misma semilla da el mismo resul
   assert.equal(N.recogerSecreto(p, "Z1.3").ok, true, "sin rng usa Math.random");
   assert.throws(() => N.recogerSecreto(p, "Z1.3", 5), esError("TypeError"));
 });
+
+test("historia: crearPartida trae la lista vacía y marcarHistoria añade cada clave una sola vez", () => {
+  const p = N.crearPartida({ semilla: 5 });
+  assert.deepEqual(plano(p.historia), [], "partida nueva sin historia vista");
+  const antes = JSON.stringify(p);
+  const a = N.marcarHistoria(p, "zona:1");
+  assert.equal(JSON.stringify(p), antes, "la partida recibida no cambia");
+  assert.deepEqual(plano(a.historia), ["zona:1"]);
+  const b = N.marcarHistoria(a, "jefe:guardian-duna");
+  assert.deepEqual(plano(b.historia), ["zona:1", "jefe:guardian-duna"]);
+  const repetida = N.marcarHistoria(b, "zona:1");
+  assert.deepEqual(plano(repetida), plano(b), "repetir una clave deja la copia igual");
+  assert.deepEqual(plano(repetida.historia), ["zona:1", "jefe:guardian-duna"], "sin duplicados");
+  assert.throws(() => N.marcarHistoria(p, ""), esError("TypeError"));
+  assert.throws(() => N.marcarHistoria(p, "   "), esError("TypeError"));
+  assert.throws(() => N.marcarHistoria(p, 7), esError("TypeError"));
+  assert.throws(() => N.marcarHistoria(p, undefined), esError("TypeError"));
+});
+
+test("historia: las claves de los jefes, fogatas, fase 3D y final se guardan y se leen igual", () => {
+  const claves = [
+    "zona:1", "zona:4", "jefe:guardian-duna", "jefe:guardian-duna:caida", "fogata:2",
+    "3d:entrada", "3d:S1", "3d:S2", "3d:S3", "3d:coloso:1", "3d:coloso:2", "3d:coloso:3", "final",
+  ];
+  let p = N.crearPartida({ semilla: 6 });
+  for (const c of claves) p = N.marcarHistoria(p, c);
+  const r = N.deserializar(N.serializar(p));
+  assert.equal(r.ok, true, r.error);
+  assert.deepEqual(plano(r.partida.historia), claves, "las claves sobreviven al guardado");
+});
+
+test("historia: un guardado v1 sin historia se completa con []", () => {
+  const p = N.crearPartida({ semilla: 8 });
+  const v1 = plano(p);
+  delete v1.historia;
+  const r = N.deserializar(JSON.stringify({ version: N.VERSION, partida: v1 }));
+  assert.equal(r.ok, true, r.error);
+  assert.deepEqual(plano(r.partida.historia), []);
+  // El guardado con historia de tipo incorrecto se rechaza sin lanzar.
+  for (const malo of ["zona:1", [1], ["zona:1", "zona:1"], [null]]) {
+    const copia = plano(p);
+    copia.historia = malo;
+    const m = N.deserializar(JSON.stringify({ version: N.VERSION, partida: copia }));
+    assert.equal(m.ok, false, "historia no válida: " + JSON.stringify(malo));
+    assert.match(m.error, /historia/);
+  }
+});

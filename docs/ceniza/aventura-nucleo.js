@@ -18,8 +18,9 @@
 //   inventario [pieza], consumibles {curacion, bomba}, contadorPiezas, sala,
 //   ultimaFogata, jefesVencidos [jefeId], cofresAbiertos ["salaId#indice"],
 //   muertes, faseActual ("2d" | "3d" | "victoria"), armas [arma 2D] (la hoja viene
-//   desbloqueada), usos {arma: enemigos vencidos con ella} y secretos [salaId].
-//   Un guardado v1 sin armas, usos ni secretos se carga con sus valores por defecto.
+//   desbloqueada), usos {arma: enemigos vencidos con ella}, secretos [salaId] e
+//   historia [clave] (claves de historia ya vistas, sin repetir; ver marcarHistoria).
+//   Un guardado v1 sin armas, usos, secretos ni historia se carga con sus valores por defecto.
 
 (function () {
   "use strict";
@@ -314,6 +315,7 @@
       armas: ["hoja"],
       usos: usosIniciales(),
       secretos: [],
+      historia: [],
       muertes: 0,
       faseActual: "2d",
     };
@@ -400,6 +402,10 @@
         new Set(p.secretos).size !== p.secretos.length) {
       return "secretos no válidos";
     }
+    if (!Array.isArray(p.historia) || !p.historia.every((c) => typeof c === "string") ||
+        new Set(p.historia).size !== p.historia.length) {
+      return "historia no válida";
+    }
     if (!FASES.includes(p.faseActual)) return "fase no válida";
     return null;
   }
@@ -410,14 +416,15 @@
     return JSON.stringify({ version: VERSION, partida });
   }
 
-  // Guardados v1 anteriores a las armas, los usos y los secretos: se completan con sus valores
-  // por defecto. Devuelve una copia y no toca el objeto recibido.
+  // Guardados v1 anteriores a las armas, los usos, los secretos y la historia: se completan con sus
+  // valores por defecto. Devuelve una copia y no toca el objeto recibido.
   function completarGuardado(p) {
     if (!esObjeto(p)) return p;
     const c = { ...p };
     if (!tiene(c, "armas")) c.armas = ["hoja"];
     if (!tiene(c, "usos")) c.usos = usosIniciales();
     if (!tiene(c, "secretos")) c.secretos = [];
+    if (!tiene(c, "historia")) c.historia = [];
     return c;
   }
 
@@ -536,6 +543,20 @@
       return { ok: true, partida: p, recompensa: { tipo, cantidad } };
     }
     throw new RangeError("Recompensa de secreto desconocida: " + String(tipo));
+  }
+
+  // ----------------------------------------------------------------- historia vista
+  // Marca una clave de historia (docs/ceniza/historia.js: "zona:1", "jefe:guardian-duna", "3d:S1",
+  // "final", etc.) como vista. Devuelve una copia. Si la clave ya estaba, la copia sale sin cambios.
+  // Lanza TypeError si la clave no es un texto no vacío.
+  function marcarHistoria(partida, clave) {
+    if (typeof clave !== "string" || clave.trim() === "") {
+      throw new TypeError("La clave de historia debe ser un texto no vacío");
+    }
+    const p = clonar(partida);
+    if (!Array.isArray(p.historia)) p.historia = [];
+    if (!p.historia.includes(clave)) p.historia.push(clave);
+    return p;
   }
 
   // ----------------------------------------------------------------- enemigos y jefes
@@ -699,6 +720,7 @@
     comprarArma,
     maestriaDe,
     recogerSecreto,
+    marcarHistoria,
     registrarEnemigoVencido,
     registrarJefeVencido,
     registrarVictoria,
