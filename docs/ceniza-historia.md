@@ -1,6 +1,6 @@
 Historia definitiva. Fuente de los textos de docs/ceniza/historia.js.
 
-Estado: pendiente de integración. docs/index.html todavía no carga docs/ceniza/historia.js, así que el jugador no ve estos textos aún. La apertura del Acto I (el despertar y el primer uso de {nombre}) está en este documento y no en historia.js: añadirla allí supone una clave nueva en el objeto exportado. Las dos cosas quedan para la ronda de integración.
+Estado: pendiente de integración. docs/index.html todavía no carga docs/ceniza/historia.js, así que el jugador no ve estos textos aún. El despertar del Acto I está en historia.js con la clave inicio (tres líneas tomadas de este documento), y aventura-ui.js lo muestra al empezar una partida nueva. Queda pendiente para la integración: el nombre se escribe al encender la primera fogata (ver «Cómo se nombra»), así que el despertar siempre sale como «viajero».
 
 # CENIZA: lo que queda encendido
 
@@ -27,6 +27,12 @@ Los forjadores mantuvieron encendida su última forja cuando el cielo dejó de d
 
 **Acto I. Duna tibia (Z1).** El viajero despierta junto a la primera fogata y dice su nombre en voz alta: «{nombre}». La arena no contesta. Aprende que la fogata responde a quien vuelve. El canal de vapor que daba calor a la duna ya no sube, y la arena lo cubre. En la Cresta del viento el viento empuja los granos hacia el canal, y en el Refugio hundido alguien dejó una lámpara encendida que nadie ha apagado. Los areneros se levantan de la arena y los escarabajos de duna cavan bajo el canal. Al caer el Guardián de duna, la arena vuelve a su cauce y deja ver un tubo de metal que sube hacia el norte: era el que llevaba el calor de la forja a la duna.
 
+**Despertar (clave `inicio`).** Tres líneas que se leen al empezar una partida nueva, antes de moverse. Son el comienzo del Acto I en tono de pantalla:
+
+1. Despiertas junto a la primera fogata con una hoja de chatarra en la mano. Dices en voz alta: «{nombre}». La arena no contesta.
+2. La fogata responde a quien vuelve. El canal de vapor que daba calor a la duna ya no sube, y la arena lo cubre.
+3. La cresta del viento empuja los granos hacia el canal seco, y en el refugio hundido sigue encendida una lámpara.
+
 **Acto II. Ciudad de cristal (Z2).** Los cristales devuelven al viajero siempre un poco tarde. En las Calles de vidrio hay voces que repiten lo último que oyeron. En el Mirador de espejos la ciudad se ve de cabeza, los reflejos de cristal se desprenden del vidrio y las astillas vivas crecen en las esquinas. En la Catedral rota el suelo suena como una campana sin badajo. Al caer la Centinela, el cristal deja de vibrar y la luz de la ciudad se inclina hacia la fundición, como una lámpara que alguien gira.
 
 **Acto III. Fundición de lava (Z3).** El calor sube del horno como si alguien lo hubiera dejado encendido. En la Colada de magma la lava corre sin descanso; en la Galería de crisol las brasas errantes cruzan y los crisoles ardientes se abren como bocas. El Forjador martillea un yunque vacío en el Horno mayor. Al caer, la colada se detiene y el calor sube hacia el bosque.
@@ -44,13 +50,13 @@ Cada zona tiene un secreto opcional: algo que la forja nunca llegó a entregar. 
 
 ## Fogatas
 
-Las fogatas descansan, guardan, forjan y personalizan. Cada una restaura la vida del viajero.
+Cada zona tiene una fogata. Al encenderla por primera vez sale su línea, y la vida del viajero vuelve al máximo. Las líneas describen el ambiente de la fogata, no las acciones del menú. La quinta línea sale al volver tras morir.
 
-1. **Al encender.** La fogata da poco calor, pero alcanza para cerrar los ojos un rato.
-2. **Al guardar.** La brasa anota lo que has hecho: cada cofre abierto, cada guardián caído. No olvida nada, y eso pesa.
-3. **Al forjar.** Pon la pieza en la brasa. Vuelve más fuerte, y cada vez pide más chatarra.
-4. **Al personalizar.** Mírate en el cristal del fuego, {nombre}, y dile cómo quieres que te reconozcan.
-5. **Al volver tras morir.** Has vuelto. Lo que venciste sigue vencido; los núcleos sin consolidar se quedaron allá abajo.
+1. **Fogata de Z1** (clave `fogata:1`). La fogata da poco calor, pero alcanza para cerrar los ojos un rato.
+2. **Fogata de Z2** (clave `fogata:2`). En la brasa quedan las marcas de cada cofre abierto y de cada guardián caído. El calor no las borra.
+3. **Fogata de Z3** (clave `fogata:3`). Una pieza sin dueño se hunde en la brasa y sale más dura. Cada vez que la brasa la recibe, pide más chatarra.
+4. **Fogata de Z4** (clave `fogata:4`). En el cristal de la brasa queda la figura de {nombre}, con el traje gastado por la ceniza.
+5. **Al volver tras morir** (clave `fogata:morir`). Has vuelto. Lo que venciste sigue vencido; los núcleos sin consolidar se quedaron allá abajo. Sale la primera vez que el viajero vuelve tras morir, como el resto de cuadros.
 
 ## Zonas
 
@@ -131,7 +137,7 @@ Cada arma de la fase 3D se entrega al entrar a su sector: el rifle en S1, la esc
 ## Nombres
 
 - **CENIZA**: título del juego, en la pantalla de inicio y en el registro.
-- **{nombre}**: nombre del viajero, escrito por el jugador (hasta 12 caracteres). Aparece en el Acto I (el despertar), en la fogata de personalizar, en la entrada de Z2, en la pared del Horno mayor y en el final. Sin nombre escrito, la historia usa «viajero».
+- **{nombre}**: nombre del viajero, escrito por el jugador (hasta 12 caracteres). Aparece en el Acto I (el despertar), en la fogata de Z4, en la entrada de Z2, en la pared del Horno mayor y en el final. Sin nombre escrito, la historia usa «viajero».
 - **{traje}**: color del traje. Aparece en la entrada de Z1.
 - **{visor}**: color del visor. Aparece en la entrada de Z2.
 - **Colores**: se escriben con tilde (óxido, carmesí, ámbar). El juego pasa el id de datos.js y la historia lo convierte en su nombre.

@@ -15,7 +15,7 @@
 //   const control = CenizaAventuraUI.montar({
 //     contenedor,           // HTMLElement obligatorio
 //     partida,              // estado de CenizaAventuraNucleo (crearPartida o deserializar)
-//     onGuardar(partida),   // al descansar en una fogata y tras cada cambio hecho en ella
+//     onGuardar(partida),   // al encender una fogata y tras cada cambio; siempre con sala = última fogata
 //     onFase3D(partida),    // al entrar en la fase 3D, antes de arrancar Ceniza3D
 //     onVictoria(partida),  // al derrotar al Coloso final
 //     onSalir(),            // al elegir Salir en el menú de pausa
@@ -28,8 +28,9 @@
 // para pausa. Los botones táctiles solo aparecen en pantallas táctiles.
 //
 // Historia: docs/ceniza/historia.js (CenizaHistoria) se carga antes de este archivo. Los momentos
-// (zona, jefe, fogata, fase 3D y final) abren un cuadro de diálogo que pausa la aventura; Enter,
-// Espacio, E o Continuar pasan la línea. Cada momento se muestra una sola vez (partida.historia).
+// (despertar, zona, jefe, fogata, fase 3D y final) abren un cuadro de diálogo que pausa la aventura;
+// Enter, Espacio, E o Continuar pasan la línea. Cada momento se muestra una sola vez (partida.historia).
+// El guardado va a la última fogata encendida (docs/ceniza-diseno.md, 10.1): ver guardarProgreso.
 //
 // Gancho de pruebas: globalThis.CENIZA_TEST solo existe si la URL contiene "prueba=1".
 // Expone estado(), avanzar(segundos), entrarSala(salaId), matarEnemigosDeSala(), vencerJefe(jefeId),
@@ -236,14 +237,15 @@
   }
 
   // ----------------------------------------------------------------- historia (textos de historia.js)
-  // Claves de momento (partida.historia): zona:N, jefe:X, jefe:X:caida, fogata:N, 3d:entrada,
-  // 3d:S1, 3d:S2, 3d:S3, 3d:coloso:N (N de 1 a 3) y final. Devuelven sus rutas de texto y su título.
+  // Claves de momento (partida.historia): inicio, zona:N, jefe:X, jefe:X:caida, fogata:N, fogata:morir,
+  // 3d:entrada, 3d:S1, 3d:S2, 3d:S3, 3d:coloso:N (N de 1 a 3) y final. Devuelven sus rutas de texto y su título.
   const NOMBRE_FASE_COLOSO = Object.freeze(["Ojo expuesto", "Brazos", "Núcleo"]);
   const esJefe = (id) => Object.prototype.hasOwnProperty.call(M.TIPOS_ENEMIGO, id) && M.TIPOS_ENEMIGO[id].clase === "jefe";
 
   // Rutas de CenizaHistoria.texto para un momento, o null si la clave no existe.
   function rutasHistoria(clave) {
     const p = String(clave).split(":");
+    if (clave === "inicio") return CH.inicio.map((_, i) => "inicio." + i);
     if (p[0] === "zona" && p.length === 2 && /^[1-4]$/.test(p[1])) {
       return ["zonas." + p[1] + ".entrada.0", "zonas." + p[1] + ".entrada.1"];
     }
@@ -253,6 +255,7 @@
         return ["jefes." + p[1] + ".alCaer", "zonas." + M.TIPOS_ENEMIGO[p[1]].zona + ".trasJefe"];
       }
     }
+    if (clave === "fogata:morir") return ["fogatas.4"];
     if (p[0] === "fogata" && p.length === 2 && /^[1-4]$/.test(p[1])) return ["fogatas." + (Number(p[1]) - 1)];
     if (p[0] === "3d" && p.length === 2) {
       if (p[1] === "entrada") return ["fase3D.entrada"];
@@ -265,11 +268,13 @@
     return null;
   }
 
-  // Título del cuadro para cada momento: zona, jefe, fogata, sector o fase del Coloso, o final.
+  // Título del cuadro para cada momento: despertar, zona, jefe, fogata, sector o fase del Coloso, o final.
   function tituloHistoria(clave) {
     const p = String(clave).split(":");
+    if (clave === "inicio") return "Acto I · Despertar";
     if (p[0] === "zona") return "Zona " + p[1] + " · " + CH.nombres.zonas[p[1]];
     if (p[0] === "jefe") return "Jefe · " + CH.nombres.jefes[p[1]];
+    if (clave === "fogata:morir") return "Fogata · De vuelta";
     if (p[0] === "fogata") return "Fogata · " + CH.nombres.zonas[p[1]];
     if (p[0] === "3d" && p[1] === "coloso") return "Fase 3D · Coloso final: " + NOMBRE_FASE_COLOSO[Number(p[2]) - 1];
     if (p[0] === "3d" && p[1] === "entrada") return "Fase 3D · Entrada a la cabina";
@@ -1119,6 +1124,7 @@
       cargarSala(partida.sala, null);
       modo = "juego";
       mostrar("Vuelves a " + escena.sala.nombre + ".");
+      historiaPedir(["fogata:morir"], "juego", null);
     }
 
     // ----------------------------------------------------------------- entrada y acciones del viajero
@@ -1256,7 +1262,7 @@
         return;
       }
       partida = res.partida;
-      guardar();
+      guardarProgreso();
       const r = res.recompensa;
       if (r.tipo === "pieza") mostrar("Secreto: pieza");
       else if (r.tipo === "nucleos") mostrar("Secreto: " + r.cantidad + " núcleos");
@@ -1285,7 +1291,7 @@
         return { ok: false, error: res.error };
       }
       partida = res.partida;
-      guardar();
+      guardarProgreso();
       mostrar("Arma comprada: " + NOMBRE_ARMA[arma] + ".");
       return { ok: true };
     }
@@ -1331,7 +1337,7 @@
       }
       const lineas = nuevas.reduce((acc, c) => acc.concat(lineasHistoria(c, partida.personaje)), []);
       for (const c of nuevas) partida = N.marcarHistoria(partida, c);
-      guardar();
+      guardarProgreso();
       limpiarEntrada();
       entrada.izq = false;
       entrada.der = false;
@@ -1385,10 +1391,19 @@
       });
     }
 
+    // ----------------------------------------------------------------- guardado
+    // Todo guardado va con sala = última fogata encendida (docs/ceniza-diseno.md, 10.1). Así una recarga
+    // lleva al viajero a la fogata y no a la sala donde se hizo el cambio (cuadros de historia, secretos,
+    // compras). La partida en memoria no cambia de sala. Solo al encender una fogata se guarda la sala real,
+    // porque descansarEnFogata deja ultimaFogata igual a la sala actual.
+    function guardarProgreso() {
+      if (typeof op.onGuardar !== "function") return;
+      const copia = clonar(partida);
+      copia.sala = partida.ultimaFogata;
+      op.onGuardar(copia);
+    }
+
     // ----------------------------------------------------------------- fogata
-    const guardar = () => {
-      if (typeof op.onGuardar === "function") op.onGuardar(clonar(partida));
-    };
 
     // Encender la fogata: primero el cuadro de su momento (fogata:N, la primera vez) y luego el panel.
     function abrirFogata() {
@@ -1413,7 +1428,7 @@
       partida = N.descansarEnFogata(partida);
       cache.clear();
       repoblarSala();
-      guardar();
+      guardarProgreso();
       mostrar("Descansas: vida al máximo. Los enemigos han vuelto.");
       return { ok: true };
     }
@@ -1425,7 +1440,7 @@
         return false;
       }
       partida = res.partida;
-      guardar();
+      guardarProgreso();
       return true;
     }
 
@@ -1436,7 +1451,7 @@
         return false;
       }
       partida = res.partida;
-      guardar();
+      guardarProgreso();
       mostrar("Atributos reiniciados.");
       return true;
     }
@@ -1485,7 +1500,7 @@
       }
       if (p !== partida) {
         partida = p;
-        guardar();
+        guardarProgreso();
       }
       if (fallos.length > 0) {
         mostrar(fallos[0], true);
@@ -1559,6 +1574,7 @@
       cargarSala(partida.sala, null);
       modo = "juego";
       mostrar("Caíste en la fase 3D: vuelves a la última fogata.", true);
+      historiaPedir(["fogata:morir"], "juego", null);
     }
 
     // Salida desde el menú de pausa de 3D: regresa a la pantalla de pausa de 2D sin penalización.
@@ -1774,10 +1790,12 @@
       return vivos.length;
     }
 
+    // Al empezar: el despertar (clave "inicio") va antes de moverse. Si ya estaba visto, pasa directo
+    // a la entrada de la sala. Tras el despertar, alEntrarSala muestra los cuadros de la zona si faltan.
     function iniciar() {
       cargarSala(partida.sala, null);
       mostrar("Entras en " + escena.sala.nombre + ".");
-      alEntrarSala();
+      historiaPedir(["inicio"], "juego", alEntrarSala);
     }
 
     function ponerPausa(activa) {

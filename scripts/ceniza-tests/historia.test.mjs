@@ -290,3 +290,34 @@ test("la línea final no empieza por el nombre del viajero, que puede ser el val
   assert.ok(!HIST.final.victoria[1].startsWith("{nombre}"));
   assert.match(H.texto("final.victoria.1"), /^Sobre el metal queda la huella de viajero\./);
 });
+
+test("el despertar (clave inicio) existe, tiene tres líneas y usa {nombre} entre comillas", () => {
+  assert.ok(Array.isArray(HIST.inicio), "inicio debe ser una lista de líneas");
+  assert.equal(HIST.inicio.length, 3, "inicio tiene tres líneas");
+  for (const linea of HIST.inicio) assert.equal(typeof linea, "string");
+  assert.ok(HIST.inicio.some((l) => l.includes("{nombre}")), "el despertar usa {nombre}");
+  assert.equal(H.texto("inicio.0", { nombre: "Ana" }), HIST.inicio[0].replace("{nombre}", "Ana"));
+  assert.ok(H.texto("inicio.0", { nombre: "Ana" }).includes("«Ana»"), "el nombre sale entre comillas");
+  assert.ok(H.texto("inicio.0").includes("«viajero»"), "sin nombre escrito, sale el valor por defecto");
+});
+
+test("las líneas de inicio caben en 140 caracteres, con el nombre más largo, y usan solo marcadores permitidos", () => {
+  HIST.inicio.forEach((linea, i) => {
+    assert.ok(linea.length <= LIMITE, `inicio.${i}: ${linea.length} caracteres sin sustituir`);
+    const renderizada = H.texto(`inicio.${i}`, { nombre: NOMBRE_LARGO, traje: COLOR_LARGO, visor: COLOR_LARGO });
+    assert.ok(renderizada.length <= LIMITE, `inicio.${i}: ${renderizada.length} caracteres sustituidos`);
+    assert.ok(!EMOJI.test(linea), `inicio.${i} contiene un emoji`);
+    assert.ok(!/^\s*\{/.test(linea), `inicio.${i} empieza por un marcador`);
+    assert.ok(!/[.!?»]\s+\{(nombre|traje|visor)\}/.test(linea), `inicio.${i}: un marcador abre frase`);
+    for (const [, marca] of linea.matchAll(/\{([^{}]*)\}/g)) {
+      assert.ok(MARCADORES.includes(marca), `inicio.${i}: marcador no permitido {${marca}}`);
+    }
+  });
+});
+
+test("las fogatas describen el ambiente y no nombran acciones de menú", () => {
+  const MENU = /\b(guardar|forjar|personalizar|comprar|men[uú]s?|pulsa\w*|pon|mírate|dile)\b/iu;
+  HIST.fogatas.forEach((linea, i) => {
+    assert.ok(!MENU.test(linea), `fogatas.${i} nombra una acción de menú: ${linea}`);
+  });
+});

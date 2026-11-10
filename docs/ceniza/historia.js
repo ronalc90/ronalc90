@@ -1,4 +1,4 @@
-// Ceniza · textos de la historia: zonas, jefes, fogatas, fase 3D y final.
+// Ceniza · textos de la historia: despertar, zonas, jefes, fogatas, fase 3D y final.
 // Script clásico (sin módulos ES): define globalThis.CenizaHistoria.
 // Datos puros, sin DOM, sin red y sin dependencias. Sigue docs/ceniza-diseno.md
 // (secciones 1, 2, 9, 11 y 12). La narrativa completa está en docs/ceniza-historia.md.
@@ -104,13 +104,25 @@
     },
   });
 
+  // ----------------------------------------------------------------- despertar (Acto I)
+  // Se muestra al empezar una partida nueva, antes de moverse (clave "inicio"). Tres líneas tomadas
+  // de docs/ceniza-historia.md, Acto I. El jugador pone su nombre al encender la primera fogata
+  // (docs/ceniza-historia.md, «Cómo se nombra»), así que aquí {nombre} sale como «viajero».
+  const inicio = congelar([
+    "Despiertas junto a la primera fogata con una hoja de chatarra en la mano. Dices en voz alta: «{nombre}». La arena no contesta.",
+    "La fogata responde a quien vuelve. El canal de vapor que daba calor a la duna ya no sube, y la arena lo cubre.",
+    "La cresta del viento empuja los granos hacia el canal seco, y en el refugio hundido sigue encendida una lámpara.",
+  ]);
+
   // ----------------------------------------------------------------- fogatas
-  // Cinco líneas, en el orden de las acciones: encender, guardar, forjar, personalizar y volver tras morir.
+  // Cinco líneas. fogatas[0] a fogatas[3] son las de las zonas 1 a 4 (clave fogata:N, al encender esa
+  // fogata por primera vez). fogatas[4] es la de volver tras morir (clave fogata:morir). Son ambiente,
+  // no instrucciones: no nombran acciones de menú.
   const fogatas = congelar([
     "La fogata da poco calor, pero alcanza para cerrar los ojos un rato.",
-    "La brasa anota lo que has hecho: cada cofre abierto, cada guardián caído. No olvida nada, y eso pesa.",
-    "Pon la pieza en la brasa. Vuelve más fuerte, y cada vez pide más chatarra.",
-    "Mírate en el cristal del fuego, {nombre}, y dile cómo quieres que te reconozcan.",
+    "En la brasa quedan las marcas de cada cofre abierto y de cada guardián caído. El calor no las borra.",
+    "Una pieza sin dueño se hunde en la brasa y sale más dura. Cada vez que la brasa la recibe, pide más chatarra.",
+    "En el cristal de la brasa queda la figura de {nombre}, con el traje gastado por la ceniza.",
     "Has vuelto. Lo que venciste sigue vencido; los núcleos sin consolidar se quedaron allá abajo.",
   ]);
 
@@ -139,7 +151,7 @@
     pregunta: "¿Se apagó la forja porque se acabó el metal, o porque alguien dejó de querer alimentarla?",
   });
 
-  const raiz = congelar({ nombres, zonas, jefes, fogatas, fase3D, final });
+  const raiz = congelar({ nombres, zonas, jefes, inicio, fogatas, fase3D, final });
 
   // Busca un texto por ruta ("zonas.1.entrada.0"). Devuelve undefined si no existe o no es texto.
   function buscar(ruta) {
@@ -173,5 +185,5 @@
     });
   }
 
-  globalThis.CenizaHistoria = congelar({ nombres, zonas, jefes, fogatas, fase3D, final, texto });
+  globalThis.CenizaHistoria = congelar({ nombres, zonas, jefes, inicio, fogatas, fase3D, final, texto });
 })();

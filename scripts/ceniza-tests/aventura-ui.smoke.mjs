@@ -140,28 +140,42 @@ function cargar(url, opciones = {}) {
 }
 
 // Monta la aventura con una partida nueva y registra cada llamada de retorno.
-// Por defecto la zona 1 ya está vista (si no, el cuadro de entrada abre al montar).
-// Opciones: sinZona1 (no marcarla), nucleos, usos (parcial), armas, semilla.
+// Por defecto el despertar (inicio) y la zona 1 ya están vistos (si no, sus cuadros abren al montar).
+// Opciones: sinInicio, sinZona1 (no marcarlas), nucleos, usos (parcial), armas, semilla, vida.
+// registro.guardados guarda cada partida que llega a onGuardar (la copia tal como la recibe la página).
 function montarEn(contexto, extra = {}) {
   const doc = new Documento();
   const contenedor = doc.createElement("div");
   const N = contexto.CenizaAventuraNucleo;
   const D = contexto.CenizaDatos;
   let partida = N.crearPartida({ personaje: D.personajePorDefecto(), semilla: extra.semilla ?? 42 });
+  if (!extra.sinInicio) partida = N.marcarHistoria(partida, "inicio");
   if (!extra.sinZona1) partida = N.marcarHistoria(partida, "zona:1");
   if (extra.nucleos !== undefined) partida.nucleos = extra.nucleos;
   if (extra.usos) Object.assign(partida.usos, extra.usos);
   if (extra.armas) partida.armas = extra.armas.slice();
-  const registro = { onGuardar: 0, onFase3D: 0, onVictoria: 0, onSalir: 0 };
+  if (extra.vida !== undefined) partida.vida = extra.vida;
+  const registro = { onGuardar: 0, onFase3D: 0, onVictoria: 0, onSalir: 0, guardados: [] };
   const control = contexto.CenizaAventuraUI.montar({
     contenedor,
     partida,
-    onGuardar: () => { registro.onGuardar += 1; },
+    onGuardar: (p) => {
+      registro.onGuardar += 1;
+      registro.guardados.push(p);
+    },
     onFase3D: () => { registro.onFase3D += 1; },
     onVictoria: () => { registro.onVictoria += 1; },
     onSalir: () => { registro.onSalir += 1; },
   });
   return { doc, contenedor, control, registro };
+}
+
+// Monta la aventura con una partida ya existente, como tras una recarga de la página.
+function montarCon(contexto, partida) {
+  const doc = new Documento();
+  const contenedor = doc.createElement("div");
+  const control = contexto.CenizaAventuraUI.montar({ contenedor, partida, onGuardar: () => {} });
+  return { doc, contenedor, control };
 }
 
 // Búsqueda en el árbol del DOM mínimo.
@@ -301,7 +315,7 @@ test("historia: el cuadro de zona sale una sola vez y no vuelve a salir", () => 
   cerrarHistoria(contenedor);
   estado = gancho.estado();
   assert.equal(estado.modo, "juego");
-  assert.deepEqual(plano(estado.historia), ["zona:1"], "la clave queda guardada");
+  assert.deepEqual(plano(estado.historia), ["inicio", "zona:1"], "las claves quedan guardadas");
   // Mismas zonas, otra entrada: nada de cuadros.
   gancho.entrarSala("Z1.2");
   assert.equal(gancho.estado().modo, "juego");
@@ -517,5 +531,135 @@ test("un enemigo vencido con la hoja cuenta usos de la hoja (arma del último go
   }
   assert.equal(gancho.enemigos().length, vivosAntes - 1, "la hoja vence al arenero");
   assert.equal(gancho.estado().maestria.hoja, 1, "la muerte cuenta un uso de la hoja");
+  control.destruir();
+});
+
+test("guardado: cada guardado lleva sala = última fogata (guardarProgreso); la partida en memoria sigue en su sala", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const { doc, control, registro } = montarEn(contexto);
+  const gancho = contexto.CENIZA_TEST;
+  assert.equal(gancho.entrarSala("Z1.2").ok, true);
+  assert.equal(gancho.entrarSala("Z1.3").ok, true);
+  // El secreto de Z1.3 se guarda desde Z1.3, pero la fogata encendida es la de Z1.1.
+  gancho.colocar(560, 250);
+  doc.dispatch("keydown", { key: "e" });
+  gancho.avanzar(1 / 60);
+  assert.deepEqual(plano(gancho.estado().secretos), ["Z1.3"], "el secreto queda recogido");
+  const guardado = plano(registro.guardados[registro.guardados.length - 1]);
+  assert.equal(guardado.sala, "Z1.1", "el guardado va a la última fogata, no a Z1.3");
+  assert.equal(guardado.ultimaFogata, "Z1.1");
+  assert.deepEqual(guardado.secretos, ["Z1.3"], "el guardado ya incluye el secreto");
+  assert.equal(gancho.estado().sala, "Z1.3", "la partida en memoria no cambia de sala");
+  control.destruir();
+});
+
+test("recarga: tras cuadros de historia en otra sala, la partida vuelve a la última fogata con historia y secretos marcados", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const { doc, contenedor, control, registro } = montarEn(contexto);
+  const gancho = contexto.CENIZA_TEST;
+  gancho.entrarSala("Z1.2");
+  gancho.entrarSala("Z1.3");
+  gancho.colocar(560, 250);
+  doc.dispatch("keydown", { key: "e" });
+  gancho.avanzar(1 / 60);
+  gancho.entrarSala("Z1.JEFE");          // cuadro del jefe antes del combate (jefe:guardian-duna)
+  cerrarHistoria(contenedor);
+  gancho.vencerJefe("guardian-duna");    // cuadro de la caída (jefe:guardian-duna:caida)
+  cerrarHistoria(contenedor);
+  const ultimo = plano(registro.guardados[registro.guardados.length - 1]);
+  assert.equal(ultimo.sala, "Z1.1", "el último guardado apunta a la fogata");
+  control.destruir();
+
+  // Recarga de la página con ese guardado.
+  const recarga = cargar(CON_PRUEBA);
+  const otra = montarCon(recarga, ultimo);
+  const estado = recarga.CENIZA_TEST.estado();
+  assert.equal(estado.sala, "Z1.1", "vuelve a la última fogata, no a Z1.JEFE");
+  assert.equal(estado.jugador.x, 96, "de pie junto a la fogata");
+  assert.equal(estado.modo, "juego", "no repite cuadros ya vistos");
+  for (const clave of ["inicio", "zona:1", "jefe:guardian-duna", "jefe:guardian-duna:caida"]) {
+    assert.ok(estado.historia.includes(clave), `la historia guarda ${clave}`);
+  }
+  assert.deepEqual(estado.secretos, ["Z1.3"], "el secreto sigue marcado");
+  assert.deepEqual(estado.jefesVencidos, ["guardian-duna"], "el jefe sigue vencido");
+  otra.control.destruir();
+});
+
+test("inicio: una partida nueva abre el despertar antes de moverse, lo marca con su guardado y no lo repite", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const { contenedor, control, registro } = montarEn(contexto, { sinInicio: true });
+  const gancho = contexto.CENIZA_TEST;
+  let estado = gancho.estado();
+  assert.equal(estado.modo, "historia", "el despertar pausa la aventura al empezar");
+  assert.equal(estado.dialogo.titulo, "Acto I · Despertar");
+  assert.equal(estado.dialogo.total, 3, "el despertar tiene tres líneas");
+  assert.ok(estado.dialogo.texto.includes("«viajero»"), "sin nombre escrito, {nombre} sale como viajero");
+  const x = estado.jugador.x;
+  gancho.avanzar(1);
+  assert.equal(gancho.estado().jugador.x, x, "con el cuadro abierto el viajero no se mueve");
+  cerrarHistoria(contenedor);
+  estado = gancho.estado();
+  assert.equal(estado.modo, "juego", "al cerrar, la aventura sigue");
+  assert.ok(estado.historia.includes("inicio"), "la clave queda marcada");
+  const guardado = plano(registro.guardados[registro.guardados.length - 1]);
+  assert.ok(guardado.historia.includes("inicio"), "el guardado incluye el despertar");
+  assert.equal(guardado.sala, "Z1.1");
+  control.destruir();
+  // Una partida que ya tiene el despertar no lo vuelve a mostrar.
+  const ctx2 = cargar(CON_PRUEBA);
+  const otra = montarCon(ctx2, guardado);
+  assert.equal(ctx2.CENIZA_TEST.estado().modo, "juego", "el despertar visto no se repite");
+  otra.control.destruir();
+});
+
+test("muerte: al volver a la fogata sale su cuadro (fogata:morir) y el viajero recupera la vida", () => {
+  const contexto = cargar(CON_PRUEBA);
+  // Con una sola vida, el contacto con el arenero de Z1.1 (450, 440) deja al viajero caído.
+  const { contenedor, control } = montarEn(contexto, { vida: 1 });
+  const gancho = contexto.CENIZA_TEST;
+  gancho.colocar(450, 440);
+  for (let i = 0; i < 60 && !gancho.estado().muerto; i++) gancho.avanzar(0.1);
+  assert.equal(gancho.estado().muerto, true, "el contacto con el arenero mata al viajero");
+  // Pantalla de caída (1,5 s) y vuelta a la última fogata: el cuadro sale al volver.
+  gancho.avanzar(2);
+  let estado = gancho.estado();
+  assert.equal(estado.modo, "historia", "al volver sale el cuadro de la fogata");
+  assert.equal(estado.dialogo.titulo, "Fogata · De vuelta");
+  assert.equal(estado.sala, "Z1.1", "vuelve a la fogata encendida");
+  cerrarHistoria(contenedor);
+  estado = gancho.estado();
+  assert.equal(estado.muerto, false);
+  assert.equal(estado.vida, estado.vidaMax, "vuelve con la vida al máximo");
+  assert.ok(estado.historia.includes("fogata:morir"), "el cuadro queda marcado");
+  control.destruir();
+});
+
+test("fogata: encender una fogata en otra zona guarda esa sala; el guardado al entrar en la zona va a la fogata anterior", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const { doc, contenedor, control, registro } = montarEn(contexto);
+  const gancho = contexto.CENIZA_TEST;
+  // Ruta: Z1.1 (fogata) → Z1.2 → Z1.3 → Z1.JEFE (vencer al guardián) → Z2.1 (fogata de la zona 2).
+  gancho.entrarSala("Z1.2");
+  gancho.entrarSala("Z1.3");
+  gancho.entrarSala("Z1.JEFE");
+  cerrarHistoria(contenedor);
+  gancho.vencerJefe("guardian-duna");
+  cerrarHistoria(contenedor);
+  assert.equal(gancho.entrarSala("Z2.1").ok, true, "la puerta se abre con el jefe vencido");
+  cerrarHistoria(contenedor);   // cuadro de la zona 2
+  const alEntrar = plano(registro.guardados.find((g) => g.historia.includes("zona:2")));
+  assert.equal(alEntrar.sala, "Z1.1", "el guardado de la entrada en Z2 apunta a la fogata de Z1");
+  // Junto a la fogata de Z2.1: E abre su cuadro (fogata:2) y luego el panel.
+  gancho.colocar(96, 440);
+  doc.dispatch("keydown", { key: "e" });
+  gancho.avanzar(1 / 60);
+  assert.equal(gancho.estado().dialogo.titulo, "Fogata · Ciudad de cristal");
+  cerrarHistoria(contenedor);
+  assert.equal(gancho.estado().modo, "fogata");
+  pulsar(botonPorEtiqueta(contenedor, "Descansar en la fogata y guardar"));
+  const encendido = plano(registro.guardados[registro.guardados.length - 1]);
+  assert.equal(encendido.sala, "Z2.1", "encender la fogata guarda la sala real");
+  assert.equal(encendido.ultimaFogata, "Z2.1");
+  assert.equal(gancho.estado().sala, "Z2.1");
   control.destruir();
 });
