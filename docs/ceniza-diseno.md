@@ -616,3 +616,4 @@ Decisiones pendientes del dueño:
 - **D10 (munición 3D, propuesta).** El diseño no fija munición. La reserva no se agota: el cargador se recarga con el tiempo de recarga existente. Código: shooter3d.js.
 - **D11 (secretos, propuesta).** El diseño no fija cantidades ni tipo de recompensa de los secretos. Propuesta: pieza común de la zona, o 20 a 40 núcleos, o 10 a 20 chatarra, según el secreto. Código: `recogerSecreto` en `docs/ceniza/aventura-nucleo.js`.
 - **D12 (historia).** Texto de docs/ceniza-historia.md, ronda de guionistas: cuatro propuestas, tres jueces, síntesis y revisión. Cuadros de diálogo en la aventura; la historia se guarda con las claves de historia en la partida.
+- **D13 (curación 3D, propuesta).** El viajero recupera la vida al entrar a cada sector y al cambiar de fase en el Coloso final. El diseño no fija curación en 3D. Código: shooter3d.js.
