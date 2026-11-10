@@ -33,7 +33,9 @@ const BOSS_NAMES = ["Vigía de Óxido", "Centinela Carmesí", "Titán de Ceniza"
 const COOLDOWN_MIN = 20;
 const MAX_GUESTS = 24;
 const CENIZA_COOLDOWN_MIN = 10;
-const CENIZA_ARMAS = ["hoja", "arco", "martillo", "lanza"];
+// Armas que puede enviar la aventura de CENIZA: 2D (hoja, arco, martillo, lanza) y 3D (rifle, escopeta, plasma).
+// Deben coincidir con las armas que escribe docs/index.html (avUrlRegistro); el formato de ceniza-stats no cambia.
+const CENIZA_ARMAS = ["hoja", "arco", "martillo", "lanza", "rifle", "escopeta", "plasma"];
 const CENIZA_CAMPOS = ["arma", "jefes", "nivel", "victoria", "puntos", "segundos"];
 const CENIZA_WINS_KEEP = 50;
 const RESET_RE = /^\s*raid\s*[:|\-]\s*reset\s*$/i;
@@ -107,7 +109,12 @@ const fmtMin = (ms) => Math.max(1, Math.ceil(ms / 60000));
 const TITLE_RE = /^\s*(raid|firma)\s*[:|\-]\s*([a-záéíóúñ]+)\s*$/i;
 const CENIZA_TITLE_RE = /^\s*ceniza\s*:\s*(victoria|caida|caída)\s*$/i;
 
+// Solo cuentan las claves propias de WEAPONS. Sin esta comprobación, "constructor" (u otra clave
+// heredada de Object) pasaba como arma: su daño salía NaN y la vida del coloso quedaba en NaN.
+const esArmaRaid = (clave) => Object.prototype.hasOwnProperty.call(WEAPONS, clave);
+
 function attack(user, avatarUrl, weaponKey) {
+  if (!esArmaRaid(weaponKey)) return { ok: false, msg: `@${user}, no conozco el arma **${weaponKey}**.` };
   const r = state.raid;
   const w = WEAPONS[weaponKey];
   const p = (r.players[user] ||= { dmg: 0, attacks: 0, kills: 0, last: 0, avatar: avatarUrl });
@@ -185,7 +192,7 @@ function parseCenizaBody(body, victoriaTitulo) {
     ...Object.keys(d).filter((k) => !CENIZA_CAMPOS.includes(k)).map((k) => `campo no admitido ${k}`),
   ];
   if (bad.length) return { error: bad.join(", ") };
-  if (!CENIZA_ARMAS.includes(d.arma)) return { error: "arma no válida (hoja, arco, martillo o lanza)" };
+  if (!CENIZA_ARMAS.includes(d.arma)) return { error: "arma no válida (hoja, arco, martillo, lanza, rifle, escopeta o plasma)" };
   for (const k of ["jefes", "nivel", "puntos", "segundos"]) {
     if (!Number.isSafeInteger(d[k]) || d[k] < 0) return { error: `${k} debe ser un entero no negativo` };
   }
@@ -482,7 +489,7 @@ function raidMarkdown() {
   const rows = top.map(([u, p], i) =>
     `| ${medals[i]} | <img src="https://github.com/${u}.png?size=40" width="20" height="20"/> [@${u}](https://github.com/${u}) | ${p.dmg} | ${p.attacks} | ${p.kills} |`);
   const events = r.events.slice(0, 5).map((e) => {
-    const w = WEAPONS[e.weapon] || { icon: "⚔️" };
+    const w = esArmaRaid(e.weapon) ? WEAPONS[e.weapon] : { icon: "⚔️" };
     const what = e.miss ? "falló el ataque" : `hizo **−${e.dmg}**${e.crit ? " (crítico)" : ""}`;
     return `- ${w.icon} [@${e.user}](https://github.com/${e.user}) ${what} contra el Nv. ${e.level}${e.kill ? " — 💀 **golpe final**" : ""} · <sub>${ago(e.t)}</sub>`;
   });
@@ -536,7 +543,7 @@ async function main() {
       const kind = m[1].toLowerCase();
       const arg = m[2].toLowerCase();
       if (kind === "raid") {
-        if (!WEAPONS[arg]) {
+        if (!esArmaRaid(arg)) {
           await reply(issue, `🤔 @${user}, no conozco el arma **${arg}**. Usa uno de los botones del perfil: espada, arco o bomba.`, ["raid"]);
           continue;
         }
