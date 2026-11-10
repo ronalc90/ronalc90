@@ -23,12 +23,17 @@
 //   control.pausar(); control.reanudar(); control.destruir(); control.estado();
 //
 // Controles: A/D o flechas para moverse, W o espacio para saltar, J para atacar con el arma
-// activa, K para esquivar, 1 a 4 para cambiar de arma (hoja, arco, martillo, lanza), E para
-// interactuar (cofre, puerta, fogata), Escape o P para pausa. Los botones táctiles solo
-// aparecen en pantallas táctiles.
+// activa, K para esquivar, 1 a 4 para cambiar de arma (hoja, arco, martillo, lanza; las no
+// compradas están bloqueadas), E para interactuar (cofre, puerta, fogata, secreto), Escape o P
+// para pausa. Los botones táctiles solo aparecen en pantallas táctiles.
+//
+// Historia: docs/ceniza/historia.js (CenizaHistoria) se carga antes de este archivo. Los momentos
+// (zona, jefe, fogata, fase 3D y final) abren un cuadro de diálogo que pausa la aventura; Enter,
+// Espacio, E o Continuar pasan la línea. Cada momento se muestra una sola vez (partida.historia).
 //
 // Gancho de pruebas: globalThis.CENIZA_TEST solo existe si la URL contiene "prueba=1".
-// Expone estado(), avanzar(segundos), entrarSala(salaId), matarEnemigosDeSala() y vencerJefe(jefeId).
+// Expone estado(), avanzar(segundos), entrarSala(salaId), matarEnemigosDeSala(), vencerJefe(jefeId),
+// enemigos() y secretosDisponibles() (solo lectura), y colocar(x, y) (mueve al viajero; solo prueba).
 //
 // Pausa y medición: la pausa (Escape o P) no avanza el tiempo de simulación. El tiempo se
 // cuenta en fotogramas fijos de 1/60 s, así que avanzar(n) es determinista con la misma semilla.
@@ -43,8 +48,9 @@
   const D = globalThis.CenizaDatos;
   const N = globalThis.CenizaAventuraNucleo;
   const PERSONAJE = globalThis.CenizaPersonaje;
-  if (!M || !D || !N || !PERSONAJE) {
-    throw new Error("aventura-ui.js necesita datos.js, mundo.js, personaje-ui.js y aventura-nucleo.js cargados antes");
+  const CH = globalThis.CenizaHistoria;
+  if (!M || !D || !N || !PERSONAJE || !CH) {
+    throw new Error("aventura-ui.js necesita datos.js, mundo.js, personaje-ui.js, aventura-nucleo.js e historia.js cargados antes");
   }
 
   const VERSION = "0.1.0";
@@ -97,6 +103,7 @@
   const VIAJERO = Object.freeze({ ancho: 28, alto: 52, xMin: 14, xMax: W - 14 });
 
   const ARMAS_2D = Object.freeze(["hoja", "arco", "martillo", "lanza"]);
+  const ARMAS_COMPRABLES = Object.freeze(["arco", "martillo", "lanza"]);   // la hoja viene con el viajero
   const TECLA_ARMA = Object.freeze({ "1": "hoja", "2": "arco", "3": "martillo", "4": "lanza" });
   const NOMBRE_ARMA = Object.freeze({ hoja: "Hoja", arco: "Arco", martillo: "Martillo", lanza: "Lanza" });
   const NOMBRE_RANURA = Object.freeze({
@@ -220,9 +227,74 @@
     };
   }
 
-  // Maestría por arma. El estado de partida del núcleo no guarda maestría todavía,
-  // así que la interfaz usa 0 (ver las notas de la entrega).
-  const maestriaDe = () => 0;
+  // Semilla de un generador auxiliar: la de la partida mezclada con un texto (FNV-1a de 32 bits).
+  // Cada secreto tiene su propia tirada y se repite con la misma semilla.
+  function derivarSemilla(semilla, texto) {
+    let h = (Number(semilla) >>> 0) ^ 2166136261;
+    for (let i = 0; i < texto.length; i++) h = Math.imul(h ^ texto.charCodeAt(i), 16777619);
+    return h >>> 0;
+  }
+
+  // ----------------------------------------------------------------- historia (textos de historia.js)
+  // Claves de momento (partida.historia): zona:N, jefe:X, jefe:X:caida, fogata:N, 3d:entrada,
+  // 3d:S1, 3d:S2, 3d:S3, 3d:coloso:N (N de 1 a 3) y final. Devuelven sus rutas de texto y su título.
+  const NOMBRE_FASE_COLOSO = Object.freeze(["Ojo expuesto", "Brazos", "Núcleo"]);
+  const esJefe = (id) => Object.prototype.hasOwnProperty.call(M.TIPOS_ENEMIGO, id) && M.TIPOS_ENEMIGO[id].clase === "jefe";
+
+  // Rutas de CenizaHistoria.texto para un momento, o null si la clave no existe.
+  function rutasHistoria(clave) {
+    const p = String(clave).split(":");
+    if (p[0] === "zona" && p.length === 2 && /^[1-4]$/.test(p[1])) {
+      return ["zonas." + p[1] + ".entrada.0", "zonas." + p[1] + ".entrada.1"];
+    }
+    if (p[0] === "jefe" && esJefe(p[1])) {
+      if (p.length === 2) return ["jefes." + p[1] + ".antesDelCombate"];
+      if (p.length === 3 && p[2] === "caida") {
+        return ["jefes." + p[1] + ".alCaer", "zonas." + M.TIPOS_ENEMIGO[p[1]].zona + ".trasJefe"];
+      }
+    }
+    if (p[0] === "fogata" && p.length === 2 && /^[1-4]$/.test(p[1])) return ["fogatas." + (Number(p[1]) - 1)];
+    if (p[0] === "3d" && p.length === 2) {
+      if (p[1] === "entrada") return ["fase3D.entrada"];
+      if (p[1] === "S1" || p[1] === "S2" || p[1] === "S3") return ["fase3D." + p[1]];
+    }
+    if (p[0] === "3d" && p.length === 3 && p[1] === "coloso" && /^[1-3]$/.test(p[2])) {
+      return ["fase3D.coloso." + (Number(p[2]) - 1)];
+    }
+    if (clave === "final") return ["final.victoria.0", "final.victoria.1", "final.pregunta"];
+    return null;
+  }
+
+  // Título del cuadro para cada momento: zona, jefe, fogata, sector o fase del Coloso, o final.
+  function tituloHistoria(clave) {
+    const p = String(clave).split(":");
+    if (p[0] === "zona") return "Zona " + p[1] + " · " + CH.nombres.zonas[p[1]];
+    if (p[0] === "jefe") return "Jefe · " + CH.nombres.jefes[p[1]];
+    if (p[0] === "fogata") return "Fogata · " + CH.nombres.zonas[p[1]];
+    if (p[0] === "3d" && p[1] === "coloso") return "Fase 3D · Coloso final: " + NOMBRE_FASE_COLOSO[Number(p[2]) - 1];
+    if (p[0] === "3d" && p[1] === "entrada") return "Fase 3D · Entrada a la cabina";
+    if (p[0] === "3d") return "Fase 3D · " + CH.nombres.sectores[p[1]];
+    return "Final";
+  }
+
+  // Marcadores de la historia: nombre del viajero (vacío si es el de por defecto, para que
+  // historia.js escriba «viajero») y los ids de traje y visor de datos.js.
+  function datosHistoria(personaje) {
+    return {
+      nombre: personaje.nombre === D.personajePorDefecto().nombre ? "" : personaje.nombre,
+      traje: personaje.traje.color,
+      visor: personaje.visor.color,
+    };
+  }
+
+  // Líneas { titulo, texto } de un momento ya sustituidas. Lanza RangeError si la clave no existe.
+  function lineasHistoria(clave, personaje) {
+    const rutas = rutasHistoria(clave);
+    if (rutas === null) throw new RangeError("Momento de historia desconocido: " + clave);
+    const datos = datosHistoria(personaje);
+    const titulo = tituloHistoria(clave);
+    return rutas.map((ruta) => ({ titulo, texto: CH.texto(ruta, datos) }));
+  }
 
   // Pruebas: true solo si la URL contiene la cadena prueba=1.
   function pruebaActiva() {
@@ -267,6 +339,7 @@
       disparo: cal.disparo || null,
       cdDisparo: cal.disparo ? cal.disparo.cada : 0,
       lim: limitesDe(sala, x, y),
+      ultimoGolpePor: null,  // arma 2D del último golpe recibido (cuenta usos para la maestría)
       dir: 1,
       estado: "patrulla",   // patrulla | aviso | embestida | recuperacion
       t: 0,
@@ -614,6 +687,19 @@
 
   // Dibuja la escena entera. `vista` trae el estado de la sala y dos consultas:
   // puertaBloqueada(puerta) y cofreAbierto(id). `vista.pista` es el aviso de E junto al objeto cercano.
+  // Marcador de un secreto de sala: un rombo que palpita sobre el punto de apoyo (x, y).
+  function dibujarSecreto(ctx, s, tiempo) {
+    const cy = s.y - 26 + Math.sin(tiempo * 2.4) * 3;
+    ctx.fillStyle = COLOR.cristal;
+    ctx.beginPath();
+    ctx.moveTo(s.x, cy - 10);
+    ctx.lineTo(s.x + 8, cy);
+    ctx.lineTo(s.x, cy + 10);
+    ctx.lineTo(s.x - 8, cy);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   function dibujarEscena(ctx, vista) {
     dibujarFondo(ctx, vista.tiempo);
     dibujarPlataformas(ctx, vista.sala);
@@ -626,6 +712,7 @@
     if (vista.jefe) dibujarJefe(ctx, vista.jefe);
     for (const p of vista.proyectiles) dibujarProyectil(ctx, p);
     for (const ef of vista.efectos) dibujarEfecto(ctx, ef);
+    if (vista.secreto) dibujarSecreto(ctx, vista.secreto, vista.tiempo);
     dibujarViajero(ctx, vista.viajero, vista.tiempo);
     if (vista.jefe) dibujarBarraJefe(ctx, vista.jefe);
     if (vista.pista) texto(ctx, vista.pista.texto, vista.pista.x, vista.pista.y, COLOR.texto, 15);
@@ -653,6 +740,8 @@
     const cache = new Map();     // salaId -> { enemigos, jefe }: enemigos vivos de salas visitadas
     let aviso = { texto: "", t: 0, error: false };
     let control3d = null;
+    let historia = null;         // diálogo abierto: { lineas, pos, volverA, alTerminar }
+    let vigia3d = null;          // sector y fase del Coloso vistos en la fase 3D (vigilar3d)
     const entrada = { izq: false, der: false, saltar: false, atacar: false, esquivar: false, interactuar: false, arma: null };
 
     function mostrar(texto, esError) {
@@ -661,6 +750,9 @@
     }
 
     const stats = () => N.statsJugador(partida);
+
+    // Maestría del arma 2D según la partida actual (decisión D9 en aventura-nucleo.js). Armas no 2D: 0.
+    const maestriaDe = (arma) => (ARMAS_2D.includes(arma) ? N.maestriaDe(partida, arma) : 0);
 
     // ----------------------------------------------------------------- salas
     // Enemigos y jefe de una sala tal como aparecen al entrar (los jefes vencidos no aparecen).
@@ -757,8 +849,10 @@
     };
 
     // Daño a un enemigo o al jefe. Marca la muerte una sola vez y la deja en `eventos`.
-    function herir(obj, dano, eventos) {
+    // `arma` es el arma 2D que causa el golpe (o null); se guarda como ultimoGolpePor.
+    function herir(obj, dano, eventos, arma) {
       if (obj.muerto) return;
+      obj.ultimoGolpePor = ARMAS_2D.includes(arma) ? arma : null;
       obj.vida -= dano;
       obj.flash = 0.08;
       if (obj.vida <= 0) {
@@ -778,19 +872,20 @@
         y1: v.y + 8,
       };
       for (const obj of blancosVivos()) {
-        if (solapa(area, cajaDe(obj))) herir(obj, dano, eventos);
+        if (solapa(area, cajaDe(obj))) herir(obj, dano, eventos, v.arma);
       }
     }
 
     // Golpe de área centrado en (cx, cy): alcanza a los blancos a `radio` px en horizontal.
     function golpeArea(cx, cy, radio, dano, eventos) {
       for (const obj of blancosVivos()) {
-        if (Math.abs(obj.x - cx) <= radio && Math.abs(obj.y - cy) <= 60) herir(obj, dano, eventos);
+        if (Math.abs(obj.x - cx) <= radio && Math.abs(obj.y - cy) <= 60) herir(obj, dano, eventos, viajero.arma);
       }
     }
 
+    // Proyectil del viajero: guarda el arma que lo disparó (para ultimoGolpePor).
     function lanzar(p) {
-      escena.proyectiles.push(p);
+      escena.proyectiles.push(Object.assign({ arma: viajero.arma }, p));
     }
 
     const dmgDe = (mul) => (base) => Math.round(base * mul);
@@ -907,7 +1002,7 @@
         }
         if (!mejor) break;
         p.golpeados.push(mejor);
-        herir(mejor, Math.round(p.dano * ARMA.lanza.cadenaFactor), eventos);
+        herir(mejor, Math.round(p.dano * ARMA.lanza.cadenaFactor), eventos, p.arma);
         origen = mejor;
       }
       p.cadena = 0;
@@ -935,7 +1030,7 @@
         for (const obj of blancosVivos()) {
           if (p.golpeados.includes(obj) || !solapa(c, cajaDe(obj))) continue;
           p.golpeados.push(obj);
-          herir(obj, p.dano, eventos);
+          herir(obj, p.dano, eventos, p.arma);
           if (p.cadena > 0) encadenar(p, obj, eventos);
           if (!p.perfora) {
             consumido = true;
@@ -985,7 +1080,7 @@
 
     function muereEnemigo(e) {
       escena.enemigos = escena.enemigos.filter((x) => x !== e);
-      partida = N.registrarEnemigoVencido(partida, e.tipo);
+      partida = N.registrarEnemigoVencido(partida, e.tipo, e.ultimoGolpePor || null);
     }
 
     function muereJefe(j) {
@@ -1038,9 +1133,14 @@
     function procesarEntrada(eventos) {
       const v = viajero;
       if (entrada.arma) {
-        v.arma = entrada.arma;
+        const pedida = entrada.arma;
         entrada.arma = null;
-        mostrar("Arma: " + NOMBRE_ARMA[v.arma] + ".");
+        if (partida.armas.includes(pedida)) {
+          v.arma = pedida;
+          mostrar("Arma: " + NOMBRE_ARMA[pedida] + ".");
+        } else {
+          mostrar("Arma bloqueada: " + NOMBRE_ARMA[pedida] + ". Cómprala en una fogata.", true);
+        }
       }
       if (entrada.interactuar) {
         entrada.interactuar = false;
@@ -1084,6 +1184,10 @@
           return;
         }
       }
+      if (secretoVisible() && solapa(area, cajaSecreto(sala))) {
+        recogerSecreto();
+        return;
+      }
       for (const d of sala.puertas) {
         if (solapa(area, { x0: d.x, x1: d.x + d.ancho, y0: d.y, y1: d.y + d.alto })) {
           cruzar(d.destino);
@@ -1101,6 +1205,7 @@
       partida = res.partida;
       cargarSala(partida.sala, previa);
       mostrar("Entras en " + escena.sala.nombre + ".");
+      alEntrarSala();
       return { ok: true, sala: partida.sala };
     }
 
@@ -1136,16 +1241,164 @@
       mostrar(textoRecompensa(res.recompensa));
     }
 
+    // ----------------------------------------------------------------- secretos de sala
+    // Marcador del secreto de la sala actual, mientras no esté recogido (docs 2.2).
+    const secretoVisible = () => Boolean(escena && escena.sala.secreto && !partida.secretos.includes(escena.sala.id));
+    const cajaSecreto = (sala) => caja(sala.secreto.x, sala.secreto.y, 36, 48);
+
+    // Recoge el secreto de la sala actual, una sola vez. La tirada sale de la semilla de la partida.
+    function recogerSecreto() {
+      const sala = escena.sala;
+      const rng = crearRng(derivarSemilla(partida.semilla, "secreto:" + sala.id));
+      const res = N.recogerSecreto(partida, sala.id, rng);
+      if (!res.ok) {
+        mostrar(res.error, true);
+        return;
+      }
+      partida = res.partida;
+      guardar();
+      const r = res.recompensa;
+      if (r.tipo === "pieza") mostrar("Secreto: pieza");
+      else if (r.tipo === "nucleos") mostrar("Secreto: " + r.cantidad + " núcleos");
+      else mostrar("Secreto: " + r.cantidad + " chatarra");
+    }
+
+    // ----------------------------------------------------------------- armas: ciclo y compra
+    // Botón Arma: pasa a la siguiente arma comprada (las bloqueadas se saltan).
+    function cambiarArmaCiclica() {
+      const libres = ARMAS_2D.filter((a) => partida.armas.includes(a));
+      const i = libres.indexOf(viajero.arma);
+      entrada.arma = libres[(i + 1) % libres.length];
+    }
+
+    // Compra un arma en la fogata abierta, con núcleos consolidados (docs 2.4). Nunca con el viajero
+    // muerto ni con la fogata cerrada. Devuelve { ok, error? }.
+    function comprarArma(arma) {
+      if (partida.muerto || modo !== "fogata") {
+        const error = "Solo se compra con el viajero vivo y junto a una fogata abierta.";
+        mostrar(error, true);
+        return { ok: false, error };
+      }
+      const res = N.comprarArma(partida, arma);
+      if (!res.ok) {
+        mostrar(res.error, true);
+        return { ok: false, error: res.error };
+      }
+      partida = res.partida;
+      guardar();
+      mostrar("Arma comprada: " + NOMBRE_ARMA[arma] + ".");
+      return { ok: true };
+    }
+
+    // ----------------------------------------------------------------- lecturas para pruebas
+    // Enemigos vivos de la sala actual, con el jefe si sigue vivo. Solo lectura.
+    function enemigosVivos() {
+      const lista = escena ? escena.enemigos.filter((e) => !e.muerto) : [];
+      if (escena && escena.jefe && !escena.jefe.muerto) lista.push(escena.jefe);
+      return lista.map((e) => ({ tipo: e.tipo, x: redondear2(e.x), y: redondear2(e.y), vida: e.vida }));
+    }
+
+    // Salas con secreto que aún no se han recogido. Solo lectura.
+    const secretosDisponibles = () =>
+      M.SALAS.filter((s) => s.secreto !== null && !partida.secretos.includes(s.id)).map((s) => s.id);
+
+    // Mueve al viajero a (x, y), solo para pruebas. No cambia la partida.
+    function moverViajeroPrueba(x, y) {
+      viajero.x = clamp(Number(x), VIAJERO.xMin, VIAJERO.xMax);
+      viajero.y = Number(y);
+      viajero.vy = 0;
+      viajero.enSuelo = false;
+    }
+
+    // ----------------------------------------------------------------- historia (diálogo)
+    // Pausa la simulación con un cuadro de historia. Cada línea se pasa con Enter, Espacio, E o
+    // Continuar. Un momento ya visto (partida.historia) no vuelve a salir.
+    const pendientes = (claves) => claves.filter((c) => !partida.historia.includes(c));
+
+    const verHistoria = () => {
+      const actual = historia.lineas[historia.pos];
+      return { titulo: actual.titulo, texto: actual.texto, pagina: historia.pos + 1, total: historia.lineas.length };
+    };
+
+    // Abre el diálogo con los momentos pendientes, en orden. Los marca como vistos y guarda la partida.
+    // Al cerrar la última línea, el modo vuelve a `volverA` y se llama a `alTerminar`. Si no hay nada
+    // pendiente, llama a `alTerminar` de inmediato.
+    function historiaPedir(claves, volverA, alTerminar) {
+      const nuevas = pendientes(claves);
+      if (nuevas.length === 0) {
+        if (alTerminar) alTerminar();
+        return;
+      }
+      const lineas = nuevas.reduce((acc, c) => acc.concat(lineasHistoria(c, partida.personaje)), []);
+      for (const c of nuevas) partida = N.marcarHistoria(partida, c);
+      guardar();
+      limpiarEntrada();
+      entrada.izq = false;
+      entrada.der = false;
+      historia = { lineas, pos: 0, volverA, alTerminar: alTerminar || null };
+      modo = "historia";
+      ui.historia(verHistoria());
+    }
+
+    // Pasa a la línea siguiente. Tras la última, cierra el diálogo, vuelve al modo previo y continúa.
+    function avanzarHistoria() {
+      if (!historia) return;
+      historia.pos += 1;
+      if (historia.pos < historia.lineas.length) {
+        ui.historia(verHistoria());
+        return;
+      }
+      const h = historia;
+      historia = null;
+      modo = h.volverA;
+      ui.historia(null);
+      if (h.alTerminar) h.alTerminar();
+    }
+
+    // Al entrar en una sala: la primera vez en su zona (zona:N) y, si el jefe de la sala sigue vivo,
+    // antes de su combate (jefe:X).
+    function alEntrarSala() {
+      const claves = ["zona:" + escena.sala.zona];
+      if (escena.jefe) claves.push("jefe:" + escena.jefe.tipo);
+      historiaPedir(claves, "juego", null);
+    }
+
+    // Fase 3D: la fase no avisa de sus sectores ni de las fases del Coloso, así que se lee su estado()
+    // en cada fotograma de pantalla. Al cambiar, se pausa, se muestra el cuadro y se reanuda.
+    function vigilar3d() {
+      if (!control3d || !vigia3d || modo !== "tres_d") return;
+      const e = control3d.estado();
+      if (e.terminado) return;
+      const claves = [];
+      if (e.sector !== vigia3d.sector) {
+        if (e.sector === "S2" || e.sector === "S3") claves.push("3d:" + e.sector);
+        vigia3d.sector = e.sector;
+      }
+      if (e.fase !== null && e.fase !== vigia3d.fase) {
+        claves.push("3d:coloso:" + e.fase);
+        vigia3d.fase = e.fase;
+      }
+      if (claves.length === 0 || pendientes(claves).length === 0) return;
+      control3d.pausar();
+      historiaPedir(claves, "tres_d", () => {
+        if (control3d) control3d.reanudar();
+      });
+    }
+
     // ----------------------------------------------------------------- fogata
     const guardar = () => {
       if (typeof op.onGuardar === "function") op.onGuardar(clonar(partida));
     };
 
+    // Encender la fogata: primero el cuadro de su momento (fogata:N, la primera vez) y luego el panel.
     function abrirFogata() {
       if (partida.muerto || modo !== "juego") return;
-      modo = "fogata";
-      limpiarEntrada();
-      ui.fogata(true);
+      historiaPedir(["fogata:" + escena.sala.zona], "juego", () => {
+        if (partida.muerto || modo !== "juego") return;
+        modo = "fogata";
+        limpiarEntrada();
+        ui.fogata(true);
+      });
     }
 
     function cerrarFogata() {
@@ -1249,13 +1502,16 @@
     }
 
     // Derrota de un jefe. Si ya estaba vencido no hace nada (el núcleo no da XP dos veces).
+    // El cuadro de la caída va antes de la fase 3D (si el jefe da paso a ella).
     function derrotarJefe(id) {
       const antes = partida.jefesVencidos.length;
       partida = N.registrarJefeVencido(partida, id);
       limpiarJefe(id);
       if (partida.jefesVencidos.length === antes) return;
       mostrar("Derrotado: " + M.TIPOS_ENEMIGO[id].nombre + ".");
-      if (partida.faseActual === "3d") entrar3D();
+      historiaPedir(["jefe:" + id + ":caida"], "juego", () => {
+        if (partida.faseActual === "3d") entrar3D();
+      });
     }
 
     // Bonos del personaje para Ceniza3D (docs 4.2 y 5.4). La vida extra va en HP sobre la base.
@@ -1282,12 +1538,15 @@
       ui.escena3d(false);
     }
 
+    // Victoria en 3D: primero el cuadro del final (sobre la escena de 3D, que sigue montada), luego
+    // se cierra la fase 3D, se marca la victoria y se avisa a la página (registro y guardado).
     function alVictoria3d() {
-      cerrar3d();
       partida = N.registrarVictoria(partida);
-      modo = "victoria";
-      mostrar("Coloso derrotado. Victoria.");
-      if (typeof op.onVictoria === "function") op.onVictoria(clonar(partida));
+      historiaPedir(["final"], "victoria", () => {
+        cerrar3d();
+        mostrar("Coloso derrotado. Victoria.");
+        if (typeof op.onVictoria === "function") op.onVictoria(clonar(partida));
+      });
     }
 
     // Caída en 3D: cuenta como muerte del viajero y vuelve a la última fogata.
@@ -1309,19 +1568,26 @@
       ui.pausa(true);
     }
 
+    // Entrar en la fase 3D: el cuadro de entrada (y el del primer sector) se muestran antes de
+    // arrancar Ceniza3D, que se comprueba al final, cuando ya han tenido tiempo de cargar sus scripts.
     function entrar3D() {
       modo = "tres_d";
       limpiarEntrada();
       ui.pausa(false);
       ui.fogata(false);
+      ui.escena3d(true);
       if (typeof op.onFase3D === "function") op.onFase3D(clonar(partida));
+      historiaPedir(["3d:entrada", "3d:S1"], "tres_d", arrancar3D);
+    }
+
+    function arrancar3D() {
       const C3 = globalThis.Ceniza3D;
       if (!C3 || typeof C3.start !== "function") {
         modo = "juego";
+        ui.escena3d(false);
         mostrar("La fase 3D no está cargada en esta página.", true);
         return;
       }
-      ui.escena3d(true);
       try {
         control3d = C3.start({
           contenedor: ui.contenedor3d(),
@@ -1335,6 +1601,7 @@
             if (cantidad > 0) partida = N.ganarXp(partida, cantidad);
           },
         });
+        vigia3d = { sector: "S1", fase: null };
       } catch (e) {
         control3d = null;
         ui.escena3d(false);
@@ -1401,8 +1668,9 @@
       const s = Number(segundos);
       if (!Number.isFinite(s) || s < 0) throw new RangeError("avanzar necesita un número de segundos no negativo");
       const pasos = Math.round(s / PASO);
+      vigilar3d();
       for (let i = 0; i < pasos; i++) {
-        if (modo === "pausa" || modo === "fogata" || modo === "tres_d" || modo === "victoria") break;
+        if (modo === "pausa" || modo === "fogata" || modo === "tres_d" || modo === "victoria" || modo === "historia") break;
         paso();
       }
       ui.hud();
@@ -1436,6 +1704,11 @@
           : null,
         cofresAbiertos: partida.cofresAbiertos.length,
         jefesVencidos: partida.jefesVencidos.slice(),
+        armas: partida.armas.slice(),
+        maestria: Object.fromEntries(ARMAS_2D.map((a) => [a, maestriaDe(a)])),
+        secretos: partida.secretos.slice(),
+        historia: partida.historia.slice(),
+        dialogo: historia ? verHistoria() : null,
         aviso: aviso.texto,
       };
     }
@@ -1455,6 +1728,9 @@
           const abierto = partida.cofresAbiertos.includes(sala.id + "#" + i);
           return { texto: abierto ? "Cofre abierto" : "E: abrir cofre", x: c.x, y: c.y - 40 };
         }
+      }
+      if (secretoVisible() && solapa(area, cajaSecreto(sala))) {
+        return { texto: "E: recoger secreto", x: sala.secreto.x, y: sala.secreto.y - 60 };
       }
       for (const d of sala.puertas) {
         if (solapa(area, { x0: d.x, x1: d.x + d.ancho, y0: d.y, y1: d.y + d.alto })) {
@@ -1483,6 +1759,7 @@
         puertaBloqueada,
         cofreAbierto: (id) => partida.cofresAbiertos.includes(id),
         pista: pistaCercana(),
+        secreto: secretoVisible() ? escena.sala.secreto : null,
       };
     }
 
@@ -1491,7 +1768,7 @@
       const vivos = escena.enemigos.filter((e) => !e.muerto);
       for (const e of vivos) {
         e.muerto = true;
-        partida = N.registrarEnemigoVencido(partida, e.tipo);
+        partida = N.registrarEnemigoVencido(partida, e.tipo, e.ultimoGolpePor || null);
       }
       escena.enemigos = [];
       return vivos.length;
@@ -1500,6 +1777,7 @@
     function iniciar() {
       cargarSala(partida.sala, null);
       mostrar("Entras en " + escena.sala.nombre + ".");
+      alEntrarSala();
     }
 
     function ponerPausa(activa) {
@@ -1537,6 +1815,13 @@
       matarEnemigosDeSala,
       derrotarJefe,
       entrar3D,
+      comprarArma,
+      cambiarArmaCiclica,
+      avanzarHistoria,
+      vigilar3d,
+      enemigosVivos,
+      secretosDisponibles,
+      moverViajeroPrueba,
       avisar: mostrar,
       destruir,
     };
@@ -1562,9 +1847,15 @@
 .av-panel{display:none;margin-top:12px;padding:12px;border:1px solid #4a3b32;border-radius:8px;background:#1c1714}
 .av-h{margin:0 0 8px;font-size:18px}
 .av-fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #4a3b32}
-.av-tactil{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-top:10px}
+.av-tactil{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-top:10px;touch-action:none}
 .av-personaje{margin-top:10px}
 .av-3d{display:none;width:100%;min-height:360px}
+.av-historia{display:none;position:fixed;inset:0;z-index:40;align-items:flex-end;justify-content:center;padding:16px;background:rgba(11,8,7,.6)}
+.av-historia-caja{width:100%;max-width:640px;max-height:70vh;overflow:auto;padding:16px;background:#1c1714;border:1px solid #4a3b32;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.av-historia-titulo{margin:0 0 8px;font-size:15px;font-weight:600;color:#e06b2d}
+.av-historia-texto{margin:0 0 14px;font-size:17px;line-height:1.5;color:#f3e9d8}
+.av-historia-pie{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.av-historia-progreso{font-size:13px;color:#b9b2a6}
 `;
 
   function crearEl(doc, tag, clase, texto) {
@@ -1601,6 +1892,7 @@
       escena3d: () => {},
       contenedor3d: () => null,
       refrescarPanel: () => {},
+      historia: () => {},
     };
     const motor = crearMotor(op, ui);
 
@@ -1670,10 +1962,7 @@
       tactil.appendChild(pulsar("Atacar", "Atacar con el arma activa", "atacar"));
       tactil.appendChild(pulsar("Esquivar", "Esquivar", "esquivar"));
       tactil.appendChild(pulsar("E", "Interactuar", "interactuar"));
-      const cambiarArma = boton(doc, "Arma", "Cambiar de arma", () => {
-        const i = ARMAS_2D.indexOf(motor.estado().arma);
-        motor.entrada.arma = ARMAS_2D[(i + 1) % ARMAS_2D.length];
-      });
+      const cambiarArma = boton(doc, "Arma", "Cambiar de arma", () => motor.cambiarArmaCiclica());
       tactil.appendChild(cambiarArma);
       tactil.appendChild(boton(doc, "||", "Pausa", () => manejarPausa()));
       escenario.appendChild(tactil);
@@ -1733,12 +2022,51 @@
         refrescarFogata();
       });
     panelFogata.appendChild(btnRespec);
+
+    // Armas de la fogata: se compran con núcleos consolidados (docs 2.4). La hoja viene con el viajero.
+    panelFogata.appendChild(crearEl(doc, "h3", "av-h", "Armas"));
+    const armasTexto = crearEl(doc, "p", null, "");
+    panelFogata.appendChild(armasTexto);
+    const botonesCompra = {};
+    for (const arma of ARMAS_COMPRABLES) {
+      const fila = crearEl(doc, "div", "av-fila");
+      fila.appendChild(crearEl(doc, "span", null, NOMBRE_ARMA[arma]));
+      fila.appendChild(crearEl(doc, "span", null, N.COSTO_ARMA[arma] + " núcleos"));
+      const comprar = boton(doc, "Comprar", NOMBRE_ARMA[arma] + ": comprar", () => {
+        motor.comprarArma(arma);
+        refrescarFogata();
+      });
+      fila.appendChild(comprar);
+      panelFogata.appendChild(fila);
+      botonesCompra[arma] = comprar;
+    }
     escenario.appendChild(panelFogata);
     raiz.appendChild(escenario);
 
     // Contenedor de la fase 3D (Ceniza3D se monta aquí; el escenario 2D se oculta).
     const host3d = crearEl(doc, "div", "av-3d");
     raiz.appendChild(host3d);
+
+    // Cuadro de historia (docs/ceniza/historia.js): cubre la escena y pausa la simulación mientras está abierto.
+    const dialogo = crearEl(doc, "div", "av-historia");
+    dialogo.setAttribute("role", "dialog");
+    dialogo.setAttribute("aria-modal", "true");
+    dialogo.setAttribute("aria-label", "Historia de Ceniza");
+    dialogo.style.display = "none";
+    const dialogoCaja = crearEl(doc, "div", "av-historia-caja");
+    const dialogoTitulo = crearEl(doc, "h2", "av-historia-titulo", "");
+    const dialogoTexto = crearEl(doc, "p", "av-historia-texto", "");
+    dialogoTexto.setAttribute("aria-live", "polite");
+    const dialogoPie = crearEl(doc, "div", "av-historia-pie");
+    const dialogoProgreso = crearEl(doc, "span", "av-historia-progreso", "");
+    const dialogoBoton = boton(doc, "Continuar", "Continuar la historia", () => motor.avanzarHistoria());
+    dialogoPie.appendChild(dialogoProgreso);
+    dialogoPie.appendChild(dialogoBoton);
+    dialogoCaja.appendChild(dialogoTitulo);
+    dialogoCaja.appendChild(dialogoTexto);
+    dialogoCaja.appendChild(dialogoPie);
+    dialogo.appendChild(dialogoCaja);
+    raiz.appendChild(dialogo);
     op.contenedor.appendChild(raiz);
 
     // ----------------------------------------------------------------- actualización de la interfaz
@@ -1757,7 +2085,15 @@
       chatarraTexto.textContent = "Chatarra " + p.chatarra;
       zonaTexto.textContent = "Zona " + r.zona + " · " + M.salaPorId(p.sala).nombre;
       const arma = motor.estado().arma;
-      for (const a of ARMAS_2D) botonesArma[a].setAttribute("aria-pressed", String(arma === a));
+      ARMAS_2D.forEach((a, i) => {
+        const libre = p.armas.includes(a);
+        const b = botonesArma[a];
+        const rotulo = (i + 1) + " " + NOMBRE_ARMA[a] + (libre ? "" : " · bloqueada");
+        if (b.textContent !== rotulo) b.textContent = rotulo;
+        b.disabled = !libre;
+        b.setAttribute("aria-pressed", String(arma === a));
+        b.setAttribute("aria-label", "Arma " + (i + 1) + ": " + NOMBRE_ARMA[a] + (libre ? "" : ", bloqueada"));
+      });
       const av = motor.aviso();
       mensaje.textContent = av.texto;
       mensaje.setAttribute("data-error", String(av.error));
@@ -1772,6 +2108,13 @@
         filasAtributo[atr].boton.disabled = p.puntosLibres < 1;
       }
       boton3d.style.display = p.faseActual === "3d" ? "inline-block" : "none";
+      armasTexto.textContent = "Núcleos consolidados: " + p.nucleos + ". Las armas se compran con núcleos consolidados.";
+      for (const arma of ARMAS_COMPRABLES) {
+        const estadoArma = p.armas.includes(arma) ? "Comprada" : p.nucleos >= N.COSTO_ARMA[arma] ? "Comprar" : "Faltan núcleos";
+        botonesCompra[arma].textContent = estadoArma;
+        botonesCompra[arma].disabled = estadoArma !== "Comprar" || p.muerto;
+        botonesCompra[arma].setAttribute("aria-label", NOMBRE_ARMA[arma] + ": " + estadoArma);
+      }
     }
 
     // Si CenizaPersonaje no puede abrirse (hoy lanza al validar el personaje, ver las notas de la
@@ -1821,6 +2164,17 @@
     ui.refrescarPanel = () => {
       if (personajeAbierto) abrirPersonaje();
     };
+    ui.historia = (dato) => {
+      if (!dato) {
+        dialogo.style.display = "none";
+        return;
+      }
+      dialogoTitulo.textContent = dato.titulo;
+      dialogoTexto.textContent = dato.texto;
+      dialogoProgreso.textContent = dato.total > 1 ? dato.pagina + " de " + dato.total : "";
+      dialogo.style.display = "flex";
+      dialogoBoton.focus();
+    };
 
     // ----------------------------------------------------------------- teclado
     // Las teclas se ignoran dentro de campos de texto (el nombre del personaje, por ejemplo).
@@ -1847,6 +2201,15 @@
       if (k === "escape" || k === "p") {
         if (!e.repeat) manejarPausa();
         prevenir();
+        return;
+      }
+      if (motor.modo() === "historia") {
+        // Cuadro de historia abierto: E, o Enter y Espacio fuera de un botón (el botón ya responde al clic), pasan la línea.
+        const enBoton = Boolean(e.target && e.target.tagName === "BUTTON");
+        if (k === "e" || ((k === "enter" || k === " ") && !enBoton)) {
+          prevenir();
+          if (!e.repeat) motor.avanzarHistoria();
+        }
         return;
       }
       if (motor.modo() !== "juego") return;
@@ -1891,13 +2254,14 @@
       ultimo = t;
       while (acumulado >= PASO) {
         const m = motor.modo();
-        if (m === "pausa" || m === "fogata" || m === "tres_d" || m === "victoria") {
+        if (m === "pausa" || m === "fogata" || m === "tres_d" || m === "victoria" || m === "historia") {
           acumulado = 0;
           break;
         }
         motor.paso();
         acumulado -= PASO;
       }
+      motor.vigilar3d();
       dibujar();
       actualizarHud();
       rafId = globalThis.requestAnimationFrame(cuadro);
@@ -1912,6 +2276,9 @@
     // ----------------------------------------------------------------- gancho de pruebas
     const pruebas = Object.freeze({
       estado: () => motor.estado(),
+      enemigos: () => motor.enemigosVivos(),
+      secretosDisponibles: () => motor.secretosDisponibles(),
+      colocar: (x, y) => motor.moverViajeroPrueba(x, y),
       avanzar: (segundos) => motor.avanzar(segundos),
       entrarSala: (salaId) => motor.intentarCruzar(salaId),
       matarEnemigosDeSala: () => motor.matarEnemigosDeSala(),

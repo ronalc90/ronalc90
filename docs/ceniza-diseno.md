@@ -615,3 +615,4 @@ Decisiones pendientes del dueño:
 - **D9 (maestría de arma, propuesta).** El diseño no fija de dónde sale la maestría. Propuesta: `maestría = min(3, floor(usos / 30))`, donde `usos` cuenta los enemigos comunes o élite vencidos con esa arma 2D. Código: `maestriaDe` en `docs/ceniza/aventura-nucleo.js`.
 - **D10 (munición 3D, propuesta).** El diseño no fija munición. La reserva no se agota: el cargador se recarga con el tiempo de recarga existente. Código: shooter3d.js.
 - **D11 (secretos, propuesta).** El diseño no fija cantidades ni tipo de recompensa de los secretos. Propuesta: pieza común de la zona, o 20 a 40 núcleos, o 10 a 20 chatarra, según el secreto. Código: `recogerSecreto` en `docs/ceniza/aventura-nucleo.js`.
+- **D12 (historia).** Texto de docs/ceniza-historia.md, ronda de guionistas: cuatro propuestas, tres jueces, síntesis y revisión. Cuadros de diálogo en la aventura; la historia se guarda con las claves de historia en la partida.
