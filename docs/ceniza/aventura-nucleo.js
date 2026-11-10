@@ -17,7 +17,9 @@
 //   consolidar: se pierden al morir), chatarra, equipo {ranura: pieza | null},
 //   inventario [pieza], consumibles {curacion, bomba}, contadorPiezas, sala,
 //   ultimaFogata, jefesVencidos [jefeId], cofresAbiertos ["salaId#indice"],
-//   muertes, faseActual ("2d" | "3d" | "victoria").
+//   muertes, faseActual ("2d" | "3d" | "victoria"), armas [arma 2D] (la hoja viene
+//   desbloqueada), usos {arma: enemigos vencidos con ella} y secretos [salaId].
+//   Un guardado v1 sin armas, usos ni secretos se carga con sus valores por defecto.
 
 (function () {
   "use strict";
@@ -38,14 +40,29 @@
   const FORJA_MAX = D.FORJA_MAX;
   const COSTO_RESPEC = D.COSTO_RESPEC;
 
+  // Armas 2D: las de tipo "2d" en datos.js (hoja, arco, martillo y lanza).
+  const ARMAS_2D = congelar(Object.keys(D.armas).filter((a) => D.armas[a].tipo === "2d"));
+  // Costo de compra en núcleos consolidados de cada arma 2D comprable (docs 2.4). La hoja no se compra.
+  const COSTO_ARMA = congelar({ arco: 100, martillo: 220, lanza: 400 });
+  // Maestría por arma (decisión D9, propuesta del coordinador; el diseño no fija su origen):
+  // un nivel por cada UMBRAL_MAESTRIA enemigos vencidos con esa arma, hasta MAESTRIA_MAX.
+  const UMBRAL_MAESTRIA = 30;
+  const MAESTRIA_MAX = 3;
+  // Recompensas de los secretos de sala (mundo.js). Las cifras son propuesta del coordinador:
+  // docs/ceniza-diseno.md solo menciona los secretos (2.2 y 10.1) y no fija cantidades.
+  // Son rangos enteros inclusivos.
+  const SECRETO_NUCLEOS = congelar([20, 40]);
+  const SECRETO_CHATARRA = congelar([10, 20]);
+
   // XP de enemigos (docs 4.1) y de jefes de zona (docs 2.4), tomadas de datos.js.
   const XP_ENEMIGO = Object.freeze({ comun: D.XP_FUENTES.enemigoComun, elite: D.XP_FUENTES.elite });
   const xpDeJefe = (zona) => D.ZONAS.find((z) => z.id === zona).xpJefe;
 
   // Los cofres salen de D.abrirCofre (datos.js), que aplica las tablas 8.1, 8.2 y 8.3.
 
-  // Núcleos y chatarra por enemigo. PENDIENTE: el diseño no fija estas cifras
-  // (la sección 4.1 solo fija la XP). Se dejan en 0 hasta que el dueño lo decida.
+  // Núcleos y chatarra por enemigo común o élite. DECISIÓN: se quedan en 0. Motivo:
+  // docs/ceniza-diseno.md, sección 4.1, solo fija la XP de enemigos; los núcleos salen de los
+  // cofres (8.1) y de los secretos de sala (recogerSecreto). Cambiarlo solo si el dueño fija cifras.
   const RECOMPENSA_ENEMIGO = Object.freeze({
     comun: { nucleos: 0, chatarra: 0 },
     elite: { nucleos: 0, chatarra: 0 },
@@ -243,6 +260,11 @@
   }
 
   // ----------------------------------------------------------------- partida nueva
+  // Usos a cero de cada arma 2D (base de la maestría, decisión D9).
+  function usosIniciales() {
+    return Object.fromEntries(ARMAS_2D.map((a) => [a, 0]));
+  }
+
   // Copia del personaje solo con sus campos conocidos (sin claves extra).
   function normalizarPersonaje(o) {
     return {
@@ -289,6 +311,9 @@
       ultimaFogata: M.SALA_INICIAL,
       jefesVencidos: [],
       cofresAbiertos: [],
+      armas: ["hoja"],
+      usos: usosIniciales(),
+      secretos: [],
       muertes: 0,
       faseActual: "2d",
     };
@@ -363,6 +388,18 @@
         new Set(p.cofresAbiertos).size !== p.cofresAbiertos.length) {
       return "cofres abiertos no válidos";
     }
+    if (!Array.isArray(p.armas) || !p.armas.every((a) => ARMAS_2D.includes(a)) ||
+        new Set(p.armas).size !== p.armas.length || !p.armas.includes("hoja")) {
+      return "armas no válidas";
+    }
+    if (!esObjeto(p.usos) || Object.keys(p.usos).length !== ARMAS_2D.length ||
+        !ARMAS_2D.every((a) => esEntero(p.usos[a], 0, Number.MAX_SAFE_INTEGER))) {
+      return "usos no válidos";
+    }
+    if (!Array.isArray(p.secretos) || !p.secretos.every((s) => salaConSecreto(s)) ||
+        new Set(p.secretos).size !== p.secretos.length) {
+      return "secretos no válidos";
+    }
     if (!FASES.includes(p.faseActual)) return "fase no válida";
     return null;
   }
@@ -373,15 +410,27 @@
     return JSON.stringify({ version: VERSION, partida });
   }
 
+  // Guardados v1 anteriores a las armas, los usos y los secretos: se completan con sus valores
+  // por defecto. Devuelve una copia y no toca el objeto recibido.
+  function completarGuardado(p) {
+    if (!esObjeto(p)) return p;
+    const c = { ...p };
+    if (!tiene(c, "armas")) c.armas = ["hoja"];
+    if (!tiene(c, "usos")) c.usos = usosIniciales();
+    if (!tiene(c, "secretos")) c.secretos = [];
+    return c;
+  }
+
   // { ok: true, partida } o { ok: false, error }. Nunca lanza.
   function deserializar(texto) {
     try {
       if (typeof texto !== "string") return { ok: false, error: "El guardado debe ser texto" };
       const obj = JSON.parse(texto);
       if (!esObjeto(obj) || obj.version !== VERSION) return { ok: false, error: "Versión de guardado no reconocida" };
-      const problema = problemaPartida(obj.partida);
+      const partida = completarGuardado(obj.partida);
+      const problema = problemaPartida(partida);
       if (problema !== null) return { ok: false, error: "Partida no válida: " + problema };
-      return { ok: true, partida: obj.partida };
+      return { ok: true, partida };
     } catch (e) {
       return { ok: false, error: "Guardado corrupto: no se pudo leer" };
     }
@@ -422,9 +471,78 @@
     };
   }
 
+  // ----------------------------------------------------------------- armas 2D y maestría
+  // Compra un arma 2D en una fogata (docs 2.4). Cobra COSTO_ARMA de partida.nucleos (consolidados),
+  // nunca de nucleosSala. La hoja viene desbloqueada y no se compra.
+  function comprarArma(partida, arma) {
+    if (typeof arma !== "string" || !tiene(COSTO_ARMA, arma)) {
+      return fallo(partida, "Arma no comprable: " + String(arma));
+    }
+    if (partida.armas.includes(arma)) return fallo(partida, "Ya tienes el arma: " + arma);
+    const costo = COSTO_ARMA[arma];
+    if (partida.nucleos < costo) return fallo(partida, "Faltan núcleos: hacen falta " + costo);
+    const p = clonar(partida);
+    p.nucleos -= costo;
+    p.armas.push(arma);
+    return exito(p);
+  }
+
+  // Maestría de un arma 2D (decisión D9): un nivel por cada UMBRAL_MAESTRIA usos, hasta MAESTRIA_MAX.
+  // Lanza RangeError si el arma no es 2D conocida.
+  function maestriaDe(partida, arma) {
+    if (!ARMAS_2D.includes(arma)) throw new RangeError("Arma 2D desconocida: " + String(arma));
+    return Math.min(MAESTRIA_MAX, Math.floor(partida.usos[arma] / UMBRAL_MAESTRIA));
+  }
+
+  // ----------------------------------------------------------------- secretos de sala
+  // Entero uniforme en el rango [min, max] inclusivo, a partir del rng recibido.
+  const enteroEnRango = (rango, r) =>
+    rango[0] + Math.min(rango[1] - rango[0], Math.floor(r() * (rango[1] - rango[0] + 1)));
+
+  // true si la sala existe y tiene secreto (mundo.js).
+  function salaConSecreto(salaId) {
+    const sala = M.salaPorId(salaId);
+    return sala !== null && sala.secreto !== null;
+  }
+
+  // Recoge el secreto de la sala actual, una sola vez por sala (docs 2.2 y 10.1). Recompensas
+  // según mundo.js: "pieza" (pieza de la zona con tipo de cofre "comun" y la suerte del viajero,
+  // con tope 100), "nucleos" (consolidados) o "chatarra". Devuelve
+  // { ok, partida, recompensa: { tipo, pieza } } o { ok, partida, recompensa: { tipo, cantidad } }.
+  function recogerSecreto(partida, salaId, rng) {
+    const r = obtenerRng(rng);
+    const sala = M.salaPorId(salaId);
+    if (!sala || sala.secreto === null) return fallo(partida, "La sala no tiene secreto: " + String(salaId));
+    if (partida.sala !== salaId) return fallo(partida, "El secreto de " + salaId + " no está en la sala actual");
+    if (partida.secretos.includes(salaId)) return fallo(partida, "El secreto ya está recogido");
+    if (partida.muerto) return fallo(partida, "El viajero está muerto");
+    const p = clonar(partida);
+    p.secretos.push(salaId);
+    const tipo = sala.secreto.recompensa;
+    if (tipo === "pieza") {
+      const suerte = Math.min(100, statsJugador(partida).suerte);
+      const conPieza = anadirPieza(p, D.generarPieza(sala.zona, "comun", suerte, r));
+      const pieza = clonar(conPieza.inventario[conPieza.inventario.length - 1]);
+      return { ok: true, partida: conPieza, recompensa: { tipo, pieza } };
+    }
+    if (tipo === "nucleos") {
+      const cantidad = enteroEnRango(SECRETO_NUCLEOS, r);
+      p.nucleos += cantidad;
+      return { ok: true, partida: p, recompensa: { tipo, cantidad } };
+    }
+    if (tipo === "chatarra") {
+      const cantidad = enteroEnRango(SECRETO_CHATARRA, r);
+      p.chatarra += cantidad;
+      return { ok: true, partida: p, recompensa: { tipo, cantidad } };
+    }
+    throw new RangeError("Recompensa de secreto desconocida: " + String(tipo));
+  }
+
   // ----------------------------------------------------------------- enemigos y jefes
   // XP y recompensas de un enemigo común o élite. Los jefes van por registrarJefeVencido.
-  function registrarEnemigoVencido(partida, tipo) {
+  // arma (opcional): si es un arma 2D, suma 1 a usos[arma] (base de la maestría). Sin arma o con
+  // otra arma no cuenta y no falla.
+  function registrarEnemigoVencido(partida, tipo, arma) {
     if (!tiene(M.TIPOS_ENEMIGO, tipo) || M.TIPOS_ENEMIGO[tipo].clase === "jefe") {
       throw new RangeError("Enemigo común o élite desconocido: " + String(tipo));
     }
@@ -432,6 +550,7 @@
     const p = ganarXp(partida, XP_ENEMIGO[clase]);
     p.nucleosSala += RECOMPENSA_ENEMIGO[clase].nucleos;
     p.chatarra += RECOMPENSA_ENEMIGO[clase].chatarra;
+    if (ARMAS_2D.includes(arma)) p.usos[arma] += 1;
     return p;
   }
 
@@ -559,6 +678,9 @@
     ARMADURA_MAX,
     FASES,
     COSTO_RESPEC,
+    COSTO_ARMA,
+    UMBRAL_MAESTRIA,
+    MAESTRIA_MAX,
     XP_ENEMIGO,
     crearPartida,
     serializar,
@@ -574,6 +696,9 @@
     desequipar,
     forjar,
     abrirCofre,
+    comprarArma,
+    maestriaDe,
+    recogerSecreto,
     registrarEnemigoVencido,
     registrarJefeVencido,
     registrarVictoria,

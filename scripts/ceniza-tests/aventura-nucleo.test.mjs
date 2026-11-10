@@ -514,3 +514,234 @@ test("resumen expone los datos del HUD sin modificar la partida", () => {
   assert.equal(r.fase, "2d");
   assert.equal(JSON.stringify(p), antes);
 });
+
+// ----------------------------------------------------------------- armas, maestría y secretos
+
+// Partida nueva con el viajero en una sala concreta (copia JSON; no pasa por las puertas).
+const enSala = (salaId) => ({ ...plano(N.crearPartida({ semilla: 1 })), sala: salaId });
+
+test("crearPartida trae la hoja, los usos a cero y ningún secreto", () => {
+  const p = N.crearPartida({ semilla: 1 });
+  assert.deepEqual(plano(p.armas), ["hoja"]);
+  assert.deepEqual(plano(p.usos), { hoja: 0, arco: 0, martillo: 0, lanza: 0 });
+  assert.deepEqual(plano(p.secretos), []);
+});
+
+test("COSTO_ARMA es 100, 220 y 400 y está congelado; maestría con umbral 30 y tope 3", () => {
+  assert.deepEqual(plano(N.COSTO_ARMA), { arco: 100, martillo: 220, lanza: 400 });
+  assert.equal(Object.isFrozen(N.COSTO_ARMA), true);
+  assert.equal(N.UMBRAL_MAESTRIA, 30);
+  assert.equal(N.MAESTRIA_MAX, 3);
+});
+
+test("comprarArma cobra el costo exacto de núcleos consolidados y no toca nucleosSala", () => {
+  for (const arma of ["arco", "martillo", "lanza"]) {
+    const costo = N.COSTO_ARMA[arma];
+    const p = N.crearPartida({ semilla: 1 });
+    p.nucleos = costo;
+    p.nucleosSala = 33;
+    const r = N.comprarArma(p, arma);
+    assert.equal(r.ok, true, r.error);
+    assert.equal(r.partida.nucleos, 0, `${arma} cuesta exactamente ${costo}`);
+    assert.equal(r.partida.nucleosSala, 33, "los núcleos sin consolidar no se gastan");
+    assert.deepEqual(plano(r.partida.armas), ["hoja", arma]);
+    assert.equal(p.nucleos, costo, "la partida original no cambia");
+    assert.deepEqual(plano(p.armas), ["hoja"]);
+  }
+});
+
+test("comprarArma sin núcleos consolidados suficientes deja la partida idéntica", () => {
+  for (const arma of ["arco", "martillo", "lanza"]) {
+    const p = N.crearPartida({ semilla: 1 });
+    p.nucleos = N.COSTO_ARMA[arma] - 1;
+    p.nucleosSala = 1000;   // los núcleos sin consolidar no cuentan para comprar
+    const r = N.comprarArma(p, arma);
+    assert.equal(r.ok, false, `${arma} sin núcleos suficientes`);
+    assert.equal(typeof r.error, "string");
+    assert.deepEqual(plano(r.partida), plano(p), `${arma} no cambia la partida`);
+  }
+});
+
+test("comprarArma rechaza un arma repetida, la hoja, armas 3D y nombres inventados", () => {
+  const p = N.crearPartida({ semilla: 1 });
+  p.nucleos = 1000;
+  const primera = N.comprarArma(p, "arco");
+  assert.equal(primera.ok, true, primera.error);
+  const repetida = N.comprarArma(primera.partida, "arco");
+  assert.equal(repetida.ok, false, "ya comprada");
+  assert.deepEqual(plano(repetida.partida), plano(primera.partida), "repetir no cobra");
+  for (const malo of ["hoja", "rifle", "escopeta", "plasma", "inventada", "constructor", "__proto__", "", undefined, null, 3]) {
+    const r = N.comprarArma(p, malo);
+    assert.equal(r.ok, false, `debería rechazar ${String(malo)}`);
+    assert.deepEqual(plano(r.partida), plano(p), `sin cambios con ${String(malo)}`);
+  }
+});
+
+test("un guardado v1 sin armas, usos ni secretos se carga con valores por defecto", () => {
+  const v1 = JSON.parse(N.serializar(N.crearPartida({ semilla: 9 })));
+  delete v1.partida.armas;
+  delete v1.partida.usos;
+  delete v1.partida.secretos;
+  const r = N.deserializar(JSON.stringify(v1));
+  assert.equal(r.ok, true, r.error);
+  assert.deepEqual(plano(r.partida.armas), ["hoja"]);
+  assert.deepEqual(plano(r.partida.usos), { hoja: 0, arco: 0, martillo: 0, lanza: 0 });
+  assert.deepEqual(plano(r.partida.secretos), []);
+  assert.deepEqual(plano(r.partida), plano(N.crearPartida({ semilla: 9 })), "igual que una partida nueva");
+});
+
+test("un guardado con armas pero sin usos ni secretos completa solo lo que falta", () => {
+  const v1 = JSON.parse(N.serializar(N.crearPartida({ semilla: 9 })));
+  v1.partida.armas = ["hoja", "arco"];
+  delete v1.partida.usos;
+  delete v1.partida.secretos;
+  const r = N.deserializar(JSON.stringify(v1));
+  assert.equal(r.ok, true, r.error);
+  assert.deepEqual(plano(r.partida.armas), ["hoja", "arco"]);
+  assert.deepEqual(plano(r.partida.usos), { hoja: 0, arco: 0, martillo: 0, lanza: 0 });
+});
+
+test("deserializar rechaza armas, usos y secretos no válidos", () => {
+  const base = N.serializar(N.crearPartida({ semilla: 9 }));
+  const con = (cambios) => {
+    const o = JSON.parse(base);
+    Object.assign(o.partida, cambios);
+    return JSON.stringify(o);
+  };
+  const malos = [
+    { armas: ["arco"] },                                        // sin hoja
+    { armas: ["hoja", "hoja"] },                                // repetida
+    { armas: ["hoja", "rifle"] },                               // arma 3D
+    { armas: "hoja" },                                          // no es arreglo
+    { usos: { hoja: 0, arco: 0, martillo: 0 } },                // falta lanza
+    { usos: { hoja: 0, arco: -1, martillo: 0, lanza: 0 } },     // negativo
+    { usos: { hoja: 0, arco: 0, martillo: 0, lanza: 0, rifle: 0 } },
+    { secretos: ["Z1.1"] },                                     // Z1.1 no tiene secreto
+    { secretos: ["Z1.3", "Z1.3"] },                             // repetido
+    { secretos: ["Z9.9"] },                                     // sala inexistente
+  ];
+  for (const m of malos) {
+    const r = N.deserializar(con(m));
+    assert.equal(r.ok, false, `debería rechazar ${JSON.stringify(m)}`);
+  }
+  const bien = N.deserializar(con({
+    armas: ["hoja", "lanza"],
+    usos: { hoja: 4, arco: 0, martillo: 0, lanza: 30 },
+    secretos: ["Z1.3"],
+  }));
+  assert.equal(bien.ok, true, bien.error);
+});
+
+test("maestriaDe: un nivel por cada 30 usos, máximo 3; RangeError si el arma no es 2D", () => {
+  const con = (n) => {
+    const p = N.crearPartida({ semilla: 1 });
+    p.usos.arco = n;
+    return p;
+  };
+  assert.equal(N.maestriaDe(con(29), "arco"), 0);
+  assert.equal(N.maestriaDe(con(30), "arco"), 1);
+  assert.equal(N.maestriaDe(con(89), "arco"), 2);
+  assert.equal(N.maestriaDe(con(90), "arco"), 3);
+  assert.equal(N.maestriaDe(con(500), "arco"), 3);
+  assert.equal(N.maestriaDe(con(0), "arco"), 0);
+  assert.equal(N.maestriaDe(N.crearPartida({ semilla: 1 }), "hoja"), 0, "la hoja cuenta aparte");
+  assert.throws(() => N.maestriaDe(con(0), "rifle"), esError("RangeError"));
+  assert.throws(() => N.maestriaDe(con(0), "constructor"), esError("RangeError"));
+  assert.throws(() => N.maestriaDe(con(0), undefined), esError("RangeError"));
+});
+
+test("registrarEnemigoVencido cuenta usos solo con un arma 2D y no cambia la recompensa", () => {
+  const p = N.crearPartida({ semilla: 1 });
+  const sin = N.registrarEnemigoVencido(p, "arenero");
+  assert.equal(sin.xp, 5);
+  assert.deepEqual(plano(sin.usos), plano(p.usos), "sin arma no cuenta");
+  assert.equal(sin.nucleosSala, 0, "RECOMPENSA_ENEMIGO sigue en 0 núcleos");
+  assert.equal(sin.chatarra, 0, "RECOMPENSA_ENEMIGO sigue en 0 chatarra");
+
+  const conArco = N.registrarEnemigoVencido(p, "escarabajo", "arco");
+  assert.equal(conArco.xp, 10);
+  assert.equal(conArco.usos.arco, 1);
+  assert.equal(conArco.usos.hoja, 0);
+  assert.equal(N.registrarEnemigoVencido(conArco, "arenero", "arco").usos.arco, 2);
+
+  const tresD = N.registrarEnemigoVencido(p, "arenero", "rifle");
+  assert.deepEqual(plano(tresD.usos), plano(p.usos), "un arma 3D no cuenta");
+  assert.equal(tresD.xp, 5, "y no falla");
+  assert.equal(N.registrarEnemigoVencido(p, "arenero", "inventada").xp, 5);
+  assert.equal(p.usos.arco, 0, "la partida original no cambia");
+});
+
+test("recogerSecreto da la pieza, los núcleos o la chatarra según la sala", () => {
+  // Z1.3 da pieza (zona 1), Z2.2 núcleos y Z3.1 chatarra (mundo.js).
+  const pieza = N.recogerSecreto(enSala("Z1.3"), "Z1.3", rngSemilla(9));
+  assert.equal(pieza.ok, true, pieza.error);
+  assert.equal(pieza.recompensa.tipo, "pieza");
+  assert.equal(pieza.recompensa.pieza.zona, 1);
+  assert.equal(pieza.recompensa.pieza.forja, 0);
+  assert.equal(pieza.partida.inventario.length, 1);
+  assert.equal(pieza.partida.inventario[0].id, pieza.recompensa.pieza.id);
+  assert.ok(contexto.CenizaDatos.statsDePieza(pieza.recompensa.pieza).length > 0, "la pieza es válida");
+  assert.deepEqual(plano(pieza.partida.secretos), ["Z1.3"]);
+
+  const nucleos = enSala("Z2.2");
+  nucleos.nucleos = 5;
+  nucleos.nucleosSala = 7;
+  const bajo = N.recogerSecreto(nucleos, "Z2.2", () => 0);
+  assert.equal(bajo.recompensa.tipo, "nucleos");
+  assert.equal(bajo.recompensa.cantidad, 20);
+  assert.equal(bajo.partida.nucleos, 25, "se suma a los núcleos consolidados");
+  assert.equal(bajo.partida.nucleosSala, 7, "no pasa por los núcleos sin consolidar");
+  const alto = N.recogerSecreto(nucleos, "Z2.2", () => 0.999);
+  assert.equal(alto.recompensa.cantidad, 40);
+  assert.equal(alto.partida.nucleos, 45);
+  assert.equal(alto.partida.inventario.length, 0);
+
+  const chatarra = enSala("Z3.1");
+  chatarra.chatarra = 3;
+  const c1 = N.recogerSecreto(chatarra, "Z3.1", () => 0);
+  assert.equal(c1.recompensa.tipo, "chatarra");
+  assert.equal(c1.recompensa.cantidad, 10);
+  assert.equal(c1.partida.chatarra, 13);
+  const c2 = N.recogerSecreto(chatarra, "Z3.1", () => 0.999);
+  assert.equal(c2.recompensa.cantidad, 20);
+  assert.equal(c2.partida.chatarra, 23);
+});
+
+test("recogerSecreto: las cantidades quedan siempre entre 20 y 40 núcleos y 10 y 20 chatarra", () => {
+  for (let semilla = 1; semilla <= 60; semilla++) {
+    const n = N.recogerSecreto(enSala("Z2.2"), "Z2.2", rngSemilla(semilla));
+    assert.ok(n.recompensa.cantidad >= 20 && n.recompensa.cantidad <= 40, `núcleos ${n.recompensa.cantidad}`);
+    const c = N.recogerSecreto(enSala("Z3.1"), "Z3.1", rngSemilla(semilla));
+    assert.ok(c.recompensa.cantidad >= 10 && c.recompensa.cantidad <= 20, `chatarra ${c.recompensa.cantidad}`);
+  }
+});
+
+test("recogerSecreto: falla si ya se recogió, la sala no es la actual, no hay secreto, la sala no existe o el viajero murió", () => {
+  const r = N.recogerSecreto(enSala("Z2.2"), "Z2.2", rngSemilla(3));
+  assert.equal(r.ok, true, r.error);
+  const otra = N.recogerSecreto(r.partida, "Z2.2", rngSemilla(3));
+  assert.equal(otra.ok, false, "segunda vez");
+  assert.deepEqual(plano(otra.partida), plano(r.partida));
+
+  const distinta = N.recogerSecreto(enSala("Z1.1"), "Z1.3", rngSemilla(3));
+  assert.equal(distinta.ok, false, "secreto de otra sala");
+  assert.deepEqual(plano(distinta.partida), plano(enSala("Z1.1")));
+  assert.equal(N.recogerSecreto(enSala("Z1.1"), "Z1.1", rngSemilla(3)).ok, false, "sala sin secreto");
+  assert.equal(N.recogerSecreto(enSala("Z9.9"), "Z9.9", rngSemilla(3)).ok, false, "sala desconocida");
+
+  const muerto = N.danioAJugador(enSala("Z1.3"), 999);
+  const rm = N.recogerSecreto(muerto, "Z1.3", rngSemilla(3));
+  assert.equal(rm.ok, false, "viajero muerto");
+  assert.deepEqual(plano(rm.partida), plano(muerto));
+});
+
+test("recogerSecreto no muta la partida y con la misma semilla da el mismo resultado", () => {
+  const p = enSala("Z1.3");
+  const antes = JSON.stringify(p);
+  const a = N.recogerSecreto(p, "Z1.3", rngSemilla(77));
+  assert.equal(JSON.stringify(p), antes, "la partida recibida no cambia");
+  const b = N.recogerSecreto(p, "Z1.3", rngSemilla(77));
+  assert.deepEqual(plano(a), plano(b));
+  assert.equal(N.recogerSecreto(p, "Z1.3").ok, true, "sin rng usa Math.random");
+  assert.throws(() => N.recogerSecreto(p, "Z1.3", 5), esError("TypeError"));
+});

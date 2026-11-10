@@ -612,3 +612,5 @@ Decisiones pendientes del dueño:
 - **D6 (cuantización).** El tope se mantiene a 60 y 120 Hz. Si el código cambia cómo se descuentan los cooldowns, hay que repetir la verificación de 7.5.
 - **D7 (uptime del coloso).** Se supuso 0,5 para calibrar los PV del Coloso final.
 - **D8 (forja).** Cerrada en la ronda 3: el efecto es `1 + 0,10 * nivel` sobre todos los modificadores de la pieza (5.5).
+- **D9 (maestría de arma, propuesta).** El diseño no fija de dónde sale la maestría. Propuesta: `maestría = min(3, floor(usos / 30))`, donde `usos` cuenta los enemigos comunes o élite vencidos con esa arma 2D. Código: `maestriaDe` en `docs/ceniza/aventura-nucleo.js`.
+- **D11 (secretos, propuesta).** El diseño no fija cantidades ni tipo de recompensa de los secretos. Propuesta: pieza común de la zona, o 20 a 40 núcleos, o 10 a 20 chatarra, según el secreto. Código: `recogerSecreto` en `docs/ceniza/aventura-nucleo.js`.
