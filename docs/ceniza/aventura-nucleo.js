@@ -129,12 +129,40 @@
     return suma;
   }
 
+  // Modificadores "Núcleos encontrados" y "Chatarra encontrada" de las piezas equipadas (docs 5.1
+  // y 5.3, en %). Se devuelven en centésimas de % (12,5 % = 1250) para sumar enteros sin error de
+  // coma flotante. Dentro de la fuente se suman, como en bonosDeEquipo. Solo cuentan las piezas
+  // equipadas (el inventario no). statsDePieza ya aplica la forja.
+  function bonosDeRecursos(equipo) {
+    const suma = { nucleos: 0, chatarra: 0 };
+    for (const ranura of RANURAS) {
+      const pieza = equipo[ranura];
+      if (!pieza) continue;
+      for (const s of D.statsDePieza(pieza)) {
+        if (tiene(suma, s.id)) suma[s.id] += Math.round(s.valor * 100);
+      }
+    }
+    return suma;
+  }
+
+  // Cantidad final de un recurso ganado: base + bono, con bono = floor(base * pct / 100).
+  // pct va en centésimas (1500 = 15 %). Se redondea hacia abajo y solo cuenta el bono, que
+  // nunca es negativo. Ejemplos: 20 núcleos con 15 % dan 20 + floor(3) = 23; 10 chatarra con
+  // 15 % dan 10 + floor(1,5) = 11; 10 con 14 % dan 10 + floor(1,4) = 11. Con pct 0 da base.
+  // base * pct es un entero exacto, así que no hay error de coma flotante.
+  function conBonoRecurso(base, centesimas) {
+    return base + Math.floor((base * centesimas) / 10000);
+  }
+
   // Bonos totales. Dentro de una misma fuente se suman (atributos, piezas, sets). Entre
   // fuentes distintas se multiplican (docs 4.2). La armadura es reducción: 1 - Π(1 - r).
+  // nucleosEncontrados y chatarraEncontrada son porcentajes (p. ej. 15,4) que la interfaz muestra;
+  // el cálculo de cofres y secretos usa conBonoRecurso con las centésimas exactas.
   function statsJugador(partida) {
     const attr = D.bonoDeAtributos(partida.atributos);
     const eq = bonosDeEquipo(partida.equipo);
     const sets = D.bonosDeSet(RANURAS.map((r) => partida.equipo[r]));
+    const rec = bonosDeRecursos(partida.equipo);
     const armadura = Math.min(ARMADURA_MAX, 1 - (1 - attr.armadura / 100) * (1 - eq.armadura / 100));
     return {
       vidaMax: Math.round(VIDA_BASE + attr.vida + eq.vida + sets.vida),
@@ -142,6 +170,8 @@
       armadura,
       multiplicadorVelocidad: (1 + attr.velocidad / 100) * (1 + eq.velocidad / 100),
       suerte: attr.suerte + eq.suerte,
+      nucleosEncontrados: rec.nucleos / 100,
+      chatarraEncontrada: rec.chatarra / 100,
       setsActivos: sets.activos.slice(),
     };
   }
@@ -446,6 +476,10 @@
   // ----------------------------------------------------------------- cofres
   // Abre un cofre de la sala actual. Da XP, núcleos (sin consolidar), chatarra, una pieza
   // y un consumible según la tabla 8.1. La suerte se acota a 100 (límite de datos.js).
+  // Núcleos y chatarra: la tabla da la base y los modificadores "Núcleos encontrados" y
+  // "Chatarra encontrada" de las piezas equipadas suman su % (conBonoRecurso, docs 5.1 y 8.1).
+  // recompensa.nucleos y recompensa.chatarra son el total ganado (base + bono); nucleosBono y
+  // chatarraBono son solo el bono. La tirada no cambia: el bono no gasta rng.
   function abrirCofre(partida, cofreId, rng) {
     const r = obtenerRng(rng);
     if (partida.muerto) return fallo(partida, "El viajero está muerto");
@@ -456,12 +490,15 @@
     const suerte = Math.min(100, statsJugador(partida).suerte);
     // D.abrirCofre aplica las tablas 8.1 y 8.2 y el reparto de curación y bomba.
     const botin = D.abrirCofre(hallado.cofre.tipo, zona, suerte, r);
+    const recursos = bonosDeRecursos(partida.equipo);
+    const nucleos = conBonoRecurso(botin.nucleos, recursos.nucleos);
+    const chatarra = conBonoRecurso(botin.chatarra, recursos.chatarra);
 
     let p = clonar(partida);
     p.cofresAbiertos.push(cofreId);
     p = ganarXp(p, botin.xp);
-    p.nucleosSala += botin.nucleos;
-    p.chatarra += botin.chatarra;
+    p.nucleosSala += nucleos;
+    p.chatarra += chatarra;
     if (botin.equipo) p = anadirPieza(p, botin.equipo);
     if (botin.consumible) p.consumibles[botin.consumible] += 1;
     return {
@@ -470,8 +507,10 @@
       recompensa: {
         tipo: botin.tipo,
         xp: botin.xp,
-        nucleos: botin.nucleos,
-        chatarra: botin.chatarra,
+        nucleos,
+        nucleosBono: nucleos - botin.nucleos,
+        chatarra,
+        chatarraBono: chatarra - botin.chatarra,
         pieza: botin.equipo ? clonar(p.inventario[p.inventario.length - 1]) : null,
         consumible: botin.consumible,
       },
@@ -514,8 +553,10 @@
 
   // Recoge el secreto de la sala actual, una sola vez por sala (docs 2.2 y 10.1). Recompensas
   // según mundo.js: "pieza" (pieza de la zona con tipo de cofre "comun" y la suerte del viajero,
-  // con tope 100), "nucleos" (consolidados) o "chatarra". Devuelve
-  // { ok, partida, recompensa: { tipo, pieza } } o { ok, partida, recompensa: { tipo, cantidad } }.
+  // con tope 100), "nucleos" (consolidados) o "chatarra". Los núcleos y la chatarra suman el %
+  // de los modificadores equipados con conBonoRecurso (igual que los cofres).
+  // Devuelve { ok, partida, recompensa: { tipo, pieza } } o
+  // { ok, partida, recompensa: { tipo, cantidad, bono } }; cantidad es el total y bono lo que suma el equipo.
   function recogerSecreto(partida, salaId, rng) {
     const r = obtenerRng(rng);
     const sala = M.salaPorId(salaId);
@@ -533,14 +574,16 @@
       return { ok: true, partida: conPieza, recompensa: { tipo, pieza } };
     }
     if (tipo === "nucleos") {
-      const cantidad = enteroEnRango(SECRETO_NUCLEOS, r);
+      const base = enteroEnRango(SECRETO_NUCLEOS, r);
+      const cantidad = conBonoRecurso(base, bonosDeRecursos(partida.equipo).nucleos);
       p.nucleos += cantidad;
-      return { ok: true, partida: p, recompensa: { tipo, cantidad } };
+      return { ok: true, partida: p, recompensa: { tipo, cantidad, bono: cantidad - base } };
     }
     if (tipo === "chatarra") {
-      const cantidad = enteroEnRango(SECRETO_CHATARRA, r);
+      const base = enteroEnRango(SECRETO_CHATARRA, r);
+      const cantidad = conBonoRecurso(base, bonosDeRecursos(partida.equipo).chatarra);
       p.chatarra += cantidad;
-      return { ok: true, partida: p, recompensa: { tipo, cantidad } };
+      return { ok: true, partida: p, recompensa: { tipo, cantidad, bono: cantidad - base } };
     }
     throw new RangeError("Recompensa de secreto desconocida: " + String(tipo));
   }

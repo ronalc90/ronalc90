@@ -792,3 +792,119 @@ test("historia: un guardado v1 sin historia se completa con []", () => {
     assert.match(m.error, /historia/);
   }
 });
+
+// ----------------------------------------------------------------- núcleos y chatarra encontrados
+
+// Partida con una pieza equipada que lleva un modificador de recurso. accesorio1 admite "nucleos"
+// y "chatarra" (MODIFICADORES_POR_RANURA en datos.js). valor va en % y ya incluye la forja.
+const conRecurso = (id, valor, forja = 0) => {
+  let p = N.crearPartida({ semilla: 1 });
+  p = N.anadirPieza(p, pieza("accesorio1", [{ id, valor }], { forja }));
+  return N.equipar(p, ultimoId(p)).partida;
+};
+
+test("abrirCofre: el modificador de núcleos encontrados suma su % a los núcleos del cofre", () => {
+  const sin = N.crearPartida({ semilla: 1 });
+  const con = conRecurso("nucleos", 10);
+  const a = N.abrirCofre(sin, "Z1.1#0", () => 0);
+  const b = N.abrirCofre(con, "Z1.1#0", () => 0);
+  assert.equal(a.recompensa.nucleos, 20, "sin modificador: la base de la tabla 8.1");
+  assert.equal(b.recompensa.nucleos, 22, "20 + floor(20 * 10 / 100) = 22");
+  assert.equal(b.recompensa.nucleosBono, 2);
+  assert.equal(b.partida.nucleosSala, 22, "el bono va a los núcleos de la sala, sin consolidar");
+  assert.ok(b.partida.nucleosSala > a.partida.nucleosSala);
+  // Cofre raro de Z1.2 (base 100 con rng casi 1): 100 + floor(100 * 10 / 100) = 110.
+  const raro = N.abrirCofre({ ...con, sala: "Z1.2" }, "Z1.2#0", () => 0.999);
+  assert.equal(raro.recompensa.nucleos, 110);
+});
+
+test("abrirCofre: el modificador de chatarra encontrada suma su % a la chatarra del cofre", () => {
+  const con = conRecurso("chatarra", 15);
+  const b = N.abrirCofre(con, "Z1.1#0", () => 0);
+  assert.equal(b.recompensa.chatarra, 11, "10 + floor(10 * 15 / 100) = 11");
+  assert.equal(b.recompensa.chatarraBono, 1);
+  assert.equal(b.partida.chatarra, 11);
+  assert.ok(b.partida.chatarra > N.abrirCofre(N.crearPartida({ semilla: 1 }), "Z1.1#0", () => 0).partida.chatarra);
+  const alto = N.abrirCofre({ ...con, sala: "Z1.2" }, "Z1.2#0", () => 0.999);
+  assert.equal(alto.recompensa.chatarra, 57, "50 + floor(50 * 15 / 100) = 57");
+});
+
+test("el bono de núcleos y chatarra se redondea hacia abajo, y la forja cuenta", () => {
+  // Secreto de Z2.2 (núcleos) con rng 0: base 20.
+  const secreto = (partida) => N.recogerSecreto({ ...partida, sala: "Z2.2" }, "Z2.2", () => 0);
+  assert.equal(secreto(conRecurso("nucleos", 14)).recompensa.cantidad, 22, "floor(2,8) = 2");
+  assert.equal(secreto(conRecurso("nucleos", 19)).recompensa.cantidad, 23, "floor(3,8) = 3");
+  // Forja +1 multiplica por 1,1: 5 % pasa a 5,5 %, y 20 * 5,5 / 100 = 1,1 baja a 1.
+  assert.equal(secreto(conRecurso("nucleos", 5, 1)).recompensa.cantidad, 21);
+  // Forja +5 multiplica por 1,5: 10 % pasa a 15 %, y floor(3) = 3.
+  assert.equal(secreto(conRecurso("nucleos", 10, 5)).recompensa.cantidad, 23);
+  // Chatarra base 10 con 9 %: floor(0,9) = 0, así que no sube (redondear daría 11).
+  const chatarra = N.recogerSecreto({ ...conRecurso("chatarra", 9), sala: "Z3.1" }, "Z3.1", () => 0);
+  assert.equal(chatarra.recompensa.cantidad, 10, "se redondea hacia abajo");
+  assert.equal(chatarra.recompensa.bono, 0);
+});
+
+test("los modificadores de núcleos suman entre piezas equipadas; el inventario no cuenta", () => {
+  let p = N.crearPartida({ semilla: 1 });
+  p = N.anadirPieza(p, pieza("accesorio1", [{ id: "nucleos", valor: 10 }]));
+  p = N.equipar(p, ultimoId(p)).partida;
+  p = N.anadirPieza(p, pieza("accesorio2", [{ id: "nucleos", valor: 5 }]));
+  p = N.equipar(p, ultimoId(p)).partida;
+  assert.equal(N.statsJugador(p).nucleosEncontrados, 15, "10 + 5 entre piezas equipadas");
+  assert.equal(N.statsJugador(p).chatarraEncontrada, 0);
+  assert.equal(N.abrirCofre(p, "Z1.1#0", () => 0).recompensa.nucleos, 23, "20 + floor(20 * 15 / 100) = 23");
+
+  // Una pieza en el inventario, sin equipar, no suma.
+  let q = N.crearPartida({ semilla: 1 });
+  q = N.anadirPieza(q, pieza("accesorio1", [{ id: "nucleos", valor: 15 }]));
+  assert.equal(N.statsJugador(q).nucleosEncontrados, 0);
+  assert.equal(N.abrirCofre(q, "Z1.1#0", () => 0).recompensa.nucleos, 20);
+});
+
+test("otros modificadores no dan núcleos, y el bono no gasta rng: el resto del cofre sale igual", () => {
+  const sinBono = N.crearPartida({ semilla: 1 });
+  const dano = conRecurso("dano", 6);
+  assert.equal(N.abrirCofre(dano, "Z1.1#0", () => 0).recompensa.nucleos, 20, "daño no suma núcleos");
+
+  const con = conRecurso("nucleos", 10);
+  for (let semilla = 1; semilla <= 20; semilla++) {
+    const a = N.abrirCofre(sinBono, "Z1.1#0", rngSemilla(semilla)).recompensa;
+    const b = N.abrirCofre(con, "Z1.1#0", rngSemilla(semilla)).recompensa;
+    assert.equal(b.tipo, a.tipo);
+    assert.equal(b.xp, a.xp);
+    assert.equal(b.consumible, a.consumible, `consumible con semilla ${semilla}`);
+    assert.equal(b.pieza === null, a.pieza === null, `pieza con semilla ${semilla}`);
+    if (a.pieza) assert.deepEqual(plano(b.pieza.modificadores), plano(a.pieza.modificadores));
+    assert.equal(b.nucleos, a.nucleos + Math.floor((a.nucleos * 10) / 100), `núcleos con semilla ${semilla}`);
+  }
+});
+
+test("recoger un secreto con modificador de núcleos o chatarra suma el bono", () => {
+  const nucleos = N.recogerSecreto({ ...conRecurso("nucleos", 15), sala: "Z2.2" }, "Z2.2", () => 0.999);
+  assert.equal(nucleos.recompensa.cantidad, 46, "40 + floor(40 * 15 / 100) = 46");
+  assert.equal(nucleos.recompensa.bono, 6);
+  assert.equal(nucleos.partida.nucleos, 46, "el secreto de núcleos consolida el total");
+
+  const sinMod = N.recogerSecreto({ ...N.crearPartida({ semilla: 1 }), sala: "Z2.2" }, "Z2.2", () => 0.999);
+  assert.equal(sinMod.recompensa.cantidad, 40);
+
+  const chatarra = N.recogerSecreto({ ...conRecurso("chatarra", 15), sala: "Z3.1" }, "Z3.1", () => 0);
+  assert.equal(chatarra.recompensa.cantidad, 11, "10 + floor(10 * 15 / 100) = 11");
+  assert.equal(chatarra.recompensa.bono, 1);
+  assert.equal(chatarra.partida.chatarra, 11);
+});
+
+test("abrirCofre y recogerSecreto no cambian la partida que reciben, con modificadores", () => {
+  const con = conRecurso("nucleos", 10);
+  const antes = JSON.stringify(con);
+  N.abrirCofre(con, "Z1.1#0", () => 0.5);
+  N.recogerSecreto({ ...con, sala: "Z2.2" }, "Z2.2", () => 0.5);
+  assert.equal(JSON.stringify(con), antes);
+});
+
+test("statsJugador expone los porcentajes de núcleos y chatarra encontrados de las piezas equipadas", () => {
+  const s = N.statsJugador(conRecurso("chatarra", 15, 5));
+  assert.equal(s.chatarraEncontrada, 22.5, "15 * 1,5 = 22,5 con forja +5");
+  assert.equal(s.nucleosEncontrados, 0);
+  assert.equal(N.statsJugador(N.crearPartida({ semilla: 1 })).nucleosEncontrados, 0);
+});
