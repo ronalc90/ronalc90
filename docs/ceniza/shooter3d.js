@@ -621,7 +621,7 @@
 
     function mostrarPausa() {
       hud.pausaTitulo.textContent = haJugado ? "Pausa" : "Ceniza · Fase 3D";
-      hud.pausaTexto.textContent = "Clic para jugar · WASD mueve · Ratón mira · Clic dispara · 1, 2 y 3 cambian de arma · R recarga · Esc o P pausan" +
+      hud.pausaTexto.textContent = "Clic para jugar · WASD mueve · Ratón mira · Clic o Espacio/F disparan · 1, 2 y 3 cambian de arma · R recarga · Esc o P pausan" +
         (tactilActivo ? " · Táctil: joystick izquierdo mueve, arrastra a la derecha para mirar, y usa los botones" : "");
       hud.botonContinuar.textContent = haJugado ? "Continuar" : "Empezar";
       hud.botonContinuar.style.display = "";
@@ -1839,6 +1839,7 @@
     }
 
     const TECLAS_QUE_NO_DESPLAZAN = ["Space"];
+    const TECLAS_DISPARO = ["Space", "KeyF"];
 
     function alBajarTecla(ev) {
       if (destruido) return;
@@ -1853,11 +1854,14 @@
       teclas[c] = true;
       if (TECLAS_ARMA[c]) cambiarArma(TECLAS_ARMA[c]);
       else if (c === "KeyR") recargar();
+      // Espacio o F disparan (sin ratón): mismo efecto que mantener el botón izquierdo.
+      if (TECLAS_DISPARO.indexOf(c) >= 0) disparando = true;
     }
 
     function alSubirTecla(ev) {
       const c = (ev && ev.code) || "";
       teclas[c] = false;
+      if (TECLAS_DISPARO.indexOf(c) >= 0) disparando = false;
     }
 
     function alMoverRaton(ev) {
