@@ -2208,6 +2208,8 @@
         const enBoton = Boolean(e.target && e.target.tagName === "BUTTON");
         if (k === "e" || ((k === "enter" || k === " ") && !enBoton)) {
           prevenir();
+          // La tecla es del cuadro: no llega a la fase 3D, que al reanudar podría leerla como salto.
+          if (typeof e.stopPropagation === "function") e.stopPropagation();
           if (!e.repeat) motor.avanzarHistoria();
         }
         return;
