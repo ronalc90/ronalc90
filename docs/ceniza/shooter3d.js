@@ -1344,6 +1344,8 @@
       c.fase += 1;
       c.pool = PV_FASE[c.fase];
       c.ventana = 0;
+      // D13: al cambiar de fase en el Coloso el viajero recupera la vida completa.
+      jugador.vida = vidaMax;
       if (c.fase === 2) {
         c.brazos.forEach(function (b) { b.vida = 3500; b.vivo = true; b.malla.visible = true; });
         c.misil = 2.5;
@@ -1465,6 +1467,8 @@
       jugador.pitch = 0;
       jugador.vy = 0;
       jugador.enSuelo = true;
+      // D13: al entrar a un sector de tramo (S1, S2, S3) el viajero recupera la vida completa. La arena no cura.
+      if (!arena) jugador.vida = vidaMax;
       // Se entregan las armas del sector nuevo y de los anteriores (una por sector).
       const hasta = Math.min(idx, 2);
       for (let i = 0; i <= hasta; i++) {
