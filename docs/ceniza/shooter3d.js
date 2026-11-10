@@ -1,4 +1,4 @@
-// Ceniza · FASE 2 (3D): disparos por sectores y Coloso final.
+// Ceniza · FASE 3D: disparos por sectores y Coloso final. (La «fase 2» del Coloso son sus brazos.)
 // Script clásico (sin módulos ES): define globalThis.Ceniza3D.
 // Requiere three.js r160 cargado antes (global THREE): docs/ceniza/vendor/three.min.js.
 // Sin otras dependencias ni red. Armas, oleadas y PV: docs/ceniza-diseno.md (secciones 6.2, 11.1, 11.2 y 11.3).
@@ -16,11 +16,15 @@
 //   opciones.onCaida(r)        Al llegar la vida a 0.
 //   opciones.onSalir(r)        Al elegir Salir en el menú de pausa.
 //   opciones.onXP(n, origen)   Cada vez que se gana XP: dron 5, élite 10, torreta 10, Coloso final 1000.
+//   opciones.prueba            true activa el modo de prueba, como la URL con "prueba=1". Solo entonces existen
+//                              control.step y control.vista, no se bloquea el puntero y el giro sigue el cursor.
 //   r (resumen) = { resultado, sector, tiempo, xp, enemigosDerrotados, arma }
 //                 resultado: "victoria" | "caida" | "salida". tiempo en segundos simulados.
 //
 // control.pausar() / control.reanudar() / control.destruir()
-// control.step(n)    Avanza n fotogramas de 1/60 s sin pintar. Ignora la pausa. Para pruebas y medición de tiempos.
+// control.step(n)    (solo en modo de prueba) Avanza n fotogramas de 1/60 s sin pintar. Ignora la pausa.
+//                    En modo de prueba el tiempo solo avanza con step (el bucle de pantalla solo pinta).
+// control.vista()    (solo en modo de prueba) Posiciones de enemigos, Coloso, pickups, telegrafos y balas. Solo lectura.
 // control.estado()   { webgl, sector, sectorNombre, objetivo, vida, vidaMax, arma, armaNombre,
 //                      municion: { cargador, reserva }, armas, enemigosVivos, enemigosDerrotados,
 //                      xp, tiempo, fase, pausado, terminado, resultado }
@@ -200,6 +204,17 @@
     };
   }
 
+  // Modo de prueba: solo con opciones.prueba === true o con "prueba=1" en la URL (igual que aventura-ui.js).
+  function pruebaActiva(opciones) {
+    if (opciones.prueba === true) return true;
+    try {
+      const href = globalThis.location && globalThis.location.href;
+      return typeof href === "string" && href.includes("prueba=1");
+    } catch (err) {
+      return false;
+    }
+  }
+
   // Crea un elemento del DOM con clase, texto y padre opcionales.
   function crearEl(tag, clase, padre, texto) {
     const el = document.createElement(tag);
@@ -288,6 +303,7 @@
     if (indiceInicial < 0) throw new RangeError("sectorInicial debe ser S1, S2, S3 o COLOSO");
 
     const bonos = normalizarBonos(opciones.bonos);
+    const prueba = pruebaActiva(opciones);
     const rng = crearRng(opciones.semilla);
     const cbs = {
       onVictoria: opciones.onVictoria, onCaida: opciones.onCaida,
@@ -337,6 +353,8 @@
     let destruido = false;
     let frameId = null;
     let ultimoT = null;
+    let modoPaso = prueba;       // en modo de prueba el tiempo solo avanza con step(n), no con el reloj de pared
+    let cursorPrueba = null;     // última posición del cursor (modo de prueba)
 
     // ---- estado táctil: joystick flotante (f adelante, r derecha, entre -1 y 1), mirar y reinicios de botones
     const joy = { id: null, origenX: 0, origenY: 0, f: 0, r: 0 };
@@ -1403,15 +1421,6 @@
 
     // ---------------------------------------------------------------- sectores
 
-    function aplicarAmbiente(a) {
-      luzHemi.color.setHex(a.cielo);
-      luzHemi.groundColor.setHex(a.suelo);
-      escena.background.setHex(a.niebla);
-      escena.fog.color.setHex(a.niebla);
-      escena.fog.near = arena ? 30 : 14;
-      escena.fog.far = arena ? 90 : 70;
-    }
-
     function concederArma(id) {
       if (armasDesbloqueadas.indexOf(id) < 0) {
         armasDesbloqueadas.push(id);
@@ -1593,11 +1602,8 @@
       const id = recargaArma;
       recargaArma = null;
       if (!id) return;
-      const A = ARMAS[id];
-      const m = municion[id];
-      const toma = Math.min(A.cargador - m.cargador, m.reserva);
-      m.cargador += toma;
-      m.reserva -= toma;
+      // D10: la reserva no se agota, así que el cargador se llena sin descontarla.
+      municion[id].cargador = ARMAS[id].cargador;
     }
 
     function recargar() {
@@ -1605,10 +1611,6 @@
       const A = ARMAS[armaActual];
       const m = municion[armaActual];
       if (m.cargador >= A.cargador) return;
-      if (m.reserva <= 0) {
-        mensaje("Sin reserva de munición", 1.5);
-        return;
-      }
       recargaT = A.recarga;
       recargaArma = armaActual;
     }
@@ -1694,7 +1696,8 @@
       haJugado = true;
       pausado = false;
       ocultarPausa();
-      if (canvas && typeof canvas.requestPointerLock === "function") {
+      // En modo de prueba no se pide el puntero bloqueado: el giro sigue la posición del cursor.
+      if (!prueba && canvas && typeof canvas.requestPointerLock === "function") {
         try {
           const p = canvas.requestPointerLock();
           if (p && typeof p.catch === "function") p.catch(function () {});
@@ -1754,11 +1757,10 @@
       poner(hud.enemigos, "enemigos", "Enemigos: " + todosLosEnemigos().length);
       const pct = Math.max(0, Math.min(100, (jugador.vida / vidaMax) * 100)).toFixed(1);
       poner(hud.vidaTexto, "vida", "Vida " + Math.ceil(jugador.vida) + " / " + vidaMax);
-      poner(hud.vidaRelleno, "vidaPct", pct);
       if (hud.vidaRelleno.style) hud.vidaRelleno.style.width = pct + "%";
       poner(hud.arma, "arma", armaActual ? ARMAS[armaActual].nombre : "Sin arma");
       const m = armaActual ? municion[armaActual] : null;
-      poner(hud.municion, "municion", m ? (recargaT > 0 ? "Recargando..." : m.cargador + " / " + m.reserva) : "");
+      poner(hud.municion, "municion", m ? (recargaT > 0 ? "Recargando..." : m.cargador + " / ∞") : "");
       poner(hud.mensaje, "mensaje", tiempo < mensajeHasta ? mensajeTexto : "");
       if (hud.destello.style) hud.destello.style.opacity = String(Math.min(0.45, jugador.destello * 1.6));
     }
@@ -1787,6 +1789,33 @@
       };
     }
 
+    // Solo en modo de prueba: posiciones y partes activas, en solo lectura, para que un bot apunte.
+    function vista() {
+      const p = jugador.pos;
+      return {
+        sector: ORDEN[indice],
+        arena: arena,
+        jugador: { x: p.x, y: p.y, z: p.z, yaw: jugador.yaw, pitch: jugador.pitch, vida: jugador.vida },
+        oleadaActiva: oleadaActiva,
+        zonaPuerta: oleadaActiva >= 0 ? puertas[oleadaActiva].z : null,
+        enemigos: enemigos.filter(function (e) { return !e.muerto; }).map(function (e) {
+          const q = e.grupo.position;
+          return { tipo: e.tipo, x: q.x, y: q.y, z: q.z, radio: e.radio, vida: e.vida, escudo: e.escudo, oleada: e.oleada };
+        }),
+        coloso: coloso && !coloso.muerto ? {
+          fase: coloso.fase, ventana: coloso.ventana, pool: coloso.pool,
+          partes: partesColoso(coloso).map(function (q) {
+            return { id: q.id, x: q.centro.x, y: q.centro.y, z: q.centro.z, radio: q.radio, activa: q.activa };
+          }),
+        } : null,
+        pickups: pickups.map(function (k) { return { tipo: k.tipo, x: k.malla.position.x, z: k.malla.position.z }; }),
+        telegrafos: telegrafos.filter(function (t) { return !t.hecho; }).map(function (t) { return { x: t.x, z: t.z, t: t.t }; }),
+        balas: balas.filter(function (b) { return !b.muerta; }).map(function (b) {
+          return { x: b.pos.x, y: b.pos.y, z: b.pos.z, vx: b.vel.x, vz: b.vel.z, guiado: b.guiado };
+        }),
+      };
+    }
+
     function step(n) {
       const cuenta = Number.isInteger(n) && n > 0 ? n : 0;
       for (let i = 0; i < cuenta && !terminado && !destruido; i++) avanzar(PASO);
@@ -1799,7 +1828,7 @@
       if (destruido) return;
       const dt = ultimoT === null ? 0 : Math.min(0.05, Math.max(0, (ahora - ultimoT) / 1000));
       ultimoT = ahora;
-      if (!pausado && !terminado) avanzar(dt);
+      if (!pausado && !terminado && !modoPaso) avanzar(dt);
       actualizarCamara();
       if (renderer) renderer.render(escena, camara);
       frameId = window.requestAnimationFrame(bucle);
@@ -1847,6 +1876,17 @@
       if (ev.button === 0) disparando = false;
     }
 
+    // Modo de prueba: el giro sigue el desplazamiento del cursor (clientX/clientY). Sin puntero bloqueado,
+    // Chromium no entrega movementX fiable a las entradas inyectadas por Playwright.
+    function alMoverCursorPrueba(ev) {
+      const x = ev.clientX || 0, y = ev.clientY || 0;
+      const previo = cursorPrueba;
+      cursorPrueba = { x: x, y: y };
+      if (!previo || pausado || terminado) return;
+      jugador.yaw -= (x - previo.x) * SENSIBILIDAD;
+      jugador.pitch = Math.max(-1.25, Math.min(1.25, jugador.pitch - (y - previo.y) * SENSIBILIDAD));
+    }
+
     function alCambiarBloqueo() {
       if (!document.pointerLockElement && !pausado && !terminado && !destruido) pausar();
     }
@@ -1892,7 +1932,7 @@
     escuchar(canvas, "mousedown", alPulsarRaton);
     escuchar(canvas, "contextmenu", prevenir);
     escuchar(window, "mouseup", alSoltarRaton);
-    escuchar(window, "mousemove", alMoverRaton);
+    escuchar(window, "mousemove", prueba ? alMoverCursorPrueba : alMoverRaton);
     escuchar(window, "keydown", alBajarTecla);
     escuchar(window, "keyup", alSubirTecla);
     escuchar(window, "blur", pausar);
@@ -1910,13 +1950,12 @@
       frameId = window.requestAnimationFrame(bucle);
     }
 
-    return {
-      pausar: pausar,
-      reanudar: reanudar,
-      destruir: destruir,
-      step: step,
-      estado: estado,
-    };
+    const control = { pausar: pausar, reanudar: reanudar, destruir: destruir, estado: estado };
+    if (prueba) {
+      control.step = step;
+      control.vista = vista;
+    }
+    return control;
   }
 
   globalThis.Ceniza3D = congelar({

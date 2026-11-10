@@ -1,6 +1,6 @@
 # Ceniza: diseño de la expansión
 
-Estado: diseño v1 (FASE 1 en 2D y FASE 2 en 3D). Este documento es la referencia de la expansión; el contrato cerrado de la ronda es la fuente de verdad. En la ronda 3 se cerraron las discrepancias con `docs/ceniza/datos.js`; cada decisión está en su sección, marcada como «Decisión de la ronda 3».
+Estado: diseño v1 (FASE 1 en 2D y FASE 3D en 3D). Este documento es la referencia de la expansión; el contrato cerrado de la ronda es la fuente de verdad. En la ronda 3 se cerraron las discrepancias con `docs/ceniza/datos.js`; cada decisión está en su sección, marcada como «Decisión de la ronda 3».
 
 Notas sobre los números:
 
@@ -47,7 +47,7 @@ Plataforma: un sitio estático en `docs/` para GitHub Pages. `docs/index.html` e
 | Fase | Contenido | Cómo se entra | Cómo se gana |
 |---|---|---|---|
 | FASE 1 (2D, plataformas) | Z1 a Z4, 12 salas en total | Inicio de partida | Derrotar al Guardián de chatarra (jefe X) |
-| FASE 2 (3D, disparos) | Sectores S1, S2, S3 y Coloso final | Tras derrotar al jefe X | Derrotar al Coloso final (victoria) |
+| FASE 3D (3D, disparos) | Sectores S1, S2, S3 y Coloso final | Tras derrotar al jefe X | Derrotar al Coloso final (victoria) |
 
 ### 2.2 Zonas
 
@@ -60,7 +60,7 @@ Cada zona tiene 3 salas enlazadas por puertas, 1 fogata (guardado, curación y f
 | Z3 | Fundición de lava | Z3.1, Z3.2, Z3.3 | 1 | 2 a 4 | 1 | El Forjador (ya existe en el juego actual) |
 | Z4 | Bosque de chatarra | Z4.1, Z4.2, Z4.3 | 1 | 2 a 4 | 1 | Guardián de chatarra (jefe X) |
 
-### 2.3 Sectores de FASE 2 (3D)
+### 2.3 Sectores de FASE 3D
 
 | Sector | Nombre | Tipo de combate |
 |---|---|---|
@@ -77,7 +77,7 @@ Cada zona tiene 3 salas enlazadas por puertas, 1 fogata (guardado, curación y f
 | 1 | Guardián de duna | Z2 | 150 |
 | 2 | Centinela de cristal | Z3 | 200 |
 | 3 | El Forjador | Z4 | 300 |
-| 4 | Guardián de chatarra (jefe X) | FASE 2 y S1 | 400 |
+| 4 | Guardián de chatarra (jefe X) | FASE 3D y S1 | 400 |
 | 5 | Oleadas de S1, luego S2, luego S3 | Sector siguiente y Coloso final | Ninguna |
 | 6 | Coloso final | Victoria | 1.000 |
 
@@ -85,7 +85,7 @@ Las armas 2D se compran con núcleos como hoy: arco 100, martillo 220 y lanza 40
 
 ## 3 Tiempos
 
-### 3.1 FASE 2D por zona (minutos de referencia, velocidad 1.0)
+### 3.1 FASE 1 (2D) por zona (minutos de referencia, velocidad 1.0)
 
 | Zona | Salas (3) | Fogata y cofres | Jefe | Total |
 |---|---|---|---|---|
@@ -93,7 +93,7 @@ Las armas 2D se compran con núcleos como hoy: arco 100, martillo 220 y lanza 40
 | Z2 Ciudad de cristal | 12 | 3 | 5 (Centinela de cristal) | 20 |
 | Z3 Fundición de lava | 12 | 3 | 7 (El Forjador) | 22 |
 | Z4 Bosque de chatarra | 12 | 4 | 8 (Guardián de chatarra, jefe X) | 24 |
-| **Subtotal FASE 2D** | **45** | **12** | **25** | **82** |
+| **Subtotal FASE 1 (2D)** | **45** | **12** | **25** | **82** |
 
 ### 3.2 FASE 3D por sector (minutos de referencia, velocidad 1.0)
 
@@ -107,7 +107,7 @@ Las armas 2D se compran con núcleos como hoy: arco 100, martillo 220 y lanza 40
 
 ### 3.3 Total
 
-- FASE 2D (82) más FASE 3D (48) dan **130 minutos de referencia**.
+- FASE 1 en 2D (82) más FASE 3D (48) dan **130 minutos de referencia**.
 - Mínimo exigido: 120 minutos. El margen es de 10 minutos, un 7,7 % sobre 130.
 - Los secretos y la forja son opcionales y no entran en el total.
 - Las muertes no entran en el total: la tabla supone una partida sin morir.
@@ -613,4 +613,5 @@ Decisiones pendientes del dueño:
 - **D7 (uptime del coloso).** Se supuso 0,5 para calibrar los PV del Coloso final.
 - **D8 (forja).** Cerrada en la ronda 3: el efecto es `1 + 0,10 * nivel` sobre todos los modificadores de la pieza (5.5).
 - **D9 (maestría de arma, propuesta).** El diseño no fija de dónde sale la maestría. Propuesta: `maestría = min(3, floor(usos / 30))`, donde `usos` cuenta los enemigos comunes o élite vencidos con esa arma 2D. Código: `maestriaDe` en `docs/ceniza/aventura-nucleo.js`.
+- **D10 (munición 3D, propuesta).** El diseño no fija munición. La reserva no se agota: el cargador se recarga con el tiempo de recarga existente. Código: shooter3d.js.
 - **D11 (secretos, propuesta).** El diseño no fija cantidades ni tipo de recompensa de los secretos. Propuesta: pieza común de la zona, o 20 a 40 núcleos, o 10 a 20 chatarra, según el secreto. Código: `recogerSecreto` en `docs/ceniza/aventura-nucleo.js`.

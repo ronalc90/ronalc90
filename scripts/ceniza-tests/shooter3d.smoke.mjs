@@ -65,13 +65,15 @@ function crearEntorno() {
 }
 
 // Carga three.min.js y shooter3d.js en un mismo contexto, como en el navegador.
-function cargarJuego() {
+// href opcional: URL de la página (location.href) para probar el gancho "prueba=1".
+function cargarJuego(href) {
   const { ventana, documento } = crearEntorno();
   const contexto = {
     window: ventana,
     document: documento,
     console: { log() {}, warn() {}, error: (...a) => console.error(...a) },
   };
+  if (href !== undefined) contexto.location = { href };
   vm.createContext(contexto);
   vm.runInContext(fs.readFileSync(ARCHIVO_THREE, "utf8"), contexto, { filename: "three.min.js" });
   vm.runInContext(fs.readFileSync(ARCHIVO_JUEGO, "utf8"), contexto, { filename: "shooter3d.js" });
@@ -90,10 +92,11 @@ function buscar(el, pred) {
   return null;
 }
 
+// Por defecto en modo de prueba (prueba: true), que es el que expone step y vista.
 function nuevoJuego(opciones = {}) {
   const { contexto, ventana, documento } = cargarJuego();
   const contenedor = new ElementoFalso("div");
-  const juego = contexto.Ceniza3D.start({ contenedor, semilla: 7, ...opciones });
+  const juego = contexto.Ceniza3D.start({ contenedor, semilla: 7, prueba: true, ...opciones });
   return { juego, contenedor, ventana, documento, C: contexto.Ceniza3D, T: contexto.THREE };
 }
 
@@ -251,10 +254,51 @@ const toque = (el, tipo, datos = {}) => {
 const conClase = (contenedor, texto) =>
   buscar(contenedor, (el) => typeof el.className === "string" && el.className.indexOf(texto) >= 0);
 
+test("gancho de prueba: step y vista solo existen con opciones.prueba o con prueba=1 en la URL", () => {
+  const sinPrueba = cargarJuego("file:///pagina.html").contexto.Ceniza3D.start({ contenedor: new ElementoFalso("div") });
+  assert.deepEqual(Object.keys(sinPrueba).sort(), ["destruir", "estado", "pausar", "reanudar"]);
+  sinPrueba.destruir();
+  const conUrl = cargarJuego("file:///pagina.html?prueba=1").contexto.Ceniza3D.start({ contenedor: new ElementoFalso("div") });
+  assert.deepEqual(Object.keys(conUrl).sort(), ["destruir", "estado", "pausar", "reanudar", "step", "vista"]);
+  conUrl.destruir();
+  const conOpcion = nuevoJuego({ prueba: true }).juego;
+  assert.equal(typeof conOpcion.vista, "function");
+  conOpcion.destruir();
+});
+
+test("vista (modo de prueba) da posiciones de los enemigos y del Coloso en solo lectura", () => {
+  const { juego, ventana } = nuevoJuego();
+  juego.reanudar();
+  tecla(ventana, "KeyW");
+  juego.step(240);
+  tecla(ventana, "KeyW", "keyup");
+  const v = juego.vista();
+  assert.equal(v.sector, "S1");
+  assert.equal(v.oleadaActiva, 0);
+  assert.equal(v.zonaPuerta, -22);
+  assert.equal(v.enemigos.length, 4);
+  assert.ok(v.enemigos.every((e) => e.tipo === "explorador" && e.oleada === 0 && e.radio === 0.7));
+  assert.equal(v.coloso, null);
+  juego.destruir();
+});
+
+test("modo de prueba: el giro sigue el cursor (sin puntero bloqueado) y se pausa al pulsar Escape", () => {
+  const { juego, ventana } = nuevoJuego();
+  juego.reanudar();
+  assert.equal(juego.estado().pausado, false);
+  ventana.emitir("mousemove", { clientX: 500, clientY: 300 });
+  const yaw0 = juego.vista().jugador.yaw;
+  ventana.emitir("mousemove", { clientX: 540, clientY: 300 });
+  assert.ok(Math.abs(juego.vista().jugador.yaw - (yaw0 - 40 * 0.0022)) < 1e-9, "40 px a la derecha giran -0,088 rad");
+  tecla(ventana, "Escape");
+  assert.equal(juego.estado().pausado, true);
+  juego.destruir();
+});
+
 test("API: Ceniza3D y el control devuelven las claves documentadas en la cabecera", () => {
   const { juego, C } = nuevoJuego();
   assert.deepEqual(Object.keys(C).sort(), ["ARMAS", "ORDEN", "SECTORES", "start", "version"]);
-  assert.deepEqual(Object.keys(juego).sort(), ["destruir", "estado", "pausar", "reanudar", "step"]);
+  assert.deepEqual(Object.keys(juego).sort(), ["destruir", "estado", "pausar", "reanudar", "step", "vista"]);
   assert.deepEqual(Object.keys(juego.estado()).sort(), [
     "armaNombre", "armas", "arma", "enemigosDerrotados", "enemigosVivos", "fase", "municion", "objetivo",
     "pausado", "resultado", "sector", "sectorNombre", "terminado", "tiempo", "vida", "vidaMax", "webgl", "xp",
