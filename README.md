@@ -310,10 +310,18 @@ currently_working_on:
 <div align="center">
   <a href="https://ronalc90.github.io/ronalc90/"><img src="assets/ceniza-preview.webp" width="100%" alt="CENIZA: minijuego con armas, jefes intermedios y árbol de habilidades. Clic para jugar"/></a>
   <br/>
-  <sub>Minijuego en el navegador (PC y móvil) · <b>4 armas</b> (hoja, arco, martillo y lanza) · <b>3 jefes intermedios</b> con cofres de mejoras · dash con esquiva perfecta · <b>árbol de habilidades</b> que crece cada vez que caes</sub>
+  <sub>Minijuego en el navegador (PC y móvil) · <b>4 armas</b> (hoja, arco, martillo y lanza) · <b>3 jefes intermedios</b> con cofres de mejoras · <b>aventura por zonas</b> (tecla V o botón AVENTURA) y <b>fase 3D</b> en la cabina de un coloso · dash con esquiva perfecta · <b>árbol de habilidades</b> que crece cada vez que caes</sub>
 </div>
 
-<!-- CENIZA:START --><!-- CENIZA:END -->
+<!-- CENIZA:START -->
+<div align="center">
+
+*Nadie ha derrotado al coloso todavía. ¡Sé el primero!*
+
+</div>
+
+
+<!-- CENIZA:END -->
 
 ### ⚔️ Raid comunitario contra el coloso
 

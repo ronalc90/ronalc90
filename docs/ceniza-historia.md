@@ -1,6 +1,6 @@
 Historia definitiva. Fuente de los textos de docs/ceniza/historia.js.
 
-Estado: pendiente de integración. docs/index.html todavía no carga docs/ceniza/historia.js, así que el jugador no ve estos textos aún. El despertar del Acto I está en historia.js con la clave inicio (tres líneas tomadas de este documento), y aventura-ui.js lo muestra al empezar una partida nueva. Queda pendiente para la integración: el nombre se escribe al encender la primera fogata (ver «Cómo se nombra»), así que el despertar siempre sale como «viajero».
+Estado: integrado. docs/index.html carga docs/ceniza/historia.js y docs/ceniza/aventura-ui.js muestra sus textos: el despertar al empezar una partida nueva, las entradas de zona, los jefes, las fogatas, la fase 3D y el final. Pendiente: encender la primera fogata no pide nombre (ver «Cómo se nombra»), así que el despertar sale como «viajero» hasta que el jugador cambie su nombre en el panel «Personaje y equipo».
 
 # CENIZA: lo que queda encendido
 
@@ -19,9 +19,9 @@ Los forjadores mantuvieron encendida su última forja cuando el cielo dejó de d
 
 **Quién es.** Nadie lo espera en la duna. Despierta sin nombre, junto a una fogata que nunca antes había visto.
 
-**Qué lleva.** La hoja de chatarra, con la que despierta. Desde el inicio tiene también el arco, el martillo y la lanza: cambia de una a otra con las teclas 1 a 4 (en pantallas táctiles, con el botón Arma). Lo demás lo encuentra en la ceniza: cables, cristal y piezas sin dueño. Traje, visor, casco, capa, emblema y patrón los elige el jugador. La historia los describe, pero el color no cambia lo que pasa.
+**Qué lleva.** La hoja de chatarra, con la que despierta. El arco, el martillo y la lanza se compran en una fogata con núcleos; hasta entonces están bloqueados. Cuando los tiene, cambia de arma con las teclas 1 a 4 (en pantallas táctiles, con el botón Arma). Lo demás lo encuentra en la ceniza: cables, cristal y piezas sin dueño. Traje, visor, casco, capa, emblema y patrón los elige el jugador. El color no cambia lo que pasa.
 
-**Cómo se nombra.** El jugador escribe un nombre de hasta 12 caracteres al encender la primera fogata. Hasta entonces la historia lo llama «el viajero». Después usa {nombre}: es lo primero que el viajero decide sobre sí mismo.
+**Cómo se nombra.** El jugador escribe un nombre de hasta 12 caracteres en el panel «Personaje y equipo», que se abre desde la fogata. Hasta que lo escriba, la historia lo llama «el viajero». Después usa {nombre}: es lo primero que el viajero decide sobre sí mismo. Pendiente: encender la primera fogata todavía no pide nombre; si se quiere que lo pida, hace falta un aviso en aventura-ui.js.
 
 ## Actos
 
@@ -50,13 +50,13 @@ Cada zona tiene un secreto opcional: algo que la forja nunca llegó a entregar. 
 
 ## Fogatas
 
-Cada zona tiene una fogata. Al encenderla por primera vez sale su línea, y la vida del viajero vuelve al máximo. Las líneas describen el ambiente de la fogata, no las acciones del menú. La quinta línea sale al volver tras morir.
+Cada zona tiene una fogata. Al encenderla por primera vez sale su línea. Descansar en ella y guardar devuelve la vida del viajero al máximo. Las líneas describen el ambiente de la fogata, no las acciones del menú. La quinta línea sale al volver tras morir.
 
 1. **Fogata de Z1** (clave `fogata:1`). La fogata da poco calor, pero alcanza para cerrar los ojos un rato.
 2. **Fogata de Z2** (clave `fogata:2`). En la brasa quedan las marcas de cada cofre abierto y de cada guardián caído. El calor no las borra.
 3. **Fogata de Z3** (clave `fogata:3`). Una pieza sin dueño se hunde en la brasa y sale más dura. Cada vez que la brasa la recibe, pide más chatarra.
-4. **Fogata de Z4** (clave `fogata:4`). En el cristal de la brasa queda la figura de {nombre}, con el traje gastado por la ceniza.
-5. **Al volver tras morir** (clave `fogata:morir`). Has vuelto. Lo que venciste sigue vencido; los núcleos sin consolidar se quedaron allá abajo. Sale la primera vez que el viajero vuelve tras morir, como el resto de cuadros.
+4. **Fogata de Z4** (clave `fogata:4`). En el cristal de la brasa te ves con el traje gastado por la ceniza. Eres {nombre}.
+5. **Al volver tras morir** (clave `fogata:morir`). Has vuelto. Los jefes que venciste siguen vencidos; los núcleos sin consolidar se quedaron allá abajo. Sale la primera vez que el viajero vuelve tras morir, como el resto de cuadros.
 
 ## Zonas
 
@@ -64,7 +64,7 @@ Cada zona tiene una fogata. Al encenderla por primera vez sale su línea, y la v
 
 **Entrada, en Mar de arena**
 1. Las dunas se mueven hacia el mismo lado, como si alguien las empujara. El polvo ya cubre tu traje de {traje}.
-2. Bajo la arena se mueve algo con caparazón. Acércate a la fogata antes de que se levante.
+2. Más allá de la cresta, bajo la arena, se mueve algo con caparazón. Acércate a la fogata antes de que se levante.
 
 **Tras el jefe, en Cuenca del guardián**
 La arena vuelve a su cauce y deja ver un tubo de metal que sube hacia el norte: era el que llevaba el calor de la forja a la duna.
@@ -130,7 +130,7 @@ Cada arma de la fase 3D se entrega al entrar a su sector: el rifle en S1, la esc
 
 **Victoria**
 1. El coloso cae sobre la arena. Su calor sube sin prisa, como el humo de una hoguera que nadie vuelve a encender.
-2. Sobre el metal queda la huella de {nombre}. No lo apaga ni lo alimenta. Ninguna pared guarda ese nombre.
+2. Sobre el metal queda tu huella. No apaga la forja ni la alimenta. Ninguna pared guarda el nombre de {nombre}.
 
 **Pregunta sin responder para el registro:** ¿Se apagó la forja porque se acabó el metal, o porque alguien dejó de querer alimentarla?
 
@@ -150,5 +150,5 @@ Cada arma de la fase 3D se entrega al entrar a su sector: el rifle en S1, la esc
 - **Enemigos del mundo 2D**: Arenero y Escarabajo de duna (Acto I); Reflejo de cristal y Astilla viva (Acto II); Brasa errante y Crisol ardiente (Acto III); Oxidado y Carroñero de chatarra (Acto IV).
 - **Enemigos de la fase 3D**: dron explorador, dron de asalto, torreta y guardián de cabina (élite).
 - **Jefes**: Guardián de duna, Centinela de cristal, El Forjador y Guardián de chatarra (jefe X). Aparecen en la sección de jefes y en los actos.
-- **Armas**: hoja de chatarra (con el viajero al despertar), arco, martillo y lanza (desde el inicio, con las teclas 1 a 4); rifle (S1), escopeta (S2) y plasma (S3), que se entregan al entrar a cada sector.
+- **Armas**: hoja de chatarra (con el viajero al despertar); arco, martillo y lanza (se compran en una fogata con núcleos, y con las teclas 1 a 4 se cambia entre las que se tienen); rifle (S1), escopeta (S2) y plasma (S3), que se entregan al entrar a cada sector.
 - **Fase 3D**: S1 Pasillo de hielo, S2 Taller de drones, S3 Cabina del coloso y Coloso final, con sus fases Ojo expuesto, Brazos y Núcleo.

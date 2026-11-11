@@ -1,10 +1,10 @@
 # Ceniza: diseño de la expansión
 
-Estado: diseño v1 (FASE 1 en 2D y FASE 3D en 3D). Este documento es la referencia de la expansión; el contrato cerrado de la ronda es la fuente de verdad. En la ronda 3 se cerraron las discrepancias con `docs/ceniza/datos.js`; cada decisión está en su sección, marcada como «Decisión de la ronda 3».
+Estado: diseño v1 (FASE 1 en 2D y FASE 3D en 3D). Este documento es la referencia de la expansión. En la ronda 3 se cerraron las discrepancias con `docs/ceniza/datos.js`; cada decisión está en su sección, marcada como «Decisión de la ronda 3».
 
 Notas sobre los números:
 
-- Las fórmulas de hoja, arco, martillo, lanza, maestría y daño se leyeron de `docs/index.html`. La versión de trabajo tiene cambios sin commit de la ronda anterior (registro y reinicio desde el menú), pero las líneas de armas y daño son iguales a `HEAD`.
+- Las fórmulas de hoja, arco, martillo, lanza, maestría y daño se leyeron de `docs/index.html` (la arena). Las cifras de armas y daño coinciden con `ARMAS` y `multiplicadorDano` de `docs/ceniza/datos.js`.
 - Los daños por golpe usan el mismo redondeo que `strike()` del juego (`Math.round` por golpe).
 - Las cifras de tiempo y de la sección 7 son cálculos sobre esas fórmulas. Las cifras de 3D y de loot son valores de diseño por calibrar en prototipo.
 - En prosa y tablas los decimales van con coma. En bloques de código y en nombres de variables del juego van con punto.
@@ -51,7 +51,7 @@ Plataforma: un sitio estático en `docs/` para GitHub Pages. `docs/index.html` e
 
 ### 2.2 Zonas
 
-Cada zona tiene 3 salas enlazadas por puertas, 1 fogata (guardado, curación y forja), 2 a 4 cofres, 1 secreto opcional y un jefe al final.
+Cada zona tiene 3 salas enlazadas por puertas, 1 fogata (guardado, curación y forja), 2 a 4 cofres de sala (sin contar el cofre de jefe), 1 secreto opcional y un jefe al final.
 
 | Zona | Nombre | Salas | Fogata | Cofres | Secreto | Jefe final |
 |---|---|---|---|---|---|---|
@@ -99,9 +99,9 @@ Las armas 2D se compran con núcleos como hoy: arco 100, martillo 220 y lanza 40
 
 | Sector | Oleadas o combate | Extras (avance, torretas) | Total |
 |---|---|---|---|
-| S1 Pasillo de hielo | 9 (3 oleadas de 3) | 3 (avance) | 12 |
-| S2 Taller de drones | 9 (3 oleadas de 3) | 5 (torretas 3, avance 2) | 14 |
-| S3 Cabina del coloso | 8 (2 oleadas de élite de 4) | 4 (avance) | 12 |
+| S1 Pasillo de hielo | 9 (3 oleadas de 3 min) | 3 (avance) | 12 |
+| S2 Taller de drones | 9 (3 oleadas de 3 min) | 5 (torretas 3, avance 2) | 14 |
+| S3 Cabina del coloso | 8 (2 oleadas de élite de 4 min) | 4 (avance) | 12 |
 | Coloso final | 10 (3 + 3,5 + 3,5 por fase) | 0 | 10 |
 | **Subtotal FASE 3D** | **36** | **12** | **48** |
 
@@ -116,7 +116,7 @@ Las armas 2D se compran con núcleos como hoy: arco 100, martillo 220 y lanza 40
 
 1. El tiempo es de simulación, no de reloj de pared. La pausa (Escape o P) no cuenta. Las animaciones de cofre y los diálogos sí cuentan.
 2. Ruta de referencia: lista fija de salas, cofres, puertas y jefes, sin secretos, sin forja y sin respec.
-3. En 2D, `window.__ceniza.step(n)` avanza la simulación `n` fotogramas de 1/60 s y ya existe en `docs/index.html`. En 3D se expondrá un gancho equivalente.
+3. En 2D, `CENIZA_TEST.avanzar(s)` avanza la aventura `s` segundos en pasos fijos de 1/60 s. Solo existe con `?prueba=1` (`docs/ceniza/aventura-ui.js`). `window.__ceniza.step(n)` de `docs/index.html` avanza la arena, no la aventura. En 3D se expondrá un gancho equivalente.
 4. Se marca el tiempo al cruzar cada puerta y al derrotar a cada jefe. Con esas marcas se obtiene el tiempo por zona y sector.
 5. Aceptación: 3 repeticiones. El total medido debe ser de al menos 120 minutos y cada zona o sector debe quedar dentro de ±10 % de su tabla.
 
@@ -165,13 +165,13 @@ El tiempo humano varía. Explorar secretos, leer textos, repetir patrones de jef
 | 29 | 8.748 | 478 |
 | 30 | 9.235 | 487 |
 
-Fuentes de XP del contrato: enemigo común 5, élite 10, cofre común 30, cofre raro 75, cofre de jefe 120, jefe de zona 150 (Z1), 200 (Z2), 300 (Z3) y 400 (Z4), Coloso final 1.000.
+Fuentes de XP: enemigo común 5, élite 10, cofre común 30, cofre raro 75, cofre de jefe 120, jefe de zona 150 (Z1), 200 (Z2), 300 (Z3) y 400 (Z4), Coloso final 1.000.
 
 Decisión de la ronda 3 (XP del jefe de Z2): el Centinela de cristal da 200 XP, como en 2.4 y en la lista anterior. `datos.js` tenía 220 y se corrigió a 200 en `ZONAS.xpJefe`.
 
 Consecuencia de la lectura adoptada: llegar al nivel 30 necesita 9.235 XP, que equivalen a unos 1.847 enemigos comunes. Los jefes de zona y el Coloso final suman 2.050 XP fijos.
 
-Lectura no adoptada, que debe confirmar el dueño: si la curva fuera incremental (cada nivel cuesta `40 * n^1.6`), el total para llegar al nivel 30 sería 111.178 XP, unos 22.236 enemigos comunes. Con las fuentes del contrato eso es inalcanzable en 130 minutos. Ver la decisión D1 en la sección 13.
+Lectura no adoptada, que debe confirmar el dueño: si la curva fuera incremental (cada nivel cuesta `40 * n^1.6`), el total para llegar al nivel 30 sería 111.178 XP, unos 22.236 enemigos comunes. Con las fuentes de XP de este apartado eso es inalcanzable en 130 minutos. Ver la decisión D1 en la sección 13.
 
 ### 4.2 Atributos
 
@@ -185,7 +185,7 @@ Lectura no adoptada, que debe confirmar el dueño: si la curva fuera incremental
 
 - Total de puntos al nivel 30: 29 subidas por 3 = **87 puntos**.
 - Sin tope por atributo en esta fase (decisión D3).
-- Los bonos de fuentes distintas se multiplican entre sí. Dentro de una misma fuente se suman.
+- Dentro de una misma fuente (atributos, piezas o sets) los bonos se suman. Entre fuentes distintas, el daño, la velocidad y la armadura se multiplican; la vida (HP) y la suerte (puntos) se suman.
 - La vida pasa de contar vidas, como hoy, a contar HP en la expansión.
 
 ### 4.3 Respec
@@ -230,7 +230,7 @@ Cada pieza tiene un número de modificadores según su rareza. No se repite el m
 | Núcleos | 5 a 15 | % de núcleos obtenidos |
 | Chatarra | 5 a 15 | % de chatarra obtenida |
 
-Escala por zona: `valor = round(rango * (1 + 0,2 * (zona - 1)))`. En Z4 el multiplicador es 1,6. Por ejemplo, vida en Z4 va de 3 a 10 HP.
+Escala por zona: cada límite del rango se multiplica por `1 + 0,2 * (zona - 1)` y se redondea. En Z4 el multiplicador es 1,6. Por ejemplo, vida en Z4 va de 3 a 10 HP.
 
 Rangos resultantes por zona (cada límite se redondea; `rangoModificador(id, zona)` en `datos.js`):
 
@@ -378,7 +378,7 @@ Si la onda de la hoja no contara y solo se usaran los golpes cuerpo a cuerpo, la
 
 ### 7.5 Cuantización por fotogramas
 
-En el juego, los cooldowns se descuentan por fotograma. Un ataque sale en el primer fotograma en que el cooldown llega a 0 o menos. Con 60 Hz, cada cooldown se redondea hacia arriba al fotograma: 0,230 pasa a 0,2333; 0,285 pasa a 0,300; 0,421 y 0,426 pasan a 0,4333. La hoja con 0,42 pasa a 0,4333.
+En la aventura, los cooldowns se descuentan en pasos fijos de 1/60 s (`restarFotograma` de `datos.js`, usado por `aventura-ui.js`). Un ataque sale en el primer paso en que el cooldown llega a 0 o menos. En pasos de 1/60 s, cada cooldown se redondea hacia arriba al paso: 0,230 pasa a 0,2333; 0,285 pasa a 0,300; 0,421 y 0,426 pasan a 0,4333. La hoja con 0,42 pasa a 0,4333.
 
 | Frecuencia | Hoja m = 0 a 3 | Arco con tope, % de la hoja (m = 0 a 3) |
 |---|---|---|
@@ -386,7 +386,7 @@ En el juego, los cooldowns se descuentan por fotograma. Un ataque sale en el pri
 | 60 Hz | 67,50 / 72,86 / 81,43 / 87,86 | 57,1 / 91,5 / 93,5 / 94,6 |
 | 120 Hz | 68,11 / 73,51 / 82,16 / 88,65 | 56,6 / 93,3 / 94,5 / 93,7 |
 
-El tope se cumple a 60 y 120 Hz. Debe verificarse en el juego con `window.__ceniza.step(n)` sobre la ruta de referencia (ver CA-03).
+El tope se cumple a 60 y 120 Hz. Las filas de 120 Hz son una sensibilidad: la aventura avanza siempre en pasos de 1/60 s. Debe verificarse en la aventura con `CENIZA_TEST.avanzar(s)` (con `?prueba=1`) y `CENIZA_TEST.cooldownArma()` sobre la ruta de referencia (ver CA-03).
 
 ## 8 Cofres y loot
 
@@ -403,7 +403,7 @@ Consumibles:
 - Curación: +40 % del HP máximo.
 - Bomba: 60 de daño en radio de 96 px (2D) o de 2 u (3D).
 
-Un cofre abierto queda abierto en el progreso. Cada zona tiene de 2 a 4 cofres, y el cofre de jefe aparece al derrotar al jefe.
+Un cofre abierto queda abierto en el progreso. Cada zona tiene de 2 a 4 cofres de sala, y el cofre de jefe aparece al derrotar al jefe. El cofre de jefe no cuenta en ese rango.
 
 Decisión de la ronda 3 (cofres): esta tabla es la referencia y `datos.js` la sigue (`tablaDeCofres`, `abrirCofre`).
 
@@ -437,9 +437,9 @@ Decisión de la ronda 3 (rareza por cofre): esta tabla es la única fuente de ra
 
 ### 8.3 Efecto de la suerte
 
-Los pesos de raro, épico y legendario se multiplican por `(1 + 0,03 * suerte)`. Después se normalizan los pesos. Así la suerte sube la probabilidad de rareza alta en un 3 % relativo por punto.
+Los pesos de raro, épico y legendario se multiplican por `(1 + 0,03 * suerte)`. Después se normalizan los pesos. Así el peso de la rareza alta sube un 3 % relativo por punto, pero la probabilidad sube menos, porque la normalización reparte el total. Con 10 puntos, la probabilidad de rareza alta sube entre un 3,6 % (de jefe en Z4) y un 28,1 % relativo (común en Z1), según el cofre y la zona; la tabla de abajo muestra cinco casos.
 
-Decisión de la ronda 3 (suerte en puntos): la suerte se mide en puntos. Los puntos de un jugador son los del atributo Suerte (4.2) más la suma de los modificadores de Suerte de las piezas equipadas (5.3, de 1 a 3 puntos cada uno). Cada punto sube un 3 % relativo la rareza alta. `datos.js` trataba la suerte como porcentaje (0 a 100 %) y usaba otra fórmula de subida. Ahora `abrirCofre` y `generarPieza` reciben puntos, validados de 0 a 100. `bonoDeAtributos` sigue dando el bono de Suerte en % (3 por punto) para la hoja del personaje. La función `probabilidadSubidaRareza(tipo, zona, suerte)` conserva su nombre por contrato. Devuelve la probabilidad de rareza alta, que es lo que muestra la tabla de esta sección.
+Decisión de la ronda 3 (suerte en puntos): la suerte se mide en puntos. Los puntos de un jugador son los del atributo Suerte (4.2) más la suma de los modificadores de Suerte de las piezas equipadas (5.3, de 1 a 3 puntos cada uno). Cada punto multiplica por 1,03 el peso de la rareza alta. `datos.js` trataba la suerte como porcentaje (0 a 100 %) y usaba otra fórmula de subida. Ahora `abrirCofre` y `generarPieza` reciben puntos, validados de 0 a 100. `bonoDeAtributos` sigue dando el bono de Suerte en % (3 por punto) para la hoja del personaje. La función `probabilidadSubidaRareza(tipo, zona, suerte)` conserva su nombre, que usan las pruebas. Devuelve la probabilidad de rareza alta, que es lo que muestra la tabla de esta sección.
 
 Probabilidad de rareza alta (raro, épico o legendario):
 
@@ -477,9 +477,9 @@ La personalización es solo visual. No cambia atributos ni estadísticas.
 
 ### 9.2 Persistencia
 
-- Clave de localStorage: `ceniza.personaje.v1`. Contiene un objeto JSON con el campo `v: 1`.
+- No tiene clave propia en el código actual. La personalización va dentro de la partida de la aventura, en `ceniza.aventura.v1` (campo `personaje`, con `v: 1`). La clave `ceniza.personaje.v1` se declara en `docs/index.html` y se borra al reiniciar, pero nada la escribe.
 - Decisión de la ronda 3: el objeto guardado tiene la misma forma que el JSON del código de exportación (9.3), con `capa.on` y `patron` en la raíz. La validación rechaza cualquier `v` distinto de 1.
-- Se guarda en cada cambio y se lee al iniciar. Si el dato no es válido, se usan los valores por defecto y se avisa, sin fallar.
+- Se guarda en la partida tras cada cambio del panel de personaje, en la fogata, y se restaura al reanudar. Una partida ganada no se reanuda: la siguiente empieza con el mismo personaje. Si la partida guardada no es válida, la aventura empieza una partida nueva con el personaje por defecto, sin aviso.
 - Todas las lecturas y escrituras van dentro de `try/catch`. Si el almacenamiento no está disponible, el juego sigue, pero la personalización no persiste.
 
 ### 9.3 Formato de exportación
@@ -515,7 +515,7 @@ Se guarda:
 - Equipo, forja y atributos.
 - Nivel, XP, núcleos y chatarra.
 
-Claves propuestas: `ceniza.progreso.v1` para el mundo (cofres, jefes, fogatas) y `ceniza.run.v1` para la partida en curso. La clave `ceniza.personaje.v1` queda como en el contrato.
+Claves reales: `ceniza.aventura.v1` guarda la partida de la aventura, con lo anterior y además el personaje (9.2) y la historia vista. `ceniza-prog` guarda el progreso de la arena (núcleos, mejoras y partidas). La propuesta de dos claves (`ceniza.progreso.v1` y `ceniza.run.v1`) no se implementó.
 
 ### 10.2 Muerte
 
@@ -527,9 +527,9 @@ Claves propuestas: `ceniza.progreso.v1` para el mundo (cofres, jefes, fogatas) y
 
 ### 10.3 Reinicio
 
-- REINICIAR PROGRESO borra el progreso, el personaje (incluida la personalización `ceniza.personaje.v1`), los cofres, el equipo y la partida en curso.
+- REINICIAR PROGRESO borra el progreso de la arena (`ceniza-prog`) y la partida de la aventura (`ceniza.aventura.v1`, con el personaje, el equipo, los cofres y la historia). También borra la clave `ceniza.personaje.v1`.
 - Es una doble pulsación. La primera muestra el aviso "¿Seguro?" durante 3 s y la segunda borra. Es el mismo mecanismo que ya existe en el menú principal.
-- Antes de borrar se recomienda mostrar un aviso para exportar la personalización. El aviso no bloquea el reinicio.
+- Antes de borrar se recomienda mostrar un aviso para exportar la personalización. El aviso no bloquea el reinicio. Estado: el aviso no está implementado; hoy el reinicio borra sin mostrarlo.
 
 ## 11 Fase 3D
 
@@ -574,11 +574,11 @@ El Coloso final da 1.000 XP.
 
 ## 12 Registro y victoria
 
-- El botón **Registrar en mi perfil** ya existe. Aparece al terminar la partida, sea por victoria o por caída, tras 0,9 s. Es un enlace nativo que abre un formulario de issue prellenado en GitHub. No registra nada por sí solo y no toca issues reales.
+- El botón **Registrar en mi perfil** ya existe. Aparece 0,9 s después de terminar la partida, en dos casos: en la arena, al terminar la partida (siempre como caída, porque la arena no tiene victoria); y en la aventura, solo al derrotar al Coloso final. Morir en la aventura no termina la partida: el viajero vuelve a la última fogata y no se registra nada. Es un enlace nativo que abre un formulario de issue prellenado en GitHub. No registra nada por sí solo y no toca issues reales.
 - Título del issue: `ceniza: victoria` o `ceniza: caída`. El flujo de GitHub (`scripts/games.mjs`, `CENIZA_TITLE_RE`) acepta ambas grafías.
 - Cuerpo: `ceniza-stats: {...}` con `arma`, `jefes`, `nivel`, `victoria`, `puntos` y `segundos`.
 - Propuesta de ampliación del cuerpo: fase alcanzada (2D o 3D), zona o sector, muertes y versión de guardado (`v1`).
-- La victoria (`victoria: true`) solo se activa al derrotar al Coloso final. Cualquier otro final cuenta como caída.
+- La victoria (`victoria: true`) solo se activa al derrotar al Coloso final, desde la aventura. La arena siempre envía `victoria: false`.
 - Esta fase no cambia el flujo de GitHub.
 
 ## 13 Criterios de aceptacion medibles
@@ -586,7 +586,7 @@ El Coloso final da 1.000 XP.
 | ID | Criterio | Cómo se mide | Umbral |
 |---|---|---|---|
 | CA-01 | Tiempo de referencia de la tabla | Suma de la sección 3 (2D 82 + 3D 48) | ≥ 120 min (valor de diseño: 130) |
-| CA-02 | Tiempo medido de la ruta de referencia | 3 repeticiones con `step(n)`, 1 fotograma = 1/60 s | ≥ 120 min; cada zona o sector dentro de ±10 % de su tabla |
+| CA-02 | Tiempo medido de la ruta de referencia | 3 repeticiones con `CENIZA_TEST.avanzar(s)` (con `?prueba=1`), pasos de 1/60 s | ≥ 120 min; cada zona o sector dentro de ±10 % de su tabla |
 | CA-03 | El arco nunca supera el 95 % de la hoja | DPS del arco contra la hoja, para m = 0 a 3, a 60 Hz y 120 Hz | ≤ 95 % en todos los casos (valores de 7.3 y 7.5) |
 | CA-04 | Multidisparo con cooldown de tope | Cooldown aplicado de la ráfaga por maestría | 0,230 / 0,285 / 0,421 / 0,426; daño base de flecha = 9 |
 | CA-05 | Personalización persistente | Cambiar 8 campos, recargar la página, exportar e importar | 100 % iguales; un checksum alterado se rechaza sin cambios |
@@ -604,7 +604,7 @@ El Coloso final da 1.000 XP.
 
 Decisiones pendientes del dueño:
 
-- **D1 (XP).** La curva se leyó como total acumulado. La lectura incremental daría 111.178 XP hasta el nivel 30, inalcanzable con las fuentes del contrato. Si se quiere la incremental, la constante tendría que bajar a unos 7,2 para tener 20.000 XP acumulados.
+- **D1 (XP).** La curva se leyó como total acumulado. La lectura incremental daría 111.178 XP hasta el nivel 30, inalcanzable con las fuentes de XP de 4.1. Si se quiere la incremental, la constante tendría que bajar a unos 7,2 para tener 20.000 XP acumulados.
 - **D2 (armadura).** Tope propuesto de 60 % de reducción.
 - **D3 (atributos).** Sin tope por atributo en esta fase.
 - **D4 (HP).** Base de 100 HP y paso de vidas a HP.
