@@ -77,7 +77,8 @@ class Documento {
 }
 
 // Carga datos.js y personaje-ui.js en un mismo contexto.
-function cargar() {
+// extra: globales opcionales del contexto (p. ej. navigator con portapapeles).
+function cargar(extra = {}) {
   const escrituras = [];
   const espia = {
     setItem: (...a) => escrituras.push(a),
@@ -85,7 +86,7 @@ function cargar() {
     removeItem: () => {},
     clear: () => {},
   };
-  const contexto = vm.createContext({ localStorage: espia });
+  const contexto = vm.createContext({ localStorage: espia, ...extra });
   vm.runInContext(leer("docs/ceniza/datos.js"), contexto, { filename: "datos.js" });
   vm.runInContext(leer("docs/ceniza/personaje-ui.js"), contexto, { filename: "personaje-ui.js" });
   return { P: contexto.CenizaPersonaje, D: contexto.CenizaDatos, escrituras };
@@ -144,7 +145,6 @@ test("abrir crea el panel con sus pestañas, botones con aria-label y PERSONAJE 
   assert.equal(boton(contenedor, "Pestaña PERSONAJE").getAttribute("aria-pressed"), "true");
   assert.equal(boton(contenedor, "Pestaña EQUIPO").getAttribute("aria-pressed"), "false");
   assert.equal(boton(contenedor, "Pestaña FORJA").getAttribute("aria-pressed"), "false");
-  assert.equal(boton(contenedor, "EXPORTAR código del viajero").tagName, "BUTTON");
 
   const sinEtiqueta = todos(contenedor, (n) => n.tagName === "BUTTON" && n.atributos["aria-label"] === undefined);
   assert.equal(sinEtiqueta.length, 0, "todos los botones deben tener aria-label");
@@ -391,4 +391,94 @@ test("cerrar vacía el contenedor", () => {
   P.cerrar();
   assert.equal(contenedor.hijos.length, 0);
   assert.equal(contenedor.textContent, "");
+});
+
+test("un nombre con espacios de sobra se muestra, se cuenta y se emite ya recortado (9.1)", () => {
+  const { P, D } = cargar();
+  const contenedor = new Documento().createElement("div");
+  const llamadas = [];
+  const base = opcionesBase(D, { onCambio: (e) => llamadas.push(e) });
+  base.personaje.nombre = "   Ana   Lu   ";
+  P.abrir(contenedor, base);
+
+  const nombre = control(contenedor, "Nombre de viajero");
+  assert.equal(nombre.value, "Ana Lu", "el campo muestra el nombre recortado");
+  assert.equal(todos(contenedor, (n) => n.atributos.class === "cp-contador")[0].textContent, "6 de 12 caracteres");
+  assert.equal(nombre.getAttribute("aria-invalid"), "false");
+
+  boton(contenedor, "Color del traje: Arena").disparar("click");
+  assert.equal(llamadas[0].personaje.nombre, "Ana Lu", "lo que sale del panel va sin relleno");
+
+  nombre.value = "  Ana   Lu  ";
+  nombre.disparar("input");
+  assert.equal(llamadas.at(-1).personaje.nombre, "Ana Lu", "al escribir también se recorta");
+
+  P.cerrar();
+});
+
+test("EXPORTAR entrega el código, avisa de la selección y el código sirve para importar", () => {
+  const { P, D } = cargar();
+  const contenedor = new Documento().createElement("div");
+  const entregados = [];
+  P.abrir(contenedor, opcionesBase(D, { onExportar: (c) => entregados.push(c) }));
+
+  boton(contenedor, "EXPORTAR código del viajero").disparar("click");
+
+  const codigo = control(contenedor, "Código de exportación").value;
+  assert.equal(entregados.length, 1, "onExportar recibe el código una vez");
+  assert.equal(entregados[0], codigo);
+  assert.equal(D.importarPersonaje(codigo).ok, true, "el código exportado se puede importar");
+  assert.equal(avisoDelPanel(contenedor).textContent, "Código seleccionado: cópialo con Ctrl+C.");
+
+  P.cerrar();
+});
+
+test("EXPORTAR copia con el portapapeles del navegador y avisa al terminar", async () => {
+  const copiados = [];
+  const navegador = { clipboard: { writeText: async (t) => void copiados.push(t) } };
+  const { P, D } = cargar({ navigator: navegador });
+  const contenedor = new Documento().createElement("div");
+  P.abrir(contenedor, opcionesBase(D));
+
+  boton(contenedor, "EXPORTAR código del viajero").disparar("click");
+  await new Promise((r) => setTimeout(r, 0));
+
+  const codigo = control(contenedor, "Código de exportación").value;
+  assert.deepEqual(copiados, [codigo], "se copia exactamente el código del campo");
+  assert.equal(avisoDelPanel(contenedor).textContent, "Código copiado.");
+
+  P.cerrar();
+});
+
+test("si el portapapeles rechaza la copia, EXPORTAR deja el código seleccionado y avisa", async () => {
+  const navegador = { clipboard: { writeText: () => Promise.reject(new Error("denegado")) } };
+  const { P, D } = cargar({ navigator: navegador });
+  const contenedor = new Documento().createElement("div");
+  P.abrir(contenedor, opcionesBase(D));
+
+  assert.doesNotThrow(() => boton(contenedor, "EXPORTAR código del viajero").disparar("click"));
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(avisoDelPanel(contenedor).textContent, "Código seleccionado: cópialo con Ctrl+C.");
+
+  P.cerrar();
+});
+
+test("la ficha de pieza muestra el set por su nombre, sin repetir la palabra Set", () => {
+  const { P, D } = cargar();
+  const contenedor = new Documento().createElement("div");
+  const pieza = {
+    ranura: "casco",
+    rareza: "raro",
+    zona: 2,
+    forja: 0,
+    set: "chatarra",
+    modificadores: [{ id: "armadura", valor: 3 }],
+  };
+  P.abrir(contenedor, opcionesBase(D, { inventario: [pieza] }));
+  boton(contenedor, "Pestaña EQUIPO").disparar("click");
+
+  const sets = todos(contenedor, (n) => n.atributos.class === "cp-set").map((n) => n.textContent);
+  assert.deepEqual(sets, ["Set Chatarra"]);
+
+  P.cerrar();
 });

@@ -94,7 +94,8 @@
   const numero = (v) => String(Math.round(v * 100) / 100).replace(".", ",");
   const largo = (texto) => Array.from(texto).length;
   // Los espacios de los extremos se recortan y los dobles se colapsan (sección 9.1).
-  const normalizarNombre = (texto) => String(texto).trim().replace(/ {2,}/g, " ");
+  // Misma normalización que valida datos.js (NFC, recorte y espacios dobles colapsados), para no tener dos reglas.
+  const normalizarNombre = (texto) => D.normalizarNombre(String(texto));
   const textoContador = (nombre) => `${largo(nombre)} de ${MAX_NOMBRE} caracteres`;
   const funcion = (f) => (typeof f === "function" ? f : () => {});
   const esAccesorio = (ranura) => RANURAS_ACCESORIO.indexOf(ranura) >= 0;
@@ -142,10 +143,11 @@
   // ----------------------------------------------------------------- personaje
   // Copia solo con los campos conocidos, en un orden fijo (así se compara con JSON).
   // Usa la forma de datos.js (9.2 y 9.3): versión v, patron en la raíz y la capa con on.
+  // El nombre sale ya normalizado (9.1): lo que se muestra, se emite y se guarda es el mismo texto.
   function copiarPersonaje(p) {
     return {
       v: 1,
-      nombre: p.nombre,
+      nombre: normalizarNombre(p.nombre),
       traje: { color: p.traje.color, tono: p.traje.tono, brillo: p.traje.brillo },
       visor: { color: p.visor.color },
       casco: { estilo: p.casco.estilo },
@@ -158,7 +160,7 @@
   // Aplica un cambio parcial, p. ej. { traje: { color: "arena" } }, sobre una copia del personaje.
   function mezclar(base, cambios) {
     const resultado = copiarPersonaje(base);
-    if (tiene(cambios, "nombre")) resultado.nombre = cambios.nombre;
+    if (tiene(cambios, "nombre")) resultado.nombre = normalizarNombre(cambios.nombre);
     if (tiene(cambios, "patron")) resultado.patron = cambios.patron;
     for (const parte of SECCIONES_PERSONAJE) {
       if (tiene(cambios, parte)) Object.assign(resultado[parte], cambios[parte]);
@@ -630,8 +632,9 @@
       crear(doc, "span", null, `${etiqueta(pieza.ranura)} · Zona ${pieza.zona} · +${pieza.forja}`),
       crear(doc, "span", { class: "cp-stats" }, stats),
     );
+    // El nombre del set ya dice «Set» (p. ej. «Set Chatarra»): se muestra tal cual, sin repetir el prefijo.
     if (tiene(D.SETS, pieza.set)) {
-      info.appendChild(crear(doc, "span", { class: "cp-set" }, `Set: ${D.SETS[pieza.set].nombre}`));
+      info.appendChild(crear(doc, "span", { class: "cp-set" }, D.SETS[pieza.set].nombre));
     }
     return info;
   }
@@ -795,12 +798,39 @@
       a.bloque,
       crear(doc, "h3", { class: "cp-subtitulo" }, "Importar y exportar"),
       campo(doc, "Código de este viajero", exportado),
-      boton(doc, "EXPORTAR", "EXPORTAR código del viajero", () => {
-        if (typeof exportado.select === "function") exportado.select();
-        activo.opciones.onExportar(codigoActual());
-      }),
+      boton(doc, "EXPORTAR", "EXPORTAR código del viajero", exportar),
       campo(doc, "Pegar un código para importar", importado),
       boton(doc, "IMPORTAR", "IMPORTAR código pegado", importar, "importar"),
+    );
+  }
+
+  // Selecciona el código y, si el navegador lo permite, lo copia al portapapeles. Siempre avisa de lo que pasó.
+  function exportar() {
+    const a = activo;
+    const codigo = codigoActual();
+    const codigoEl = a.refs.codigo;
+    if (codigoEl && typeof codigoEl.select === "function") codigoEl.select();
+    a.opciones.onExportar(codigo);
+    const seleccionado = "Código seleccionado: cópialo con Ctrl+C.";
+    const portapapeles = globalThis.navigator ? globalThis.navigator.clipboard : null;
+    if (!portapapeles || typeof portapapeles.writeText !== "function") {
+      avisar(seleccionado, false);
+      return;
+    }
+    let promesa;
+    try {
+      promesa = portapapeles.writeText(codigo);
+    } catch (e) {
+      avisar(seleccionado, false);
+      return;
+    }
+    Promise.resolve(promesa).then(
+      () => {
+        if (activo === a) avisar("Código copiado.", false);
+      },
+      () => {
+        if (activo === a) avisar(seleccionado, false);
+      },
     );
   }
 
