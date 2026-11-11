@@ -9,7 +9,7 @@
 //
 // Los números fijos salen de docs/ceniza-diseno.md. Las tablas de datos.js se
 // reutilizan donde el diseño no fija cifras (forja, rarezas, piezas y sets).
-// Las discrepancias entre ambos están marcadas con "DISCREPANCIA" en el código.
+// Las discrepancias entre ambos se cerraron en la ronda 3 de docs/ceniza-diseno.md (cada decisión está en su sección).
 //
 // Forma de la partida (JSON serializable):
 //   personaje, semilla, nivel, xp, puntosLibres, atributos {vida, dano, armadura,
@@ -40,6 +40,11 @@
   const PUNTOS_POR_NIVEL = D.PUNTOS_POR_NIVEL;
   const FORJA_MAX = D.FORJA_MAX;
   const COSTO_RESPEC = D.COSTO_RESPEC;
+  const SEMILLA_MAX = 4294967295;   // semilla: entero sin signo de 32 bits
+  const CONSUMIBLES_MAX = 9999;     // tope de curación y de bomba
+  const SUERTE_MAX = 100;           // tope de la suerte en puntos (validarSuerte de datos.js)
+  // Jefe cuya derrota pasa la partida a la fase 3D (guardian-chatarra en mundo.js).
+  const JEFE_X = Object.keys(M.TIPOS_ENEMIGO).find((id) => M.TIPOS_ENEMIGO[id].jefeX === true);
 
   // Armas 2D: las de tipo "2d" en datos.js (hoja, arco, martillo y lanza).
   const ARMAS_2D = congelar(Object.keys(D.armas).filter((a) => D.armas[a].tipo === "2d"));
@@ -169,7 +174,9 @@
       multiplicadorDano: (1 + attr.dano / 100) * (1 + eq.dano / 100) * (1 + sets.dano / 100),
       armadura,
       multiplicadorVelocidad: (1 + attr.velocidad / 100) * (1 + eq.velocidad / 100),
-      suerte: attr.suerte + eq.suerte,
+      // Suerte en puntos (docs 8.3, ronda 3): los del atributo más los de las piezas. El bono de
+      // bonoDeAtributos está en % (para la hoja del personaje) y aquí no se usa.
+      suerte: partida.atributos.suerte + eq.suerte,
       nucleosEncontrados: rec.nucleos / 100,
       chatarraEncontrada: rec.chatarra / 100,
       setsActivos: sets.activos.slice(),
@@ -219,7 +226,7 @@
   function piezaValida(pieza) {
     if (!esObjeto(pieza) || !RANURAS.includes(pieza.ranura)) return false;
     const rareza = D.equipoRarezas.find((r) => r.id === pieza.rareza);
-    if (!rareza || !esEntero(pieza.zona, 1, 4) || !esEntero(pieza.forja, 0, FORJA_MAX)) return false;
+    if (!rareza || !esEntero(pieza.zona, 1, D.ZONAS.length) || !esEntero(pieza.forja, 0, FORJA_MAX)) return false;
     if (pieza.set !== null && !(typeof pieza.set === "string" && tiene(D.SETS, pieza.set))) return false;
     if (!Array.isArray(pieza.modificadores) || pieza.modificadores.length !== rareza.modificadores) return false;
     try {
@@ -228,6 +235,19 @@
     } catch (e) {
       return false;
     }
+  }
+
+  // Modificadores de una pieza guardada: de su ranura, sin repetir y con el valor dentro del rango de
+  // su zona (docs 5.3). piezaValida solo mira la forma; esto se comprueba al validar un guardado.
+  function modificadoresEnRango(pieza) {
+    const ids = pieza.modificadores.map((m) => (esObjeto(m) ? m.id : null));
+    if (new Set(ids).size !== ids.length) return false;
+    const ranuraPermitidos = D.MODIFICADORES_POR_RANURA[pieza.ranura];
+    return pieza.modificadores.every((m) => {
+      if (!esObjeto(m) || !ranuraPermitidos.includes(m.id)) return false;
+      const [min, max] = D.rangoModificador(m.id, pieza.zona);
+      return typeof m.valor === "number" && m.valor >= min && m.valor <= max;
+    });
   }
 
   // Busca una pieza por id en el inventario o en una ranura. Devuelve { pieza, ranura } con
@@ -258,8 +278,9 @@
     if (!hallada) return fallo(partida, "Pieza no encontrada: " + String(piezaId));
     if (hallada.ranura !== null) return fallo(partida, "La pieza ya está equipada");
     const p = clonar(partida);
-    const pieza = p.inventario.find((x) => x.id === piezaId);
-    p.inventario = p.inventario.filter((x) => x.id !== piezaId);
+    // Solo sale la pieza encontrada: un id repetido en el inventario no debe arrastrar otras piezas.
+    const indice = p.inventario.findIndex((x) => x.id === piezaId);
+    const [pieza] = p.inventario.splice(indice, 1);
     const anterior = p.equipo[pieza.ranura];
     p.equipo[pieza.ranura] = pieza;
     if (anterior) p.inventario.push(anterior);
@@ -283,7 +304,7 @@
     const nivel = hallada.pieza.forja;
     if (nivel >= FORJA_MAX) return fallo(partida, "La pieza ya está en +" + FORJA_MAX);
     const coste = D.costoForja(nivel);
-    if (partida.chatarra < coste) return fallo(partida, "Faltan chatarra: hacen falta " + coste);
+    if (partida.chatarra < coste) return fallo(partida, "Falta chatarra: hacen falta " + coste);
     const p = clonar(partida);
     buscarPieza(p, piezaId).pieza.forja += 1;
     p.chatarra -= coste;
@@ -296,11 +317,11 @@
     return Object.fromEntries(ARMAS_2D.map((a) => [a, 0]));
   }
 
-  // Copia del personaje solo con sus campos conocidos (sin claves extra).
+  // Copia del personaje solo con sus campos conocidos (sin claves extra) y con el nombre normalizado (docs 9.1).
   function normalizarPersonaje(o) {
     return {
       v: D.personajePorDefecto().v,
-      nombre: o.nombre,
+      nombre: D.normalizarNombre(o.nombre),
       traje: { color: o.traje.color, tono: o.traje.tono, brillo: o.traje.brillo },
       visor: { color: o.visor.color },
       casco: { estilo: o.casco.estilo },
@@ -319,7 +340,7 @@
     const v = D.validarPersonaje(personaje);
     if (!v.ok) throw new TypeError("Personaje no válido: " + v.errores[0]);
     const semilla = op.semilla === undefined ? 0 : op.semilla;
-    if (!esEntero(semilla, 0, 4294967295)) throw new RangeError("La semilla es un entero de 0 a 4294967295");
+    if (!esEntero(semilla, 0, SEMILLA_MAX)) throw new RangeError("La semilla es un entero de 0 a " + SEMILLA_MAX);
     const equipo = {};
     for (const r of RANURAS) equipo[r] = null;
     const p = {
@@ -360,17 +381,34 @@
     if (i < 0) return null;
     const sala = M.salaPorId(cofreId.slice(0, i));
     const digitos = cofreId.slice(i + 1);
-    if (!sala || !/^\d+$/.test(digitos)) return null;
+    if (!sala || !/^(0|[1-9]\d*)$/.test(digitos)) return null; // sin ceros a la izquierda: un cofre, un id
     const indice = Number(digitos);
     if (indice >= sala.cofres.length) return null;
     return { salaId: sala.id, indice, cofre: sala.cofres[indice] };
+  }
+
+  // Sala alcanzable desde SALA_INICIAL cruzando solo las puertas abiertas con los jefes vencidos de
+  // la partida. caminoHasta ignora las condiciones de las puertas; esta comprobación sí las cuenta.
+  function salaAlcanzable(partida, salaId) {
+    if (!M.salaPorId(salaId)) return false;
+    const vistas = new Set([M.SALA_INICIAL]);
+    const cola = [M.SALA_INICIAL];
+    for (let i = 0; i < cola.length; i++) {
+      for (const puerta of M.salaPorId(cola[i]).puertas) {
+        if (!vistas.has(puerta.destino) && puertaAbierta(partida, puerta)) {
+          vistas.add(puerta.destino);
+          cola.push(puerta.destino);
+        }
+      }
+    }
+    return vistas.has(salaId);
   }
 
   // Primer problema de la forma de una partida, o null si es válida.
   function problemaPartida(p) {
     if (!esObjeto(p)) return "la partida debe ser un objeto";
     if (!D.validarPersonaje(p.personaje).ok) return "personaje no válido";
-    if (!esEntero(p.semilla, 0, 4294967295)) return "semilla no válida";
+    if (!esEntero(p.semilla, 0, SEMILLA_MAX)) return "semilla no válida";
     if (!esEntero(p.nivel, 1, NIVEL_MAX)) return "nivel no válido";
     if (!esEntero(p.xp, 0, Number.MAX_SAFE_INTEGER)) return "XP no válida";
     if (p.xp < umbralNivel(p.nivel) || (p.nivel < NIVEL_MAX && p.xp >= umbralNivel(p.nivel + 1))) {
@@ -386,7 +424,6 @@
         p.puntosLibres + invertidos !== PUNTOS_POR_NIVEL * (p.nivel - 1)) {
       return "los puntos de atributo no cuadran con el nivel";
     }
-    if (typeof p.vida !== "number" || !Number.isFinite(p.vida) || p.vida < 0) return "vida no válida";
     if (typeof p.muerto !== "boolean") return "muerto no válido";
     for (const k of ["nucleos", "nucleosSala", "chatarra", "muertes", "contadorPiezas"]) {
       if (!esEntero(p[k], 0, Number.MAX_SAFE_INTEGER)) return k + " no válido";
@@ -396,16 +433,28 @@
     for (const r of RANURAS) {
       const pieza = p.equipo[r];
       if (pieza === null) continue;
-      if (!piezaValida(pieza) || pieza.ranura !== r || typeof pieza.id !== "string") return "pieza equipada no válida: " + r;
+      if (!piezaValida(pieza) || pieza.ranura !== r || typeof pieza.id !== "string" || !modificadoresEnRango(pieza)) {
+        return "pieza equipada no válida: " + r;
+      }
       ids.push(pieza.id);
     }
     if (!Array.isArray(p.inventario)) return "inventario no válido";
     for (const pieza of p.inventario) {
-      if (!piezaValida(pieza) || typeof pieza.id !== "string") return "pieza del inventario no válida";
+      if (!piezaValida(pieza) || typeof pieza.id !== "string" || !modificadoresEnRango(pieza)) return "pieza del inventario no válida";
       ids.push(pieza.id);
     }
     if (new Set(ids).size !== ids.length) return "hay piezas con el mismo id";
-    if (!esObjeto(p.consumibles) || !esEntero(p.consumibles.curacion, 0, 9999) || !esEntero(p.consumibles.bomba, 0, 9999)) {
+    // Los ids salen de anadirPieza ("p" + contadorPiezas): deben ser de p1 a p<contadorPiezas>.
+    for (const id of ids) {
+      const n = /^p([1-9]\d*)$/.exec(id);
+      if (!n || Number(n[1]) > p.contadorPiezas) return "id de pieza no válido: " + id;
+    }
+    // Vida y muerte: la vida es un entero de 0 a la vida máxima, y el viajero está muerto solo con vida 0.
+    const vidaMax = statsJugador(p).vidaMax;
+    if (!esEntero(p.vida, 0, vidaMax)) return "vida no válida";
+    if (p.muerto !== (p.vida === 0)) return "muerto no coincide con la vida";
+    if (!esObjeto(p.consumibles) || Object.keys(p.consumibles).length !== 2 ||
+        !esEntero(p.consumibles.curacion, 0, CONSUMIBLES_MAX) || !esEntero(p.consumibles.bomba, 0, CONSUMIBLES_MAX)) {
       return "consumibles no válidos";
     }
     if (!M.salaPorId(p.sala)) return "sala desconocida";
@@ -432,11 +481,17 @@
         new Set(p.secretos).size !== p.secretos.length) {
       return "secretos no válidos";
     }
-    if (!Array.isArray(p.historia) || !p.historia.every((c) => typeof c === "string") ||
+    if (!Array.isArray(p.historia) || !p.historia.every((c) => typeof c === "string" && c.trim() !== "") ||
         new Set(p.historia).size !== p.historia.length) {
       return "historia no válida";
     }
     if (!FASES.includes(p.faseActual)) return "fase no válida";
+    // La fase 3D y la victoria solo existen tras el jefe X (CA-10). La victoria del Coloso no
+    // se guarda en el núcleo, así que no se puede comprobar aquí.
+    if (p.faseActual !== "2d" && !p.jefesVencidos.includes(JEFE_X)) return "la fase " + p.faseActual + " exige el Guardián de chatarra vencido";
+    // Sala y fogata deben estar al alcance con los jefes vencidos (CA-10 y puertas con condición).
+    if (!salaAlcanzable(p, p.sala)) return "sala no alcanzable con los jefes vencidos";
+    if (!salaAlcanzable(p, p.ultimaFogata)) return "última fogata no alcanzable con los jefes vencidos";
     return null;
   }
 
@@ -447,7 +502,8 @@
   }
 
   // Guardados v1 anteriores a las armas, los usos, los secretos y la historia: se completan con sus
-  // valores por defecto. Devuelve una copia y no toca el objeto recibido.
+  // valores por defecto. Devuelve una copia superficial: los campos anidados (inventario, equipo,
+  // listas) se comparten con el objeto recibido, así que quien lo llame no debe modificarlo después.
   function completarGuardado(p) {
     if (!esObjeto(p)) return p;
     const c = { ...p };
@@ -467,6 +523,8 @@
       const partida = completarGuardado(obj.partida);
       const problema = problemaPartida(partida);
       if (problema !== null) return { ok: false, error: "Partida no válida: " + problema };
+      // Solo se conservan los campos conocidos del personaje, con el nombre normalizado (docs 9.1).
+      partida.personaje = normalizarPersonaje(partida.personaje);
       return { ok: true, partida };
     } catch (e) {
       return { ok: false, error: "Guardado corrupto: no se pudo leer" };
@@ -487,7 +545,7 @@
     if (!hallado || hallado.salaId !== partida.sala) return fallo(partida, "Cofre no encontrado en esta sala");
     if (partida.cofresAbiertos.includes(cofreId)) return fallo(partida, "El cofre ya está abierto");
     const zona = M.salaPorId(hallado.salaId).zona;
-    const suerte = Math.min(100, statsJugador(partida).suerte);
+    const suerte = Math.min(SUERTE_MAX, statsJugador(partida).suerte);
     // D.abrirCofre aplica las tablas 8.1 y 8.2 y el reparto de curación y bomba.
     const botin = D.abrirCofre(hallado.cofre.tipo, zona, suerte, r);
     const recursos = bonosDeRecursos(partida.equipo);
@@ -568,7 +626,7 @@
     p.secretos.push(salaId);
     const tipo = sala.secreto.recompensa;
     if (tipo === "pieza") {
-      const suerte = Math.min(100, statsJugador(partida).suerte);
+      const suerte = Math.min(SUERTE_MAX, statsJugador(partida).suerte);
       const conPieza = anadirPieza(p, D.generarPieza(sala.zona, "comun", suerte, r));
       const pieza = clonar(conPieza.inventario[conPieza.inventario.length - 1]);
       return { ok: true, partida: conPieza, recompensa: { tipo, pieza } };
@@ -633,10 +691,11 @@
     return conXp;
   }
 
-  // Derrota del Coloso final: la partida queda en victoria.
+  // Derrota del Coloso final: la partida queda en victoria. Solo cuenta desde la fase 3D (CA-13);
+  // fuera de ella no cambia nada.
   function registrarVictoria(partida) {
     const p = clonar(partida);
-    p.faseActual = "victoria";
+    if (p.faseActual === "3d") p.faseActual = "victoria";
     return p;
   }
 
@@ -675,8 +734,10 @@
     const p = clonar(partida);
     if (p.muerto) return p;
     const efectivo = Math.round(cantidad * (1 - statsJugador(p).armadura));
-    p.vida = Math.max(0, p.vida - efectivo);
-    if (p.vida === 0) {
+    const antes = p.vida;
+    p.vida = Math.max(0, antes - efectivo);
+    // Cuenta una muerte solo si la vida pasa de positiva a 0.
+    if (antes > 0 && p.vida === 0) {
       p.muerto = true;
       p.muertes += 1;
     }

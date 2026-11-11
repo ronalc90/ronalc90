@@ -37,6 +37,20 @@ function rngSemilla(semilla) {
   };
 }
 
+// Cuenta las llamadas a Math.random del contexto del núcleo (otro realm) mientras corre fn.
+function contarLlamadasRandom(fn) {
+  const mathCtx = vm.runInContext("Math", contexto);
+  const original = mathCtx.random;
+  let llamadas = 0;
+  mathCtx.random = () => { llamadas++; return original(); };
+  try {
+    fn();
+  } finally {
+    mathCtx.random = original;
+  }
+  return llamadas;
+}
+
 // Pieza válida de la forma que genera datos.js (forja +0, rareza común con un modificador).
 // La rareza sigue al número de modificadores: 1 común, 2 poco común y 3 épico (datos.js).
 const RAREZA_POR_MODIFICADORES = { 1: "comun", 2: "poco_comun", 3: "epico" };
@@ -60,7 +74,15 @@ test("crearPartida produce una partida válida y serializable", () => {
   assert.equal(p.faseActual, "2d");
   assert.equal(p.muerto, false);
   assert.equal(p.semilla, 42);
-  // Sin undefined ni NaN: el JSON ida y vuelta da lo mismo.
+  // Ningún valor del árbol es undefined ni NaN. (Comparar el JSON con plano(p) no lo demuestra:
+  // plano hace la misma ida y vuelta y ambos lados salen iguales.)
+  const revisar = (x, ruta) => {
+    assert.notEqual(x, undefined, "undefined en " + ruta);
+    if (typeof x === "number") assert.ok(!Number.isNaN(x), "NaN en " + ruta);
+    if (x !== null && typeof x === "object") for (const k of Object.keys(x)) revisar(x[k], ruta + "." + k);
+  };
+  revisar(p, "p");
+  // Control de serialización: el JSON ida y vuelta conserva la partida.
   assert.deepEqual(JSON.parse(JSON.stringify(p)), plano(p));
   const r = N.deserializar(N.serializar(p));
   assert.equal(r.ok, true, r.error);
@@ -72,7 +94,7 @@ test("serializar y deserializar devuelven una partida idéntica", () => {
   let p = N.crearPartida({ semilla: 3 });
   p = N.ganarXp(p, 700);
   p = N.invertirPunto(p, "vida").partida;
-  p = N.anadirPieza(p, pieza("casco", [{ id: "vida", valor: 9 }, { id: "suerte", valor: 4 }]));
+  p = N.anadirPieza(p, pieza("casco", [{ id: "vida", valor: 6 }, { id: "suerte", valor: 3 }]));
   p = N.equipar(p, "p1").partida;
   p.nucleos = 55;
   p.nucleosSala = 12;
@@ -217,7 +239,9 @@ test("bonos de atributos: vida 8 HP, daño 3 %, armadura 2 %, velocidad 2 %, sue
   assert.equal(redondear3(s.multiplicadorDano), 1.03);
   assert.equal(redondear3(s.armadura), 0.06);
   assert.equal(redondear3(s.multiplicadorVelocidad), 1.02);
-  assert.equal(s.suerte, 12);
+  // La suerte de rareza va en puntos (docs 8.3): 4 puntos de atributo son 4, no el 12 % del bono.
+  assert.equal(s.suerte, 4);
+  assert.equal(contexto.CenizaDatos.bonoDeAtributos(p.atributos).suerte, 12, "la hoja del personaje sigue en %");
   assert.deepEqual(s.setsActivos, []);
 });
 
@@ -358,8 +382,10 @@ test("abrirCofre: un cofre se abre una sola vez y solo en la sala actual", () =>
   assert.equal(N.abrirCofre(p, "Z1.1#x", rngSemilla(4)).ok, false, "índice no numérico");
   assert.equal(N.abrirCofre(p, "Z9.9#0", rngSemilla(4)).ok, false, "sala inexistente");
   assert.throws(() => N.abrirCofre(p, "Z1.1#0", 5), esError("TypeError"));
-  const cualquiera = N.abrirCofre(p, "Z1.1#0");
-  assert.equal(cualquiera.ok, true, "sin rng usa Math.random");
+  let cualquiera;
+  const llamadas = contarLlamadasRandom(() => { cualquiera = N.abrirCofre(p, "Z1.1#0"); });
+  assert.equal(cualquiera.ok, true, cualquiera.error);
+  assert.ok(llamadas > 0, "sin rng se llama a Math.random");
 });
 
 test("abrirCofre con semilla fija se repite igual", () => {
@@ -488,10 +514,14 @@ test("registrarJefeVencido: guardian-chatarra pone faseActual 3d; las XP de zona
   assert.throws(() => N.registrarJefeVencido(p, "inventado"), esError("RangeError"));
 });
 
-test("registrarVictoria pone faseActual victoria", () => {
+test("registrarVictoria pone faseActual victoria solo desde la fase 3D (CA-13)", () => {
   const p = N.crearPartida({ semilla: 1 });
-  const v = N.registrarVictoria(p);
+  assert.equal(N.registrarVictoria(p).faseActual, "2d", "en 2D no hay victoria");
+  const en3d = N.registrarJefeVencido(p, "guardian-chatarra");
+  assert.equal(en3d.faseActual, "3d");
+  const v = N.registrarVictoria(en3d);
   assert.equal(v.faseActual, "victoria");
+  assert.equal(en3d.faseActual, "3d", "la partida recibida no cambia");
   assert.equal(p.faseActual, "2d");
 });
 
@@ -742,7 +772,10 @@ test("recogerSecreto no muta la partida y con la misma semilla da el mismo resul
   assert.equal(JSON.stringify(p), antes, "la partida recibida no cambia");
   const b = N.recogerSecreto(p, "Z1.3", rngSemilla(77));
   assert.deepEqual(plano(a), plano(b));
-  assert.equal(N.recogerSecreto(p, "Z1.3").ok, true, "sin rng usa Math.random");
+  let sinRng;
+  const llamadasSecreto = contarLlamadasRandom(() => { sinRng = N.recogerSecreto(p, "Z1.3"); });
+  assert.equal(sinRng.ok, true, sinRng.error);
+  assert.ok(llamadasSecreto > 0, "sin rng se llama a Math.random");
   assert.throws(() => N.recogerSecreto(p, "Z1.3", 5), esError("TypeError"));
 });
 
@@ -907,4 +940,149 @@ test("statsJugador expone los porcentajes de núcleos y chatarra encontrados de 
   assert.equal(s.chatarraEncontrada, 22.5, "15 * 1,5 = 22,5 con forja +5");
   assert.equal(s.nucleosEncontrados, 0);
   assert.equal(N.statsJugador(N.crearPartida({ semilla: 1 })).nucleosEncontrados, 0);
+});
+
+// ----------------------------------------------------------------- revisión de la parte 1
+
+// Guardado de una partida nueva con cambios aplicados a la copia JSON (para probar la validación).
+const guardadoCon = (cambios, semilla = 5) => {
+  const o = JSON.parse(N.serializar(N.crearPartida({ semilla })));
+  Object.assign(o.partida, cambios);
+  return JSON.stringify(o);
+};
+
+test("suerte: los puntos de atributo cuentan como puntos de rareza (docs 8.3), igual que puntos directos", () => {
+  let p = enNivel(10);
+  for (let i = 0; i < 10; i++) p = N.invertirPunto(p, "suerte").partida;
+  const D = contexto.CenizaDatos;
+  const puntos = N.statsJugador(p).suerte;
+  assert.equal(puntos, 10);
+  for (const tipo of ["comun", "raro", "jefe"]) {
+    for (const zona of [1, 4]) {
+      assert.equal(
+        D.probabilidadSubidaRareza(tipo, zona, puntos),
+        D.probabilidadSubidaRareza(tipo, zona, 10),
+        tipo + " zona " + zona,
+      );
+    }
+  }
+});
+
+test("cofres y secretos usan la suerte en puntos: con 20 puntos de atributo, la misma rareza que 20 directos", () => {
+  let p = enNivel(10);
+  for (let i = 0; i < 20; i++) p = N.invertirPunto(p, "suerte").partida;
+  const D = contexto.CenizaDatos;
+  assert.equal(N.statsJugador(p).suerte, 20);
+  assert.equal(
+    D.probabilidadSubidaRareza("comun", 1, N.statsJugador(p).suerte),
+    D.probabilidadSubidaRareza("comun", 1, 20),
+  );
+});
+
+test("guardado: fase 3D o victoria exigen el Guardián de chatarra vencido (CA-10)", () => {
+  for (const fase of ["3d", "victoria"]) {
+    const r = N.deserializar(guardadoCon({ faseActual: fase }));
+    assert.equal(r.ok, false, fase);
+    assert.match(r.error, /Guardián de chatarra/);
+  }
+  const final = N.deserializar(guardadoCon({
+    faseActual: "3d",
+    jefesVencidos: ["guardian-duna", "centinela-cristal", "forjador", "guardian-chatarra"],
+    sala: "Z4.JEFE",
+    ultimaFogata: "Z4.1",
+  }));
+  assert.equal(final.ok, true, final.error);
+});
+
+test("guardado: sala y fogata deben estar al alcance con los jefes vencidos (puertas con condición)", () => {
+  // Z4.JEFE y Z4.1 solo se alcanzan tras el jefe de la zona 3 (forjador).
+  const sinForjador = N.deserializar(guardadoCon({ sala: "Z4.JEFE", ultimaFogata: "Z4.1" }));
+  assert.equal(sinForjador.ok, false);
+  assert.match(sinForjador.error, /alcanzable/);
+  const alcanzable = N.deserializar(guardadoCon({ jefesVencidos: ["guardian-duna"], sala: "Z2.1", ultimaFogata: "Z2.1" }));
+  assert.equal(alcanzable.ok, true, alcanzable.error);
+  const fogataLejana = N.deserializar(guardadoCon({ jefesVencidos: ["guardian-duna"], sala: "Z2.1", ultimaFogata: "Z4.1" }));
+  assert.equal(fogataLejana.ok, false);
+});
+
+test("guardado: vida y muerte son coherentes (vida entera de 0 a la máxima; muerto solo con vida 0)", () => {
+  const malos = {
+    "vida por encima del máximo": { vida: 9999 },
+    "vida fraccionaria": { vida: 12.5 },
+    "muerto con vida mayor que 0": { muerto: true },
+    "vida 0 sin estar muerto": { vida: 0, muerto: false },
+  };
+  for (const [nombre, cambios] of Object.entries(malos)) {
+    assert.equal(N.deserializar(guardadoCon(cambios)).ok, false, nombre);
+  }
+  const muertoBien = N.deserializar(guardadoCon({ vida: 0, muerto: true }));
+  assert.equal(muertoBien.ok, true, muertoBien.error);
+});
+
+test("guardado: un id de pieza debe ser p1 a p<contadorPiezas> (no se pierde ninguna pieza al equipar)", () => {
+  const texto = N.serializar(N.anadirPieza(N.crearPartida({ semilla: 6 }), pieza("casco")));
+  assert.equal(N.deserializar(texto).ok, true, "guardado normal");
+  const contadorBajo = JSON.parse(texto);
+  contadorBajo.partida.contadorPiezas = 0;
+  const r = N.deserializar(JSON.stringify(contadorBajo));
+  assert.equal(r.ok, false);
+  assert.match(r.error, /id de pieza/);
+});
+
+test("equipar: un id repetido en el inventario no arrastra otras piezas", () => {
+  let p = N.crearPartida({ semilla: 8 });
+  p = N.anadirPieza(p, pieza("casco"));
+  p = N.anadirPieza(p, pieza("pecho"));
+  const dup = JSON.parse(JSON.stringify(p));
+  dup.inventario[1].id = dup.inventario[0].id;
+  const e = N.equipar(dup, dup.inventario[0].id);
+  assert.equal(e.ok, true, e.error);
+  assert.equal(e.partida.inventario.length, 1, "solo sale la pieza encontrada");
+});
+
+test("guardado: modificadores fuera del rango de la zona o de otra ranura se rechazan", () => {
+  const fueraDeRango = N.anadirPieza(N.crearPartida({ semilla: 6 }), pieza("casco", [{ id: "vida", valor: 9 }]));
+  const r = N.deserializar(N.serializar(fueraDeRango));
+  assert.equal(r.ok, false);
+  assert.match(r.error, /pieza del inventario/);
+  const otraRanura = N.anadirPieza(N.crearPartida({ semilla: 6 }), pieza("casco", [{ id: "nucleos", valor: 10 }]));
+  assert.equal(N.deserializar(N.serializar(otraRanura)).ok, false, "nucleos no sale en casco");
+});
+
+test("guardado: historia sin texto vacío, consumibles con solo sus claves y cofres con un solo id", () => {
+  assert.equal(N.deserializar(guardadoCon({ historia: [""] })).ok, false, "historia vacía");
+  assert.equal(N.deserializar(guardadoCon({ historia: ["   "] })).ok, false, "historia con solo espacios");
+  assert.equal(N.deserializar(guardadoCon({ consumibles: { curacion: 0, bomba: 0, extra: 9 } })).ok, false);
+  assert.equal(N.deserializar(guardadoCon({ cofresAbiertos: ["Z1.1#00"] })).ok, false, "cero a la izquierda");
+  assert.equal(N.abrirCofre(N.crearPartida({ semilla: 4 }), "Z1.1#00", rngSemilla(4)).ok, false, "mismo cofre que #0");
+  assert.equal(N.abrirCofre(N.crearPartida({ semilla: 4 }), "Z1.1#0", rngSemilla(4)).ok, true);
+});
+
+test("personaje: el nombre se normaliza al crear y al cargar, y las claves ajenas no sobreviven (docs 9.1)", () => {
+  const D = contexto.CenizaDatos;
+  const p = N.crearPartida({ personaje: { ...D.personajePorDefecto(), nombre: "  Ana   Luz  " }, semilla: 3 });
+  assert.equal(p.personaje.nombre, "Ana Luz");
+  const copia = JSON.parse(N.serializar(p));
+  copia.partida.personaje.nombre = " Ana  Luz ";
+  copia.partida.personaje.hack = true;
+  const r = N.deserializar(JSON.stringify(copia));
+  assert.equal(r.ok, true, r.error);
+  assert.equal(r.partida.personaje.nombre, "Ana Luz");
+  assert.equal(r.partida.personaje.hack, undefined, "clave ajena fuera");
+});
+
+test("danioAJugador cuenta una muerte solo al pasar de vida positiva a 0", () => {
+  const p = N.crearPartida({ semilla: 1 });
+  const golpe = N.danioAJugador(p, 1e6);
+  assert.equal(golpe.muerto, true);
+  assert.equal(golpe.muertes, 1);
+  const sinVida = N.danioAJugador({ ...p, vida: 0 }, 0);
+  assert.equal(sinVida.muertes, 0, "vida ya en 0 y daño 0: no es una muerte nueva");
+});
+
+test("forjar: el mensaje de chatarra insuficiente concuerda", () => {
+  const p = N.anadirPieza(N.crearPartida({ semilla: 2 }), pieza("casco"));
+  const r = N.forjar(p, "p1");
+  assert.equal(r.ok, false);
+  assert.match(r.error, /^Falta chatarra: hacen falta \d+$/);
 });
