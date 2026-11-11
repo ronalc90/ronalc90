@@ -4,7 +4,7 @@
 // (<script src="ceniza/datos.js">) y en node:vm (ver scripts/ceniza-tests/).
 // Las funciones aleatorias aceptan un rng opcional: una función que devuelve
 // un número en [0, 1). Si no se pasa, se usa Math.random.
-// Fuente de verdad: docs/ceniza-diseno.md. Reconciliado con el documento en la ronda 3.
+// Fuente de verdad: docs/ceniza-diseno.md.
 (function () {
   "use strict";
 
@@ -79,17 +79,18 @@
     suerte: { nombre: "Suerte", porPunto: 3, unidad: "%" },
   });
 
-  // Enemigo común 5, élite 10, jefe de zona 150 a 400 (ver ZONAS.xpJefe), Coloso final 1000.
+  // Enemigo común 5, élite 10 y Coloso final 1000. El jefe de zona da ZONAS.xpJefe (docs 2.4 y 4.1).
   const XP_FUENTES = congelar({
     enemigoComun: 5,
     elite: 10,
-    jefeZona: { min: 150, max: 400 },
     coloso: 1000,
   });
 
-  // XP total necesaria para llegar al nivel n: round(40 * n^1,6) (docs 4.1, total acumulado).
+  // XP total necesaria para llegar al nivel n (docs 4.1, total acumulado). El nivel 1 empieza con 0 XP;
+  // para n de 2 a 30 es round(40 * n^1,6).
   function xpParaNivel(n) {
     validarNivel(n);
+    if (n === 1) return 0;
     return Math.round(40 * Math.pow(n, 1.6));
   }
 
@@ -162,7 +163,7 @@
 
   // ----------------------------------------------------------------- zonas y tiempos
   // set: set que aporta la zona (null si ninguno). xpJefe: XP del jefe de la zona (docs 2.4 y 4.1).
-  // La rareza mínima por zona que tenía el código se eliminó: la tabla 8.2 fija la distribución.
+  // No hay rareza mínima por zona: la tabla 8.2 fija la distribución.
   const ZONAS = congelar([
     { id: 1, nombre: "Duna tibia", jefe: "Guardián de duna", minutos: 16, xpJefe: 150, set: null },
     { id: 2, nombre: "Ciudad de cristal", jefe: "Centinela de cristal", minutos: 20, xpJefe: 200, set: "cristal" },
@@ -187,14 +188,15 @@
   // arco: cadencia es el cooldown base de la ráfaga; cooldownArco le aplica el tope del 95 %.
   // escopeta: dano es por perdigón y perdigones por disparo.
   // plasma: danoArea y radioArea no entran en el DPS directo.
-  // rango: píxeles en 2D (alcance del juego actual) o metros en 3D.
+  // rango: alcance en metros de las armas 3D. La geometría 2D (alcance en píxeles) vive en aventura-ui.js,
+  // que la declara según docs 6.1; aquí no se duplica.
   // MULTIDISPARO_ARCO: flechas por ráfaga = 1 + min(maestría, 2). El tope recorta el espaciado, no este número.
   const MULTIDISPARO_ARCO = congelar([1, 2, 3, 3]);
   const ARMAS = congelar({
-    hoja: { nombre: "Hoja", tipo: "2d", golpes: [14, 14, 22], cadencias: [0.25, 0.25, 0.42], onda: 13, rango: 86 },
-    arco: { nombre: "Arco", tipo: "2d", dano: 9, cadencia: 0.23, rango: 640, multidisparo: true },
-    martillo: { nombre: "Martillo", tipo: "2d", dano: 28, cadencia: 0.72, rango: 84 },
-    lanza: { nombre: "Lanza", tipo: "2d", dano: 16, cadencia: 0.46, rango: 240 },
+    hoja: { nombre: "Hoja", tipo: "2d", golpes: [14, 14, 22], cadencias: [0.25, 0.25, 0.42], onda: 13 },
+    arco: { nombre: "Arco", tipo: "2d", dano: 9, cadencia: 0.23, multidisparo: true },
+    martillo: { nombre: "Martillo", tipo: "2d", dano: 28, cadencia: 0.72 },
+    lanza: { nombre: "Lanza", tipo: "2d", dano: 16, cadencia: 0.46 },
     rifle: { nombre: "Rifle", tipo: "3d", dano: 18, cadencia: 0.2, rango: 60, sector: "S1" },
     escopeta: { nombre: "Escopeta", tipo: "3d", dano: 10, perdigones: 8, cadencia: 0.9, rango: 14, sector: "S2" },
     plasma: { nombre: "Plasma", tipo: "3d", dano: 45, danoArea: 20, radioArea: 2, cadencia: 0.6, rango: 50, sector: "S3" },
@@ -317,7 +319,7 @@
   }
 
   // Probabilidad de rareza alta (raro, épico o legendario). Nombre conservado por contrato:
-  // en la versión de la ronda 3 ya no es una "subida" de escalón, sino la suma de la rareza alta de 8.2 y 8.3.
+  // no es una "subida" de escalón, sino la suma de la rareza alta de 8.2 y 8.3.
   function probabilidadSubidaRareza(tipo, zona, suerte = 0) {
     const probs = probabilidadesRareza(tipo, zona, suerte);
     return equipoRarezas.slice(INDICE_RAREZA_ALTA).reduce((s, rar) => s + probs[rar.id], 0);
@@ -412,8 +414,8 @@
 
   // curaFraccion: fracción del HP máximo (docs 8.1: +40 %). Bomba: daño y radio en 2D (px) y 3D (u).
   const CONSUMIBLES = congelar({
-    curacion: { nombre: "Vendaje de ceniza", curaFraccion: 0.40 },
-    bomba: { nombre: "Bomba de ceniza", dano: 60, radioPx: 96, radioU: 2 },
+    curacion: { nombre: "Curación", curaFraccion: 0.40 },
+    bomba: { nombre: "Bomba", dano: 60, radioPx: 96, radioU: 2 },
   });
 
   // Abre un cofre: XP, núcleos, chatarra, pieza y consumible opcionales, según el tipo, la zona y la suerte.
@@ -547,26 +549,27 @@
     return largo >= opcionesPersonaje.nombre.min && largo <= NOMBRE_MAX && PATRON_NOMBRE.test(n);
   }
 
-  // Devuelve { ok, errores }. Rechaza cualquier valor fuera de las opciones.
+  // Devuelve { ok, errores }. Rechaza cualquier valor fuera de las opciones. Los mensajes se muestran al jugador
+  // al importar, así que van en español y sin nombres de campo internos.
   function validarPersonaje(obj) {
     const errores = [];
-    if (!esObjeto(obj)) return { ok: false, errores: ["el personaje debe ser un objeto"] };
-    if (obj.v !== VERSION_PERSONAJE) errores.push("v debe ser " + VERSION_PERSONAJE);
-    if (!nombreValido(obj.nombre)) errores.push("nombre: 1 a 12 letras, números o espacios");
+    if (!esObjeto(obj)) return { ok: false, errores: ["el personaje no tiene el formato esperado"] };
+    if (obj.v !== VERSION_PERSONAJE) errores.push("la versión del código no es compatible");
+    if (!nombreValido(obj.nombre)) errores.push("el nombre debe tener de 1 a 12 letras, números o espacios");
     const traje = esObjeto(obj.traje) ? obj.traje : {};
-    if (!esOpcion(COLORES_TRAJE, traje.color)) errores.push("traje.color no existe");
-    if (!esPaso(traje.tono, TONO_RANGO[0], TONO_RANGO[1], TONO_PASO)) errores.push("traje.tono debe ser de 0 a 345 en pasos de 15");
-    if (!esPaso(traje.brillo, BRILLO_RANGO[0], BRILLO_RANGO[1], BRILLO_PASO)) errores.push("traje.brillo debe ser de -20 a 20 en pasos de 5");
-    if (!esOpcion(PATRONES_TRAJE, obj.patron)) errores.push("patron no existe");
+    if (!esOpcion(COLORES_TRAJE, traje.color)) errores.push("el color del traje no existe");
+    if (!esPaso(traje.tono, TONO_RANGO[0], TONO_RANGO[1], TONO_PASO)) errores.push("el tono del traje debe ser de 0 a 345 en pasos de 15");
+    if (!esPaso(traje.brillo, BRILLO_RANGO[0], BRILLO_RANGO[1], BRILLO_PASO)) errores.push("el brillo del traje debe ser de -20 a 20 en pasos de 5");
+    if (!esOpcion(PATRONES_TRAJE, obj.patron)) errores.push("el patrón del traje no existe");
     const visor = esObjeto(obj.visor) ? obj.visor : {};
-    if (!esOpcion(COLORES_VISOR, visor.color)) errores.push("visor.color no existe");
+    if (!esOpcion(COLORES_VISOR, visor.color)) errores.push("el color del visor no existe");
     const casco = esObjeto(obj.casco) ? obj.casco : {};
-    if (!esOpcion(ESTILOS_CASCO, casco.estilo)) errores.push("casco.estilo no existe");
+    if (!esOpcion(ESTILOS_CASCO, casco.estilo)) errores.push("el estilo del casco no existe");
     const capa = esObjeto(obj.capa) ? obj.capa : {};
-    if (!esOpcion(COLORES_TRAJE, capa.color)) errores.push("capa.color no existe");
-    if (typeof capa.on !== "boolean") errores.push("capa.on debe ser sí o no");
+    if (!esOpcion(COLORES_TRAJE, capa.color)) errores.push("el color de la capa no existe");
+    if (typeof capa.on !== "boolean") errores.push("la capa debe estar activada o desactivada");
     const emblema = esObjeto(obj.emblema) ? obj.emblema : {};
-    if (!esOpcion(ICONOS_EMBLEMA, emblema.icono)) errores.push("emblema.icono no existe");
+    if (!esOpcion(ICONOS_EMBLEMA, emblema.icono)) errores.push("el icono del emblema no existe");
     return { ok: errores.length === 0, errores };
   }
 
@@ -608,11 +611,15 @@
 
   // Devuelve { ok: true, personaje } o { ok: false, error }. Nunca lanza.
   // Orden de validación (docs 9.3): prefijo, suma de control, base64, UTF-8, JSON, versión, rangos, tipos y nombre.
+  // Un código legítimo mide unos 300 caracteres. El límite evita decodificar textos enormes en el hilo principal.
+  const LARGO_MAX_CODIGO = 1024;
   function importarPersonaje(codigo) {
     const fallo = (error) => ({ ok: false, error });
     try {
       if (typeof codigo !== "string") return fallo("El código debe ser texto");
-      const partes = codigo.trim().split(SEPARADOR_CODIGO);
+      const texto = codigo.trim();
+      if (texto.length > LARGO_MAX_CODIGO) return fallo("Código corrupto: es demasiado largo");
+      const partes = texto.split(SEPARADOR_CODIGO);
       if (partes.length !== 3 || partes[0] !== PREFIJO_CODIGO) return fallo("Formato de código no reconocido");
       const base = partes[1];
       if (hashTexto(base) !== partes[2]) return fallo("Código corrupto: la suma de control no coincide");
@@ -633,7 +640,6 @@
     PUNTOS_POR_NIVEL,
     FORJA_MAX,
     COSTO_RESPEC,
-    LIMITE_ARCO,
     CRECIMIENTO_MAESTRIA,
     ATRIBUTOS,
     XP_FUENTES,

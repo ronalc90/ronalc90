@@ -12,6 +12,12 @@ import { fileURLToPath } from "node:url";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const contexto = {};
+// datos.js va primero: los tipos de cofre salen de CenizaDatos.tablaDeCofres y no de una copia en mundo.js.
+vm.runInNewContext(
+  fs.readFileSync(path.join(RAIZ, "docs", "ceniza", "datos.js"), "utf8"),
+  contexto,
+  { filename: "datos.js" },
+);
 vm.runInNewContext(
   fs.readFileSync(path.join(RAIZ, "docs", "ceniza", "mundo.js"), "utf8"),
   contexto,
@@ -25,7 +31,7 @@ const SALAS = plano(M.SALAS);
 const ZONAS = plano(M.ZONAS);
 const TIPOS = plano(M.TIPOS_ENEMIGO);
 const RECOMPENSAS = plano(M.RECOMPENSAS_SECRETO);
-const TIPOS_COFRE = plano(M.TIPOS_COFRE);
+const TIPOS_COFRE = Object.keys(plano(contexto.CenizaDatos.tablaDeCofres));
 const ZONAS_IDS = [1, 2, 3, 4];
 
 const porId = new Map(SALAS.map((s) => [s.id, s]));
@@ -250,7 +256,7 @@ test("fogata, cofres, enemigos y secreto quedan en pantalla y apoyados en suelo 
   }
 });
 
-test("los tipos de enemigo, de cofre y de recompensa existen en sus tablas", () => {
+test("los enemigos de las salas existen en TIPOS_ENEMIGO y su clase es válida", () => {
   for (const s of SALAS) {
     for (const e of s.enemigos) {
       assert.ok(Object.prototype.hasOwnProperty.call(TIPOS, e.tipo), `${s.id}: enemigo ${e.tipo}`);

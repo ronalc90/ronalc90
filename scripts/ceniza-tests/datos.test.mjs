@@ -61,22 +61,22 @@ function contraste(a, b) {
 }
 const FONDO_JUEGO = "#0b0807";
 
-test("curva de XP: monótona y con la fórmula del contrato", () => {
-  let previo = 0;
-  for (let n = 1; n <= 30; n++) {
+test("curva de XP: el nivel 1 empieza con 0 XP y desde el nivel 2 sube con la fórmula del contrato", () => {
+  assert.equal(D.xpParaNivel(1), 0, "tabla 4.1: el nivel 1 empieza con 0 XP");
+  let previo = D.xpParaNivel(1);
+  for (let n = 2; n <= 30; n++) {
     const xp = D.xpParaNivel(n);
     assert.ok(xp > previo, `nivel ${n} debe pedir más XP que el anterior`);
     previo = xp;
   }
-  assert.equal(D.xpParaNivel(1), 40);
   assert.equal(D.xpParaNivel(2), 121); // 40 * 2^1,6 = 121,26
   assert.throws(() => D.xpParaNivel(0), esError("RangeError"));
   assert.throws(() => D.xpParaNivel(31), esError("RangeError"));
 });
 
-test("curva de XP exacta contra la tabla 4.1 de docs/ceniza-diseno.md (CA-07, niveles 2 a 30)", () => {
+test("curva de XP exacta contra la tabla 4.1 de docs/ceniza-diseno.md (CA-07, niveles 1 a 30)", () => {
   const tabla4_1 = [
-    [2, 121], [3, 232], [4, 368], [5, 525], [6, 703], [7, 900], [8, 1114], [9, 1345], [10, 1592],
+    [1, 0], [2, 121], [3, 232], [4, 368], [5, 525], [6, 703], [7, 900], [8, 1114], [9, 1345], [10, 1592],
     [11, 1855], [12, 2132], [13, 2423], [14, 2728], [15, 3047], [16, 3378], [17, 3722], [18, 4078],
     [19, 4447], [20, 4827], [21, 5219], [22, 5623], [23, 6037], [24, 6462], [25, 6899], [26, 7345],
     [27, 7803], [28, 8270], [29, 8748], [30, 9235],
@@ -275,7 +275,7 @@ test("armas: nombres, maestrías y daño por golpe inválidos lanzan RangeError"
   assert.throws(() => D.cooldownArco(-1), esError("RangeError"));
 });
 
-test("rarezas: colores de docs 5.2 y el épico con 4,5:1 o más sobre el fondo del juego (cambio de la ronda 3)", () => {
+test("rarezas: colores de docs 5.2 y el épico con 4,5:1 o más sobre el fondo del juego", () => {
   const colores = Object.fromEntries(plano(D.equipoRarezas).map((r) => [r.id, r.color]));
   assert.deepEqual(colores, {
     comun: "#8a8a8a",
@@ -529,15 +529,19 @@ test("abrirCofre: probabilidad de pieza y de consumible según docs 8.1 (muestra
 
 test("consumibles (docs 8.1): curación +40 % del HP máximo; bomba de 60 de daño en 96 px (2D) o 2 u (3D)", () => {
   assert.equal(D.CONSUMIBLES.curacion.curaFraccion, 0.40);
+  assert.equal(D.CONSUMIBLES.curacion.nombre, "Curación");
   assert.equal(D.CONSUMIBLES.bomba.dano, 60);
+  assert.equal(D.CONSUMIBLES.bomba.nombre, "Bomba");
   assert.equal(D.CONSUMIBLES.bomba.radioPx, 96);
   assert.equal(D.CONSUMIBLES.bomba.radioU, 2);
 });
 
-test("personaje por defecto: válido, con v 1 y brillo 0 dentro del rango", () => {
+test("personaje por defecto: válido, con v 1, tono 0 y un brillo dentro de -20 a 20", () => {
   const base = plano(D.personajePorDefecto());
   assert.equal(D.validarPersonaje(base).ok, true);
   assert.equal(base.v, 1);
+  const [minBrillo, maxBrillo] = plano(D.opcionesPersonaje.traje.brillo);
+  assert.ok(base.traje.brillo >= minBrillo && base.traje.brillo <= maxBrillo, `brillo ${base.traje.brillo}`);
   assert.equal(base.traje.brillo, 0);
   assert.equal(base.traje.tono, 0);
 });
@@ -678,6 +682,17 @@ test("formato (docs 9.3): CENIZA1.<base64 del JSON en UTF-8>.<suma de control de
   assert.equal(JSON.parse(json).v, 1);
 });
 
+test("suma de control FNV-1a: vectores fijos, y datos.js los cumple sin depender de la copia de esta prueba", () => {
+  assert.equal(fnv("a"), "e40c292c");
+  assert.equal(fnv(""), "811c9dc5");
+  // Si la suma del código coincide con la de la base, el error llega después: a la lectura del base64.
+  // "a" no es base64 válido (longitud 1), y "" tampoco. Así la prueba fija la suma de datos.js con vectores conocidos.
+  const conSuma = (base, suma) => D.importarPersonaje(`CENIZA1.${base}.${suma}`).error;
+  assert.equal(conSuma("a", "e40c292c"), "Código corrupto: base64 no válido");
+  assert.equal(conSuma("", "811c9dc5"), "Código corrupto: base64 no válido");
+  assert.equal(conSuma("a", "00000000"), "Código corrupto: la suma de control no coincide");
+});
+
 test("suma de control: un checksum calculado sobre el JSON se rechaza", () => {
   const json = JSON.stringify(D.personajePorDefecto());
   const base = Buffer.from(json, "utf8").toString("base64");
@@ -702,7 +717,7 @@ test("exportar un personaje inválido lanza TypeError", () => {
   assert.throws(() => D.exportarPersonaje(q), esError("TypeError"));
 });
 
-test("importar: rechaza v distinto de 1, tono, brillo, nombre largo y patrón inventado, sin cambiar nada", () => {
+test("importar: rechaza v distinto de 1, tono, brillo, nombre largo, patrón inventado y capa sin on", () => {
   const base = plano(D.personajePorDefecto());
   const variantes = [
     { ...base, v: 2 },
@@ -717,6 +732,22 @@ test("importar: rechaza v distinto de 1, tono, brillo, nombre largo y patrón in
     assert.equal(r.ok, false, JSON.stringify(v).slice(0, 60));
     assert.equal(typeof r.error, "string");
   }
+});
+
+test("importar: el error de un campo inválido se explica en español, sin nombres internos", () => {
+  const p = plano(D.personajePorDefecto());
+  const r = D.importarPersonaje(codigoManual(JSON.stringify({ ...p, traje: { ...p.traje, color: "inventado" } })));
+  assert.equal(r.ok, false);
+  assert.equal(r.error, "Personaje no válido: el color del traje no existe");
+  assert.doesNotMatch(r.error, /traje\.color/);
+});
+
+test("importar rechaza un código de más de 1024 caracteres sin decodificarlo; uno normal sigue entrando", () => {
+  const enorme = "CENIZA1." + "A".repeat(2_000_000) + ".00000000";
+  const r = D.importarPersonaje(enorme);
+  assert.equal(r.ok, false);
+  assert.match(r.error, /demasiado largo/);
+  assert.equal(D.importarPersonaje(D.exportarPersonaje(plano(D.personajePorDefecto()))).ok, true);
 });
 
 test("importar: el nombre se recorta al importar", () => {
@@ -779,7 +810,7 @@ test("codigoManual con JSON válido (v 1) y checksum correcto sí se importa", (
   assert.equal(r.ok, true, r.error);
 });
 
-test("statsDePieza sin forja y con la forja del argumento", () => {
+test("statsDePieza sin argumento usa la forja de la pieza; con argumento usa ese nivel", () => {
   const pieza = {
     ranura: "casco", rareza: "raro", zona: 2, forja: 0, set: "cristal",
     modificadores: [{ id: "vida", valor: 10 }, { id: "suerte", valor: 5 }],
@@ -788,4 +819,6 @@ test("statsDePieza sin forja y con la forja del argumento", () => {
   assert.deepEqual(sinForja.map((s) => s.valor), [10, 5]);
   assert.equal(sinForja[0].unidad, "HP");
   assert.equal(sinForja[1].unidad, "puntos");
+  assert.deepEqual(plano(D.statsDePieza({ ...pieza, forja: 2 })).map((s) => s.valor), [12, 6], "forja de la pieza +2");
+  assert.deepEqual(plano(D.statsDePieza(pieza, 5)).map((s) => s.valor), [15, 7.5], "argumento +5 sobre una pieza +0");
 });

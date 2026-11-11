@@ -67,7 +67,7 @@
     "guardian-chatarra": { nombre: "Guardián de chatarra", clase: "jefe", zona: 4, jefeX: true },
   });
 
-  const TIPOS_COFRE = congelar(["comun", "raro", "jefe"]);
+  // Los tipos de cofre (comun, raro, jefe) son los de CenizaDatos.tablaDeCofres: no se repiten aquí.
 
   // Propuesta: el tipo de recompensa del secreto aún no está cerrado en el diseño.
   const RECOMPENSAS_SECRETO = congelar(["pieza", "nucleos", "chatarra"]);
@@ -353,7 +353,6 @@
     SALA_INICIAL,
     ZONAS,
     TIPOS_ENEMIGO,
-    TIPOS_COFRE,
     RECOMPENSAS_SECRETO,
     SALAS,
     salaPorId,
