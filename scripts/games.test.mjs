@@ -23,6 +23,11 @@ function issue(title, body = "") {
   const login = `prueba-${seq}`;
   return { number: seq, title, body, user: { login, avatar_url: `https://example.invalid/${login}.png` } };
 }
+// Issue de un login concreto (para probar logins que son claves heredadas de Object).
+function issueDe(login, title, body = "") {
+  seq += 1;
+  return { number: seq, title, body, user: { login, avatar_url: `https://example.invalid/${login}.png` } };
+}
 
 const statsBody = (stats) => `ceniza-stats: ${JSON.stringify(stats)}`;
 const statsCeniza = (arma, victoria = true) => ({ arma, jefes: 5, nivel: 3, victoria, puntos: 1200, segundos: 600 });
@@ -111,4 +116,40 @@ test("ceniza: rechaza armas que no son de CENIZA, incluidas claves heredadas de 
   // "__proto__" es un JSON válido con arma no admitida: también debe rechazarse.
   assert.match(respuestas.get(lote[2].number) ?? "", /arma no válida/);
   assert.doesNotMatch(salida, /\[dry\] ceniza:/, "un rechazo no debe cambiar el registro de CENIZA");
+});
+
+// ----------------------------------------------------------------------------- logins heredados de Object
+test("raid: un login 'constructor' cuenta en el ranking del raid como cualquier otro", () => {
+  // El resumen [dry] raid: indica cuántos jugadores hay en el ranking tras el lote.
+  const jugadores = (salida) =>
+    JSON.parse(salida.split("\n").find((l) => l.startsWith("[dry] raid:")).slice("[dry] raid:".length)).jugadores;
+  const otro = ejecutar([issueDe("prueba-ranking", "raid: espada")]);
+  const ctor = ejecutar([issueDe("constructor", "raid: espada")]);
+  assert.equal(jugadores(ctor.salida), jugadores(otro.salida));
+  assert.doesNotMatch(ctor.salida, /NaN/);
+});
+
+test("ceniza: un login 'constructor' no hereda el cooldown de su ataque de raid y queda en el registro", () => {
+  const login = "constructor";
+  const lote = [
+    issueDe(login, "raid: espada"),
+    issueDe(login, "ceniza: victoria", statsBody(statsCeniza("hoja"))),
+  ];
+  const { respuestas, salida } = ejecutar(lote);
+  assert.match(respuestas.get(lote[1].number) ?? "", /Victoria registrada con \*\*hoja\*\*/);
+  assert.doesNotMatch(respuestas.get(lote[1].number) ?? "", /ya registraste/);
+  const ceniza = resumenCeniza(salida);
+  assert.ok(ceniza, "debe haber resumen de CENIZA");
+  assert.equal(Object.prototype.hasOwnProperty.call(ceniza.players, login), true);
+  assert.equal(ceniza.players[login].runs, 1);
+  assert.equal(ceniza.players[login].wins, 1);
+});
+
+// ----------------------------------------------------------------------------- escape de logins en el README
+test("ceniza: un login con caracteres de HTML se escapa en la sección del README", () => {
+  const login = "x<i>";
+  const lote = [issueDe(login, "ceniza: victoria", statsBody(statsCeniza("hoja")))];
+  const { salida } = ejecutar(lote);
+  assert.match(salida, /\[@x&lt;i&gt;\]\(https:\/\/github\.com\/x&lt;i&gt;\)/);
+  assert.doesNotMatch(salida, /\[@x<i>\]/);
 });

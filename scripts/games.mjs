@@ -54,6 +54,18 @@ const state = readJson(STATE_FILE, {
 state.ceniza ??= { players: {}, wins: [] };
 const avatars = readJson(AVATAR_FILE, {});
 
+// Tablas indexadas por login (r.players, c.players, avatars). Un login igual a una propiedad heredada
+// de Object ("constructor", "valueOf"...) devolvía la función de Object en vez de crear la entrada:
+// el daño no llegaba al ranking, el cooldown se contaminaba entre raid y CENIZA y aparecían NaN.
+const tieneClave = (tabla, clave) => Object.prototype.hasOwnProperty.call(tabla, clave);
+const leerEntrada = (tabla, clave) => (tieneClave(tabla, clave) ? tabla[clave] : undefined);
+const fijarEntrada = (tabla, clave, valor) =>
+  Object.defineProperty(tabla, clave, { value: valor, enumerable: true, writable: true, configurable: true });
+const entradaDe = (tabla, clave, nueva) => {
+  if (!tieneClave(tabla, clave)) fijarEntrada(tabla, clave, nueva());
+  return tabla[clave];
+};
+
 // ----------------------------------------------------------------------------- github api
 async function gh(method, url, body) {
   if (DRY) return null;
@@ -85,7 +97,7 @@ async function reply(issue, text, labels) {
 }
 
 async function avatarData(login, url) {
-  const hit = avatars[login];
+  const hit = leerEntrada(avatars, login);
   if (DRY) return hit?.d || null;   // la prueba en seco no sale a la red
   if (hit && NOW - hit.t < 7 * 864e5) return hit.d;
   try {
@@ -95,7 +107,7 @@ async function avatarData(login, url) {
     if (!r.ok) throw new Error(String(r.status));
     const type = r.headers.get("content-type") || "image/png";
     const d = `data:${type};base64,${Buffer.from(await r.arrayBuffer()).toString("base64")}`;
-    avatars[login] = { t: NOW, d };
+    fijarEntrada(avatars, login, { t: NOW, d });
     return d;
   } catch (e) {
     console.warn("avatar", login, e.message);
@@ -117,7 +129,7 @@ function attack(user, avatarUrl, weaponKey) {
   if (!esArmaRaid(weaponKey)) return { ok: false, msg: `@${user}, no conozco el arma **${weaponKey}**.` };
   const r = state.raid;
   const w = WEAPONS[weaponKey];
-  const p = (r.players[user] ||= { dmg: 0, attacks: 0, kills: 0, last: 0, avatar: avatarUrl });
+  const p = entradaDe(r.players, user, () => ({ dmg: 0, attacks: 0, kills: 0, last: 0, avatar: avatarUrl }));
   p.avatar = avatarUrl;
   const wait = p.last + COOLDOWN_MIN * 60000 - NOW;
   if (wait > 0 && !DRY) {
@@ -210,12 +222,12 @@ function cenizaPlay(user, avatarUrl, victoriaTitulo, body) {
   }
   const s = parsed.stats;
   const c = state.ceniza;
-  const prev = c.players[user];
+  const prev = leerEntrada(c.players, user);
   const wait = prev ? prev.last + CENIZA_COOLDOWN_MIN * 60000 - NOW : 0;
   if (wait > 0) {
     return { ok: false, msg: `⏳ @${user}, ya registraste una partida de CENIZA hace poco. Podrás registrar otra en **${fmtMin(wait)} min**; esta no se ha sumado.` };
   }
-  const p = (c.players[user] ||= { avatar: avatarUrl, last: 0, runs: 0, wins: 0, bestLevel: 0 });
+  const p = entradaDe(c.players, user, () => ({ avatar: avatarUrl, last: 0, runs: 0, wins: 0, bestLevel: 0 }));
   p.avatar = avatarUrl;
   p.last = NOW;
   p.runs += 1;
@@ -238,10 +250,14 @@ function cenizaMarkdown() {
     .sort((a, b) => b[1].wins - a[1].wins || b[1].bestLevel - a[1].bestLevel || a[0].localeCompare(b[0]))
     .slice(0, 5);
   const medals = ["🥇", "🥈", "🥉", "4", "5"];
-  const rows = top.map(([u, p], i) =>
-    `| ${medals[i]} | <img src="https://github.com/${u}.png?size=40" width="20" height="20"/> [@${u}](https://github.com/${u}) | ${p.wins} | ${p.bestLevel} | ${p.runs} |`);
-  const wins = c.wins.slice(0, 5).map((w) =>
-    `- 🔥 [@${w.user}](https://github.com/${w.user}) derrotó al coloso con **${w.arma}** · nivel ${w.nivel} · ${w.puntos} pts · <sub>${ago(w.t)}</sub>`);
+  const rows = top.map(([u, p], i) => {
+    const x = esc(u);
+    return `| ${medals[i]} | <img src="https://github.com/${x}.png?size=40" width="20" height="20"/> [@${x}](https://github.com/${x}) | ${p.wins} | ${p.bestLevel} | ${p.runs} |`;
+  });
+  const wins = c.wins.slice(0, 5).map((w) => {
+    const x = esc(w.user);
+    return `- 🔥 [@${x}](https://github.com/${x}) derrotó al coloso con **${w.arma}** · nivel ${w.nivel} · ${w.puntos} pts · <sub>${ago(w.t)}</sub>`;
+  });
   return [
     "<div align=\"center\">",
     "",
@@ -282,7 +298,7 @@ async function renderRaid() {
   const VX = IX + 302, VY = IY + 206;             // its visor (eye) position
   const recent = r.events.slice(0, 6);
   const recentAv = [];
-  for (const ev of recent) recentAv.push(await avatarData(ev.user, r.players[ev.user]?.avatar || `https://github.com/${ev.user}.png`));
+  for (const ev of recent) recentAv.push(await avatarData(ev.user, leerEntrada(r.players, ev.user)?.avatar || `https://github.com/${ev.user}.png`));
   const top = Object.entries(r.players).sort((a, b) => b[1].dmg - a[1].dmg).slice(0, 3);
   const medal = ["#e3b04f", "#c9c9c9", "#c47a45"];
 
@@ -486,12 +502,15 @@ function raidMarkdown() {
   const r = state.raid;
   const top = Object.entries(r.players).sort((a, b) => b[1].dmg - a[1].dmg).slice(0, 5);
   const medals = ["🥇", "🥈", "🥉", "4", "5"];
-  const rows = top.map(([u, p], i) =>
-    `| ${medals[i]} | <img src="https://github.com/${u}.png?size=40" width="20" height="20"/> [@${u}](https://github.com/${u}) | ${p.dmg} | ${p.attacks} | ${p.kills} |`);
+  const rows = top.map(([u, p], i) => {
+    const x = esc(u);
+    return `| ${medals[i]} | <img src="https://github.com/${x}.png?size=40" width="20" height="20"/> [@${x}](https://github.com/${x}) | ${p.dmg} | ${p.attacks} | ${p.kills} |`;
+  });
   const events = r.events.slice(0, 5).map((e) => {
     const w = esArmaRaid(e.weapon) ? WEAPONS[e.weapon] : { icon: "⚔️" };
     const what = e.miss ? "falló el ataque" : `hizo **−${e.dmg}**${e.crit ? " (crítico)" : ""}`;
-    return `- ${w.icon} [@${e.user}](https://github.com/${e.user}) ${what} contra el Nv. ${e.level}${e.kill ? " — 💀 **golpe final**" : ""} · <sub>${ago(e.t)}</sub>`;
+    const x = esc(e.user);
+    return `- ${w.icon} [@${x}](https://github.com/${x}) ${what} contra el Nv. ${e.level}${e.kill ? " — 💀 **golpe final**" : ""} · <sub>${ago(e.t)}</sub>`;
   });
   return [
     "<div align=\"center\">",
@@ -507,7 +526,10 @@ function raidMarkdown() {
 function guestMarkdown() {
   const g = state.guestbook.slice(0, 18);
   if (!g.length) return "<p align=\"center\"><sub>Aún no hay firmas. ¡La caravana espera a su primer viajero!</sub></p>";
-  const faces = g.map((x) => `<a href="https://github.com/${x.user}" title="@${x.user} · ${x.cls}"><img src="https://github.com/${x.user}.png?size=64" width="34" height="34" alt="@${x.user}"/></a>`).join(" ");
+  const faces = g.map((x) => {
+    const u = esc(x.user), cls = esc(x.cls);
+    return `<a href="https://github.com/${u}" title="@${u} · ${cls}"><img src="https://github.com/${u}.png?size=64" width="34" height="34" alt="@${u}"/></a>`;
+  }).join(" ");
   return `<p align="center">${faces}</p>\n<p align="center"><sub>Últimas firmas · ${state.guestbook.length} en total</sub></p>`;
 }
 
