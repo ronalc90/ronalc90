@@ -2,10 +2,10 @@
 // Script clásico (sin módulos ES): define globalThis.CenizaHistoria.
 // Datos puros, sin DOM, sin red y sin dependencias. Sigue docs/ceniza-diseno.md
 // (secciones 1, 2, 9, 11 y 12). La narrativa completa está en docs/ceniza-historia.md.
-// Estado: NO integrado todavía. docs/index.html no carga este archivo y ninguna pantalla
-// llama a texto(). La integración queda para otra ronda (ver «Estado» en la narrativa).
-// Se prueba en node:vm (scripts/ceniza-tests/historia.test.mjs). Cuando se integre, se carga
-// con <script src="ceniza/historia.js"></script>.
+// Estado: integrado. docs/index.html lo carga con <script src="ceniza/historia.js"> y
+// docs/ceniza/aventura-ui.js lo usa con texto() para el despertar, las zonas, los jefes, las
+// fogatas, la fase 3D y el final. Lo pendiente está en «Estado» de la narrativa.
+// Se prueba en node:vm (scripts/ceniza-tests/historia.test.mjs).
 //
 // Convenciones:
 // - Cada línea tiene 140 caracteres o menos antes de sustituir los marcadores.
@@ -26,8 +26,8 @@
   // Valores por defecto de los marcadores (docs de la historia, sección Nombres). El traje y el visor
   // coinciden con el color por defecto de datos.js (personajePorDefecto). El nombre va en minúscula
   // porque la historia dice «el viajero» hasta que el jugador le pone nombre.
-  // Pendiente de integración: datos.js usa "Viajero" como nombre de la interfaz; al integrar, esa
-  // interfaz debe tratar ese valor como vacío y usar DEFECTOS.nombre.
+  // datos.js usa "Viajero" como nombre por defecto; aventura-ui.js (datosHistoria) lo pasa como vacío,
+  // así que aquí sale DEFECTOS.nombre.
   const DEFECTOS = congelar({ nombre: "viajero", traje: "ceniza", visor: "ámbar" });
   const MARCADOR = /\{(nombre|traje|visor)\}/g;
   // Nombre que se escribe para cada color de datos.js (con tilde). Un id sin entrada se usa tal cual.
@@ -56,7 +56,7 @@
     1: {
       entrada: [
         "Las dunas se mueven hacia el mismo lado, como si alguien las empujara. El polvo ya cubre tu traje de {traje}.",
-        "Bajo la arena se mueve algo con caparazón. Acércate a la fogata antes de que se levante.",
+        "Más allá de la cresta, bajo la arena, se mueve algo con caparazón. Acércate a la fogata antes de que se levante.",
       ],
       trasJefe: "La arena vuelve a su cauce y deja ver un tubo de metal que sube hacia el norte: era el que llevaba el calor de la forja a la duna.",
     },
@@ -106,8 +106,8 @@
 
   // ----------------------------------------------------------------- despertar (Acto I)
   // Se muestra al empezar una partida nueva, antes de moverse (clave "inicio"). Tres líneas tomadas
-  // de docs/ceniza-historia.md, Acto I. El jugador pone su nombre al encender la primera fogata
-  // (docs/ceniza-historia.md, «Cómo se nombra»), así que aquí {nombre} sale como «viajero».
+  // de docs/ceniza-historia.md, Acto I. El nombre se cambia en el panel «Personaje y equipo»
+  // (docs/ceniza-historia.md, «Cómo se nombra»); si no se cambia, {nombre} sale como «viajero».
   const inicio = congelar([
     "Despiertas junto a la primera fogata con una hoja de chatarra en la mano. Dices en voz alta: «{nombre}». La arena no contesta.",
     "La fogata responde a quien vuelve. El canal de vapor que daba calor a la duna ya no sube, y la arena lo cubre.",
@@ -122,8 +122,8 @@
     "La fogata da poco calor, pero alcanza para cerrar los ojos un rato.",
     "En la brasa quedan las marcas de cada cofre abierto y de cada guardián caído. El calor no las borra.",
     "Una pieza sin dueño se hunde en la brasa y sale más dura. Cada vez que la brasa la recibe, pide más chatarra.",
-    "En el cristal de la brasa queda la figura de {nombre}, con el traje gastado por la ceniza.",
-    "Has vuelto. Lo que venciste sigue vencido; los núcleos sin consolidar se quedaron allá abajo.",
+    "En el cristal de la brasa te ves con el traje gastado por la ceniza. Eres {nombre}.",
+    "Has vuelto. Los jefes que venciste siguen vencidos; los núcleos sin consolidar se quedaron allá abajo.",
   ]);
 
   // ----------------------------------------------------------------- fase 3D
@@ -146,7 +146,7 @@
   const final = congelar({
     victoria: [
       "El coloso cae sobre la arena. Su calor sube sin prisa, como el humo de una hoguera que nadie vuelve a encender.",
-      "Sobre el metal queda la huella de {nombre}. No lo apaga ni lo alimenta. Ninguna pared guarda ese nombre.",
+      "Sobre el metal queda tu huella. No apaga la forja ni la alimenta. Ninguna pared guarda el nombre de {nombre}.",
     ],
     pregunta: "¿Se apagó la forja porque se acabó el metal, o porque alguien dejó de querer alimentarla?",
   });

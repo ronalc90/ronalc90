@@ -288,7 +288,23 @@ test("la zona 4 desbloquea la FASE 3D, el mismo nombre que usan la historia y el
 
 test("la línea final no empieza por el nombre del viajero, que puede ser el valor por defecto", () => {
   assert.ok(!HIST.final.victoria[1].startsWith("{nombre}"));
-  assert.match(H.texto("final.victoria.1"), /^Sobre el metal queda la huella de viajero\./);
+  assert.match(H.texto("final.victoria.1"), /^Sobre el metal queda tu huella\. /);
+});
+
+test("las frases con {nombre} se leen igual con el nombre por defecto y con uno escrito", () => {
+  // Sin artículo, «viajero» es predicado («Eres viajero») o va tras «nombre de»; nunca tras «figura de».
+  assert.match(H.texto("fogatas.3"), /Eres viajero\.$/);
+  assert.match(H.texto("fogatas.3", { nombre: "Ana" }), /Eres Ana\.$/);
+  assert.match(H.texto("final.victoria.1"), /Ninguna pared guarda el nombre de viajero\.$/);
+  assert.match(H.texto("final.victoria.1", { nombre: "Ana" }), /Ninguna pared guarda el nombre de Ana\.$/);
+});
+
+test("historia.js está integrado: docs/index.html lo carga y aventura-ui.js lo usa con texto()", () => {
+  const index = fs.readFileSync(path.join(RAIZ, "docs", "index.html"), "utf8");
+  const ui = fs.readFileSync(path.join(RAIZ, "docs", "ceniza", "aventura-ui.js"), "utf8");
+  assert.match(index, /<script[^>]*src="ceniza\/historia\.js"/);
+  assert.match(ui, /globalThis\.CenizaHistoria/);
+  assert.match(ui, /CH\.texto\(/);
 });
 
 test("el despertar (clave inicio) existe, tiene tres líneas y usa {nombre} entre comillas", () => {
