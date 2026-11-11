@@ -19,8 +19,9 @@
 //   ultimaFogata, jefesVencidos [jefeId], cofresAbiertos ["salaId#indice"],
 //   muertes, faseActual ("2d" | "3d" | "victoria"), armas [arma 2D] (la hoja viene
 //   desbloqueada), usos {arma: enemigos vencidos con ella}, secretos [salaId] e
-//   historia [clave] (claves de historia ya vistas, sin repetir; ver marcarHistoria).
-//   Un guardado v1 sin armas, usos, secretos ni historia se carga con sus valores por defecto.
+//   historia [clave] (claves de historia ya vistas, sin repetir; ver marcarHistoria) y
+//   ayudas [id] (ayudas de la interfaz ya vistas, de AYUDAS; ver marcarAyuda).
+//   Un guardado v1 sin armas, usos, secretos, historia ni ayudas se carga con sus valores por defecto.
 
 (function () {
   "use strict";
@@ -42,6 +43,8 @@
   const COSTO_RESPEC = D.COSTO_RESPEC;
   const SEMILLA_MAX = 4294967295;   // semilla: entero sin signo de 32 bits
   const CONSUMIBLES_MAX = 9999;     // tope de curación y de bomba
+  // Ayudas de la interfaz ya vistas (aventura-ui.js): el cuadro de controles y las pistas de la primera zona.
+  const AYUDAS = Object.freeze(["controles", "ataque", "cofre", "fogata"]);
   const SUERTE_MAX = 100;           // tope de la suerte en puntos (validarSuerte de datos.js)
   // Jefe cuya derrota pasa la partida a la fase 3D (guardian-chatarra en mundo.js).
   const JEFE_X = Object.keys(M.TIPOS_ENEMIGO).find((id) => M.TIPOS_ENEMIGO[id].jefeX === true);
@@ -367,6 +370,7 @@
       usos: usosIniciales(),
       secretos: [],
       historia: [],
+      ayudas: [],
       muertes: 0,
       faseActual: "2d",
     };
@@ -485,6 +489,10 @@
         new Set(p.historia).size !== p.historia.length) {
       return "historia no válida";
     }
+    if (!Array.isArray(p.ayudas) || !p.ayudas.every((a) => AYUDAS.includes(a)) ||
+        new Set(p.ayudas).size !== p.ayudas.length) {
+      return "ayudas no válidas";
+    }
     if (!FASES.includes(p.faseActual)) return "fase no válida";
     // La fase 3D y la victoria solo existen tras el jefe X (CA-10). La victoria del Coloso no
     // se guarda en el núcleo, así que no se puede comprobar aquí.
@@ -501,8 +509,8 @@
     return JSON.stringify({ version: VERSION, partida });
   }
 
-  // Guardados v1 anteriores a las armas, los usos, los secretos y la historia: se completan con sus
-  // valores por defecto. Devuelve una copia superficial: los campos anidados (inventario, equipo,
+  // Guardados v1 anteriores a las armas, los usos, los secretos, la historia y las ayudas: se completan con
+  // sus valores por defecto. Devuelve una copia superficial: los campos anidados (inventario, equipo,
   // listas) se comparten con el objeto recibido, así que quien lo llame no debe modificarlo después.
   function completarGuardado(p) {
     if (!esObjeto(p)) return p;
@@ -511,6 +519,7 @@
     if (!tiene(c, "usos")) c.usos = usosIniciales();
     if (!tiene(c, "secretos")) c.secretos = [];
     if (!tiene(c, "historia")) c.historia = [];
+    if (!tiene(c, "ayudas")) c.ayudas = [];
     return c;
   }
 
@@ -657,6 +666,17 @@
     const p = clonar(partida);
     if (!Array.isArray(p.historia)) p.historia = [];
     if (!p.historia.includes(clave)) p.historia.push(clave);
+    return p;
+  }
+
+  // ----------------------------------------------------------------- ayudas vistas
+  // Marca una ayuda de la interfaz (AYUDAS) como vista. Devuelve una copia. Si ya estaba, la copia sale
+  // sin cambios. Lanza RangeError si el id no es una ayuda conocida.
+  function marcarAyuda(partida, ayuda) {
+    if (!AYUDAS.includes(ayuda)) throw new RangeError("Ayuda desconocida: " + String(ayuda));
+    const p = clonar(partida);
+    if (!Array.isArray(p.ayudas)) p.ayudas = [];
+    if (!p.ayudas.includes(ayuda)) p.ayudas.push(ayuda);
     return p;
   }
 
@@ -824,7 +844,9 @@
     comprarArma,
     maestriaDe,
     recogerSecreto,
+    AYUDAS,
     marcarHistoria,
+    marcarAyuda,
     registrarEnemigoVencido,
     registrarJefeVencido,
     registrarVictoria,
