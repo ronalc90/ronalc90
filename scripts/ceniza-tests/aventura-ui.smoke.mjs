@@ -140,9 +140,9 @@ function cargar(url, opciones = {}) {
 }
 
 // Monta la aventura con una partida nueva y registra cada llamada de retorno.
-// Por defecto el despertar (inicio) y la zona 1 ya están vistos (si no, sus cuadros abren al montar).
-// Opciones: sinInicio, sinZona1 (no marcarlas), nucleos, usos (parcial), armas, semilla, vida.
-// registro.guardados guarda cada partida que llega a onGuardar (la copia tal como la recibe la página).
+// Por defecto el despertar (inicio), la zona 1 y el cuadro de controles ya están vistos (si no, sus cuadros
+// abren al montar). Opciones: sinInicio, sinZona1, sinControles (no marcarlos), nucleos, usos (parcial),
+// armas, semilla, vida. registro.guardados guarda cada partida que llega a onGuardar (la copia tal como la recibe la página).
 function montarEn(contexto, extra = {}) {
   const doc = new Documento();
   const contenedor = doc.createElement("div");
@@ -151,6 +151,7 @@ function montarEn(contexto, extra = {}) {
   let partida = N.crearPartida({ personaje: D.personajePorDefecto(), semilla: extra.semilla ?? 42 });
   if (!extra.sinInicio) partida = N.marcarHistoria(partida, "inicio");
   if (!extra.sinZona1) partida = N.marcarHistoria(partida, "zona:1");
+  if (!extra.sinControles) partida = N.marcarAyuda(partida, "controles");
   if (extra.nucleos !== undefined) partida.nucleos = extra.nucleos;
   if (extra.usos) Object.assign(partida.usos, extra.usos);
   if (extra.armas) partida.armas = extra.armas.slice();
@@ -773,4 +774,211 @@ test("fase 3D: Escape y P con un cuadro de sector abierto no reanudan la fase 3D
   assert.equal(f.alternadasPorTecla, 1);
   assert.equal(gancho.estado().modo, "tres_d", "la capa 2D sigue en la fase 3D");
   control.destruir();
+});
+
+// ----------------------------------------------------------------- ayudas: cuadro de controles y pistas
+const leyendaAbierta = (contenedor) => porClase(contenedor, "av-historia av-leyenda").style.display === "flex";
+const textosDe = (nodo, tag) => todos(nodo, (n) => n.tagName === tag).map((n) => n.textContent);
+const botonEntendido = (contenedor) => botonPorEtiqueta(contenedor, "Entendido: cerrar los controles");
+const panelPausaAbierto = (contenedor) =>
+  todos(contenedor, (n) => n.atributos["aria-label"] === "Pausa")[0].style.display === "block";
+
+test("controles: una partida nueva abre el cuadro al empezar y no mueve al viajero; una guardada con la ayuda vista no", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const { doc, contenedor, control, registro } = montarEn(contexto, { sinControles: true });
+  const gancho = contexto.CENIZA_TEST;
+  assert.equal(gancho.estado().modo, "ayuda", "la partida nueva abre el cuadro de controles");
+  assert.equal(leyendaAbierta(contenedor), true, "el cuadro es visible");
+  const x = gancho.estado().jugador.x;
+  gancho.avanzar(1);
+  assert.equal(gancho.estado().jugador.x, x, "con el cuadro abierto el viajero no se mueve");
+  // Enter fuera de un botón lo cierra; el cierre marca «controles» y guarda la partida.
+  doc.activeElement = contenedor;
+  doc.dispatch("keydown", { key: "Enter" });
+  assert.equal(gancho.estado().modo, "juego", "al cerrar, la aventura sigue");
+  assert.ok(gancho.estado().ayudas.includes("controles"), "la ayuda queda vista");
+  const guardado = plano(registro.guardados[registro.guardados.length - 1]);
+  assert.ok(guardado.ayudas.includes("controles"), "el guardado lleva la ayuda vista");
+  control.destruir();
+  // Recarga con esa partida: el cuadro no vuelve a salir.
+  const ctx2 = cargar(CON_PRUEBA);
+  const otra = montarCon(ctx2, guardado);
+  assert.equal(ctx2.CENIZA_TEST.estado().modo, "juego", "la ayuda vista no se repite");
+  assert.equal(leyendaAbierta(otra.contenedor), false);
+  otra.control.destruir();
+});
+
+test("controles: Enter, Espacio y Escape cierran el cuadro fuera de un botón; P no lo cierra ni pausa; Entendido cierra", () => {
+  for (const tecla of [{ key: "Enter" }, { key: " " }, { key: "Escape" }]) {
+    const contexto = cargar(CON_PRUEBA);
+    const { doc, contenedor, control } = montarEn(contexto, { sinControles: true });
+    assert.equal(contexto.CENIZA_TEST.estado().modo, "ayuda");
+    doc.activeElement = contenedor;   // foco fuera de un botón: la tecla es la del cuadro
+    doc.dispatch("keydown", tecla);
+    assert.equal(contexto.CENIZA_TEST.estado().modo, "juego", `${tecla.key} cierra el cuadro`);
+    assert.equal(leyendaAbierta(contenedor), false, `${tecla.key}: el cuadro se oculta`);
+    control.destruir();
+  }
+  const contexto = cargar(CON_PRUEBA);
+  const { doc, contenedor, control } = montarEn(contexto, { sinControles: true });
+  doc.activeElement = contenedor;
+  doc.dispatch("keydown", { key: "p", code: "KeyP" });
+  assert.equal(contexto.CENIZA_TEST.estado().modo, "ayuda", "P no cierra el cuadro");
+  assert.equal(panelPausaAbierto(contenedor), false, "P no abre la pausa");
+  // El botón Entendido cierra por clic (con el foco en el botón, Enter y Espacio llegan así).
+  pulsar(botonEntendido(contenedor));
+  assert.equal(contexto.CENIZA_TEST.estado().modo, "juego", "Entendido cierra el cuadro");
+  assert.equal(contexto.CENIZA_TEST.estado().ayudas.includes("controles"), true);
+  control.destruir();
+});
+
+test("controles: «Controles» en el menú de pausa reabre el cuadro; al cerrarlo vuelve a la pausa", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const { doc, contenedor, control } = montarEn(contexto);
+  const gancho = contexto.CENIZA_TEST;
+  doc.dispatch("keydown", { key: "Escape", code: "Escape" });
+  assert.equal(gancho.estado().modo, "pausa");
+  assert.equal(panelPausaAbierto(contenedor), true, "la pausa está abierta");
+  pulsar(botonPorTexto(contenedor, "Controles"));
+  assert.equal(gancho.estado().modo, "ayuda", "Controles abre la leyenda");
+  assert.equal(leyendaAbierta(contenedor), true);
+  assert.equal(panelPausaAbierto(contenedor), false, "la pausa se oculta mientras hay leyenda");
+  pulsar(botonEntendido(contenedor));
+  assert.equal(gancho.estado().modo, "pausa", "al cerrar, vuelve a la pausa");
+  assert.equal(panelPausaAbierto(contenedor), true, "la pausa vuelve a verse");
+  // Escape cierra la leyenda abierta desde la pausa: vuelve a la pausa, no reanuda la partida.
+  pulsar(botonPorTexto(contenedor, "Controles"));
+  doc.dispatch("keydown", { key: "Escape", code: "Escape" });
+  assert.equal(gancho.estado().modo, "pausa", "Escape cierra el cuadro y se queda en la pausa");
+  control.destruir();
+});
+
+test("controles en táctil: la leyenda usa los nombres de los botones táctiles", () => {
+  const contexto = cargar(CON_PRUEBA, { tactil: true });
+  const { contenedor, control } = montarEn(contexto, { sinControles: true });
+  const nombres = textosDe(contenedor, "DT");
+  for (const nombre of ["Izquierda y Derecha", "Saltar", "Atacar", "Esquivar", "Arma", "E", "||"]) {
+    assert.ok(nombres.includes(nombre), `falta el botón «${nombre}» en la leyenda`);
+  }
+  assert.ok(!nombres.includes("A / D o flechas"), "en táctil no se listan las teclas");
+  assert.ok(todos(contenedor, (n) => n.atributos.class === "av-leyenda-nota")[0].textContent.includes("Toca Entendido"));
+  control.destruir();
+});
+
+test("pistas: llegar a la fogata avisa una sola vez, se guarda y no cuenta el aparecer junto a ella", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const { control, registro } = montarEn(contexto);
+  const gancho = contexto.CENIZA_TEST;
+  gancho.matarEnemigosDeSala();   // sin enemigos ni cofre cerca: solo puede salir la pista de la fogata
+  gancho.colocar(700, 440);
+  gancho.avanzar(0.1);
+  assert.equal(gancho.estado().pista, "", "lejos de la fogata no hay pista");
+  gancho.colocar(96, 440);        // la fogata de Z1.1 está en x 96
+  gancho.avanzar(0.1);
+  assert.equal(gancho.estado().pista, "E enciende la fogata: guarda y cura.");
+  assert.ok(gancho.estado().ayudas.includes("fogata"), "la pista queda marcada");
+  const guardado = plano(registro.guardados[registro.guardados.length - 1]);
+  assert.ok(guardado.ayudas.includes("fogata"), "el guardado lleva la pista vista");
+  gancho.avanzar(7);
+  assert.equal(gancho.estado().pista, "", "la pista sale del HUD tras su tiempo");
+  gancho.colocar(700, 440);
+  gancho.avanzar(0.1);
+  gancho.colocar(96, 440);
+  gancho.avanzar(0.1);
+  assert.equal(gancho.estado().pista, "", "la pista de la fogata sale una sola vez");
+  control.destruir();
+});
+
+test("pistas: cerca del cofre sale «E abre el cofre», una vez; el enemigo a la vez espera su turno", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const { control } = montarEn(contexto);
+  const gancho = contexto.CENIZA_TEST;
+  // Cofre de Z1.1 en x 330; el enemigo del suelo (x 450) también queda a menos de 200 px.
+  gancho.colocar(300, 440);
+  gancho.avanzar(0.1);
+  assert.equal(gancho.estado().pista, "E abre el cofre.", "el cofre va primero");
+  assert.equal(gancho.estado().ayudas.includes("ataque"), false, "la pista del enemigo espera su turno");
+  gancho.avanzar(7);
+  assert.equal(gancho.estado().pista, "", "la pista del cofre sale del HUD");
+  gancho.colocar(300, 440);
+  gancho.avanzar(0.1);
+  assert.equal(gancho.estado().pista, "", "el cofre no vuelve a avisar");
+  assert.equal(gancho.estado().ayudas.includes("cofre"), true);
+  control.destruir();
+});
+
+test("pistas: un enemigo cerca avisa de J con teclado y del botón Atacar en táctil", () => {
+  for (const [tactil, esperado] of [
+    [false, "J ataca con el arma activa."],
+    [true, "Botón Atacar: ataca con el arma activa."],
+  ]) {
+    const contexto = cargar(CON_PRUEBA, { tactil });
+    const { control } = montarEn(contexto);
+    const gancho = contexto.CENIZA_TEST;
+    // Sobre la plataforma de x 560 a 760, junto al enemigo de x 620; el cofre (x 330) y el enemigo del suelo quedan lejos.
+    gancho.colocar(640, 280);
+    gancho.avanzar(0.1);
+    assert.equal(gancho.estado().pista, esperado, `pista de ataque (táctil: ${tactil})`);
+    control.destruir();
+  }
+});
+
+test("pistas: solo salen en la primera zona", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const { contenedor, control } = montarEn(contexto);
+  const gancho = contexto.CENIZA_TEST;
+  gancho.matarEnemigosDeSala();
+  for (const sala of ["Z1.2", "Z1.3", "Z1.JEFE"]) gancho.entrarSala(sala);
+  cerrarHistoria(contenedor);     // antes del combate con el guardián de duna
+  gancho.vencerJefe("guardian-duna");
+  cerrarHistoria(contenedor);     // caída del guardián
+  gancho.entrarSala("Z2.1");
+  cerrarHistoria(contenedor);     // entrada en la zona 2
+  assert.equal(gancho.estado().zona, 2);
+  gancho.colocar(700, 440);
+  gancho.avanzar(0.1);
+  gancho.colocar(96, 440);        // fogata de Z2.1
+  gancho.avanzar(0.1);
+  assert.equal(gancho.estado().pista, "", "en la zona 2 no hay pistas");
+  assert.equal(gancho.estado().ayudas.includes("fogata"), false, "la pista de la zona 1 no se marca aquí");
+  control.destruir();
+});
+
+test("armas bloqueadas: el aviso dice dónde y cuánto cuesta desbloquear el arma", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const { doc, control } = montarEn(contexto);
+  const gancho = contexto.CENIZA_TEST;
+  doc.dispatch("keydown", { key: "2", code: "Digit2" });
+  gancho.avanzar(1 / 60);
+  const aviso = gancho.estado().aviso;
+  assert.ok(aviso.includes("Se compra en una fogata"), `aviso: ${aviso}`);
+  assert.ok(aviso.includes("100 núcleos"), `aviso: ${aviso}`);
+  control.destruir();
+});
+
+test("ayudas: una partida antigua sin el campo carga (valor por defecto) y un campo no válido se rechaza", () => {
+  const contexto = cargar(CON_PRUEBA);
+  const N = contexto.CenizaAventuraNucleo;
+  let p = N.crearPartida({ personaje: contexto.CenizaDatos.personajePorDefecto(), semilla: 42 });
+  p = N.marcarHistoria(N.marcarHistoria(p, "inicio"), "zona:1");
+  p = N.marcarAyuda(p, "fogata");
+  const texto = N.serializar(p);
+  // Guardado de antes de las ayudas: sin el campo, carga con [] y el cuadro de controles sale una vez.
+  const antiguo = JSON.parse(texto);
+  delete antiguo.partida.ayudas;
+  const r = N.deserializar(JSON.stringify(antiguo));
+  assert.equal(r.ok, true, r.error);
+  assert.deepEqual(plano(r.partida.ayudas), []);
+  const ui = montarCon(contexto, r.partida);
+  assert.equal(contexto.CENIZA_TEST.estado().modo, "ayuda", "la partida antigua no vio los controles");
+  ui.control.destruir();
+  // Campos no válidos: un id desconocido, uno repetido, o no ser una lista.
+  for (const malo of [["basura"], ["controles", "controles"], "fogata", [7]]) {
+    const o = JSON.parse(texto);
+    o.partida.ayudas = malo;
+    const m = N.deserializar(JSON.stringify(o));
+    assert.equal(m.ok, false, "ayudas no válidas: " + JSON.stringify(malo));
+    assert.match(m.error, /ayudas/);
+  }
+  assert.throws(() => N.marcarAyuda(p, "inventada"), (e) => e.name === "RangeError", "un id desconocido no se marca");
 });

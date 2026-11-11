@@ -25,16 +25,24 @@
 // Controles: A/D o flechas para moverse, W o espacio para saltar, J para atacar con el arma
 // activa, K para esquivar, 1 a 4 para cambiar de arma (hoja, arco, martillo, lanza; las no
 // compradas están bloqueadas), E para interactuar (cofre, puerta, fogata, secreto), Escape o P
-// para pausa. Los botones táctiles solo aparecen en pantallas táctiles.
+// para pausa. Los botones táctiles solo aparecen en pantallas táctiles. En táctil, la leyenda de
+// controles usa los nombres de esos botones (LEYENDA_TACTIL).
 //
 // Historia: docs/ceniza/historia.js (CenizaHistoria) se carga antes de este archivo. Los momentos
 // (despertar, zona, jefe, fogata, fase 3D y final) abren un cuadro de diálogo que pausa la aventura;
 // Enter, Espacio, E o Continuar pasan la línea. Cada momento se muestra una sola vez (partida.historia).
 // El guardado va a la última fogata encendida (docs/ceniza-diseno.md, 10.1): ver guardarProgreso.
 //
+// Ayudas (partida.ayudas, validado por CenizaAventuraNucleo): en una partida sin «controles» vista, el
+// cuadro de controles sale tras el despertar y la zona 1; Enter, Espacio o Escape lo cierran. «Controles»
+// en el menú de pausa lo reabre. En la primera zona hay tres pistas, una vez por partida: llegar a la
+// fogata, acercarse a un cofre sin abrir y tener un enemigo cerca. Salen en su propia línea, no en el
+// aviso del HUD. Son de interfaz: no cambian la lógica de la partida.
+//
 // Gancho de pruebas: globalThis.CENIZA_TEST solo existe si la URL contiene "prueba=1".
 // Expone estado(), avanzar(segundos), entrarSala(salaId), matarEnemigosDeSala(), vencerJefe(jefeId),
 // enemigos(), secretosDisponibles() y cooldownArma() (solo lectura), y colocar(x, y) (mueve al viajero; solo prueba).
+// estado() incluye ayudas (ids vistos) y pista (texto de la pista visible, o "").
 //
 // Pausa y medición: la pausa (Escape o P) no avanza el tiempo de simulación. El tiempo se
 // cuenta en fotogramas fijos de 1/60 s, así que avanzar(segundos) es determinista con la misma semilla.
@@ -100,6 +108,14 @@
     comboT: 0.6,            // ventana para encadenar golpes de la hoja
   });
 
+  // Ayudas de la interfaz (cuadro de controles y pistas): tiempos y distancias de la interfaz, no del juego.
+  const AYUDA = Object.freeze({
+    pistaT: 6,              // s que una pista queda en su línea
+    enemigoDist: 200,       // px horizontales para la pista de ataque
+    cofreDist: 150,         // px horizontales para la pista de cofre
+    alturaDist: 60,         // px verticales máximos para las pistas de enemigo y de cofre
+  });
+
   // Caja del viajero: x es el centro y y los pies (mismo criterio que mundo.js).
   const VIAJERO = Object.freeze({ ancho: 28, alto: 52, xMin: 14, xMax: W - 14 });
 
@@ -118,6 +134,25 @@
   const NOMBRE_ATRIBUTO = Object.freeze({
     vida: "Vida", dano: "Daño", armadura: "Armadura", velocidad: "Velocidad", suerte: "Suerte",
   });
+  // Leyenda de controles [tecla, qué hace]: teclado en escritorio y nombres de los botones táctiles en móvil.
+  const LEYENDA_TECLADO = Object.freeze([
+    ["A / D o flechas", "Moverse a la izquierda y a la derecha."],
+    ["W o Espacio", "Saltar."],
+    ["J", "Atacar con el arma activa."],
+    ["K", "Esquivar. No recibes daño mientras dura el movimiento."],
+    ["1 a 4", "Cambiar de arma: 1 Hoja, 2 Arco, 3 Martillo, 4 Lanza. Las que no has comprado están bloqueadas: se compran en una fogata."],
+    ["E", "Interactuar: abrir cofres, cruzar puertas, encender fogatas y recoger secretos."],
+    ["Escape o P", "Pausa."],
+  ]);
+  const LEYENDA_TACTIL = Object.freeze([
+    ["Izquierda y Derecha", "Moverse."],
+    ["Saltar", "Saltar."],
+    ["Atacar", "Atacar con el arma activa."],
+    ["Esquivar", "Esquivar. No recibes daño mientras dura el movimiento."],
+    ["Arma", "Pasa a la siguiente arma comprada. También puedes tocar 1 a 4 en la barra."],
+    ["E", "Interactuar: abrir cofres, cruzar puertas, encender fogatas y recoger secretos."],
+    ["||", "Pausa."],
+  ]);
 
   // Geometría de las armas 2D (docs/ceniza-diseno.md, 6.1). Daños y cadencias salen de CenizaDatos.
   const ARMA = Object.freeze({
@@ -741,7 +776,7 @@
   function crearMotor(op, ui) {
     let partida = op.partida;
     const rng = crearRng(partida.semilla);
-    let modo = "juego";          // juego | pausa | fogata | cofre | muerte | tres_d | victoria
+    let modo = "juego";          // juego | pausa | fogata | cofre | muerte | tres_d | victoria | historia | ayuda
     let modoT = 0;               // s restantes en los modos cofre y muerte
     let tiempo = 0;              // s de simulación (no cuenta la pausa)
     let escena = null;           // { sala, enemigos, jefe, proyectiles, efectos }
@@ -751,10 +786,14 @@
     let control3d = null;
     let historia = null;         // diálogo abierto: { lineas, pos, volverA, alTerminar }
     let vigia3d = null;          // sector y fase del Coloso vistos en la fase 3D (vigilar3d)
+    let leyenda = null;          // cuadro de controles abierto: { volverA, alTerminar } (modo "ayuda")
+    let pistaVisible = null;     // pista contextual en su línea: { id, texto, t } (t, s restantes)
+    let colaPistas = [];         // ids de pistas que esperan su turno, en orden
+    let fogataAntes = false;     // el viajero estaba en la fogata en el fotograma anterior (llegar = entrar en ella)
     const entrada = { izq: false, der: false, saltar: false, atacar: false, esquivar: false, interactuar: false, arma: null };
 
-    // Modos en los que la simulación no avanza: pausa, fogata, fase 3D, victoria y cuadro de historia.
-    const MODOS_CONGELADOS = Object.freeze(["pausa", "fogata", "tres_d", "victoria", "historia"]);
+    // Modos en los que la simulación no avanza: pausa, fogata, fase 3D, victoria, cuadro de historia y de controles.
+    const MODOS_CONGELADOS = Object.freeze(["pausa", "fogata", "tres_d", "victoria", "historia", "ayuda"]);
     const modoCongelado = () => MODOS_CONGELADOS.includes(modo);
 
     function mostrar(texto, esError) {
@@ -803,6 +842,7 @@
       const jefeVivo = jefe && !partida.jefesVencidos.includes(jefe.tipo) ? jefe : null;
       escena = { sala, enemigos, jefe: jefeVivo, proyectiles: [], efectos: [] };
       colocarViajero(sala, desdeSalaId);
+      fogataAntes = enFogata();   // aparecer junto a la fogata no cuenta como llegar a ella (pistas)
     }
 
     // Vuelve a crear enemigos y jefe de la sala actual (al descansar en la fogata).
@@ -1160,7 +1200,8 @@
           v.arma = pedida;
           mostrar("Arma: " + NOMBRE_ARMA[pedida] + ".");
         } else {
-          mostrar("Arma bloqueada: " + NOMBRE_ARMA[pedida] + ". Cómprala en una fogata.", true);
+          mostrar("Arma bloqueada: " + NOMBRE_ARMA[pedida] + ". Se compra en una fogata: junto a ella, E y Comprar (" +
+            N.COSTO_ARMA[pedida] + " núcleos).", true);
         }
       }
       if (entrada.interactuar) {
@@ -1383,11 +1424,11 @@
     }
 
     // Al entrar en una sala: la primera vez en su zona (zona:N) y, si el jefe de la sala sigue vivo,
-    // antes de su combate (jefe:X).
-    function alEntrarSala() {
+    // antes de su combate (jefe:X). alTerminar (opcional) va después del último cuadro de esa entrada.
+    function alEntrarSala(alTerminar) {
       const claves = ["zona:" + escena.sala.zona];
       if (escena.jefe) claves.push("jefe:" + escena.jefe.tipo);
-      historiaPedir(claves, "juego", null);
+      historiaPedir(claves, "juego", alTerminar || null);
     }
 
     // Fase 3D: la fase no avisa de sus sectores ni de las fases del Coloso, así que se lee su estado()
@@ -1656,6 +1697,101 @@
       }
     }
 
+    // ----------------------------------------------------------------- ayudas: cuadro de controles y pistas
+    const ayudaVista = (id) => Array.isArray(partida.ayudas) && partida.ayudas.includes(id);
+    const enZona1 = () => Boolean(escena && escena.sala.zona === 1);
+    // El viajero toca la fogata de la sala actual (mismo criterio que el aviso de E: pistaCercana).
+    const enFogata = () => Boolean(escena && escena.sala.fogata && viajero &&
+      solapa(caja(viajero.x, viajero.y, VIAJERO.ancho + 12, VIAJERO.alto), caja(escena.sala.fogata.x, escena.sala.fogata.y, 36, 48)));
+    const cofreCerca = () => Boolean(escena && viajero && escena.sala.cofres.some((c, i) =>
+      !partida.cofresAbiertos.includes(escena.sala.id + "#" + i) &&
+      Math.abs(c.x - viajero.x) <= AYUDA.cofreDist && Math.abs(c.y - viajero.y) <= AYUDA.alturaDist));
+    const enemigoCerca = () => Boolean(escena && viajero && escena.enemigos.some((e) =>
+      !e.muerto && Math.abs(e.x - viajero.x) <= AYUDA.enemigoDist && Math.abs(e.y - viajero.y) <= AYUDA.alturaDist));
+
+    // Pistas de la primera zona. `vigente` dice si el momento sigue dando: se comprueba al mostrarla.
+    const PISTAS = Object.freeze({
+      fogata: { vigente: () => enZona1() && enFogata(), texto: () => "E enciende la fogata: guarda y cura." },
+      cofre: { vigente: () => enZona1() && cofreCerca(), texto: () => "E abre el cofre." },
+      ataque: {
+        vigente: () => enZona1() && enemigoCerca(),
+        texto: () => (esTactil() ? "Botón Atacar: ataca con el arma activa." : "J ataca con el arma activa."),
+      },
+    });
+
+    // Una pista sale una sola vez por partida (partida.ayudas). Si su momento ocurre mientras otra se
+    // muestra, espera en la cola. Al mostrarla se marca como vista y se guarda.
+    function encolarPista(id) {
+      if (ayudaVista(id) || colaPistas.includes(id) || (pistaVisible && pistaVisible.id === id)) return;
+      colaPistas.push(id);
+      siguientePista();
+    }
+
+    // Muestra la siguiente pista de la cola que todavía dé. Las que ya no dan se descartan sin marcar:
+    // si el viajero vuelve al momento, se encolan otra vez.
+    function siguientePista() {
+      while (!pistaVisible && colaPistas.length > 0) {
+        const id = colaPistas.shift();
+        if (ayudaVista(id) || !PISTAS[id].vigente()) continue;
+        pistaVisible = { id, texto: PISTAS[id].texto(), t: AYUDA.pistaT };
+        partida = N.marcarAyuda(partida, id);
+        guardarProgreso();
+      }
+    }
+
+    // Al final de cada fotograma de juego: llegar a la fogata (solo en la primera zona), y cofre o enemigo cerca.
+    function comprobarPistas() {
+      const dentro = enFogata();
+      if (dentro && !fogataAntes && enZona1()) encolarPista("fogata");
+      fogataAntes = dentro;
+      if (!enZona1()) return;
+      if (cofreCerca()) encolarPista("cofre");
+      if (enemigoCerca()) encolarPista("ataque");
+    }
+
+    // Cuadro de controles, como el de historia: congela la simulación hasta que se cierra.
+    // volverA: "juego" al empezar la partida o "pausa" desde el menú de pausa.
+    function abrirLeyenda(volverA, alTerminar) {
+      if (modo === "ayuda") return;
+      leyenda = { volverA, alTerminar: alTerminar || null };
+      modo = "ayuda";
+      limpiarEntrada();
+      entrada.izq = false;
+      entrada.der = false;
+      ui.pausa(false);
+      ui.leyenda(true);
+    }
+
+    // Cierra el cuadro y vuelve al modo previo (la pausa, si se abrió desde ella). Marca «controles» como
+    // visto la primera vez y guarda. Luego llama a alTerminar, si lo hay.
+    function cerrarLeyenda() {
+      if (modo !== "ayuda" || !leyenda) return;
+      const h = leyenda;
+      leyenda = null;
+      modo = h.volverA;
+      ui.leyenda(false);
+      if (modo === "pausa") ui.pausa(true);
+      if (!ayudaVista("controles")) {
+        partida = N.marcarAyuda(partida, "controles");
+        guardarProgreso();
+      }
+      if (h.alTerminar) h.alTerminar();
+    }
+
+    // «Controles» del menú de pausa: reabre la leyenda desde la pausa.
+    function verControles() {
+      if (modo === "pausa") abrirLeyenda("pausa", null);
+    }
+
+    // Al empezar, si la partida no ha visto los controles (partida nueva, o una guardada sin ese campo),
+    // el cuadro sale después del despertar y de la entrada de la zona.
+    const mostrarControlesPendientes = () => {
+      if (!ayudaVista("controles")) abrirLeyenda("juego", null);
+    };
+
+    // Texto de la pista visible en su línea, o "" si no hay ninguna.
+    const pistaActual = () => (pistaVisible ? pistaVisible.texto : "");
+
     // ----------------------------------------------------------------- simulación
     function tickTimers() {
       const v = viajero;
@@ -1671,6 +1807,11 @@
         aviso.t -= PASO;
         if (aviso.t <= 0) aviso = { texto: "", t: 0, error: false };
       }
+      if (pistaVisible) {
+        pistaVisible.t -= PASO;
+        if (pistaVisible.t <= 0) pistaVisible = null;
+      }
+      siguientePista();
     }
 
     function avanzarEfectos() {
@@ -1706,6 +1847,7 @@
       actualizarEnemigosEscena(eventos);
       contactos(eventos);
       aplicarEventos(eventos);
+      if (modo === "juego") comprobarPistas();
     }
 
     // avanzar(s) avanza s segundos de simulación en fotogramas de 1/60 s. No avanza en pausa, en fogata,
@@ -1754,7 +1896,9 @@
         maestria: Object.fromEntries(ARMAS_2D.map((a) => [a, maestriaDe(a)])),
         secretos: partida.secretos.slice(),
         historia: partida.historia.slice(),
+        ayudas: Array.isArray(partida.ayudas) ? partida.ayudas.slice() : [],
         dialogo: historia ? verHistoria() : null,
+        pista: pistaActual(),
         aviso: aviso.texto,
       };
     }
@@ -1821,11 +1965,12 @@
     }
 
     // Al empezar: el despertar (clave "inicio") va antes de moverse. Si ya estaba visto, pasa directo
-    // a la entrada de la sala. Tras el despertar, alEntrarSala muestra los cuadros de la zona si faltan.
+    // a la entrada de la sala. Tras el despertar, alEntrarSala muestra los cuadros de la zona si faltan,
+    // y después, si la partida no ha visto los controles, el cuadro de controles.
     function iniciar() {
       cargarSala(partida.sala, null);
       mostrar("Entras en la sala «" + escena.sala.nombre + "».");
-      historiaPedir(["inicio"], "juego", alEntrarSala);
+      historiaPedir(["inicio"], "juego", () => alEntrarSala(mostrarControlesPendientes));
     }
 
     function ponerPausa(activa) {
@@ -1873,6 +2018,9 @@
       comprarArma,
       cambiarArmaCiclica,
       avanzarHistoria,
+      cerrarLeyenda,
+      verControles,
+      pistaActual,
       vigilar3d,
       enemigosVivos,
       secretosDisponibles,
@@ -1913,6 +2061,11 @@
 .av-historia-texto{margin:0 0 14px;font-size:17px;line-height:1.5;color:#f3e9d8}
 .av-historia-pie{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
 .av-historia-progreso{font-size:13px;color:#b9b2a6}
+.av-pista{min-height:22px;margin:0 0 6px;color:#f2a541}
+.av-leyenda-lista{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 16px;margin:0 0 12px}
+.av-leyenda-lista dt{font-weight:600;color:#e06b2d}
+.av-leyenda-lista dd{margin:0;color:#f3e9d8}
+.av-leyenda-nota{margin:0 0 14px;font-size:13px;color:#b9b2a6}
 `;
 
   function crearEl(doc, tag, clase, texto) {
@@ -1960,6 +2113,7 @@
       contenedor3d: () => null,
       refrescarPanel: () => {},
       historia: () => {},
+      leyenda: () => {},
     };
     const motor = crearMotor(op, ui);
 
@@ -2007,6 +2161,11 @@
     mensaje.setAttribute("aria-live", "polite");
     escenario.appendChild(mensaje);
 
+    // Pistas contextuales (primera zona): en su propia línea, para que un aviso del HUD no las pise.
+    const pistaLinea = crearEl(doc, "div", "av-pista", "");
+    pistaLinea.setAttribute("aria-live", "polite");
+    escenario.appendChild(pistaLinea);
+
     // Pista de E del objeto cercano: se dibuja en el canvas y se copia a un texto oculto con aria-live.
     const pistaLector = crearEl(doc, "div", "av-solo-lector", "");
     pistaLector.setAttribute("aria-live", "polite");
@@ -2048,6 +2207,7 @@
     panelPausa.appendChild(crearEl(doc, "h2", "av-h", "Pausa"));
     const grupoPausa = crearEl(doc, "div", "av-grupo");
     grupoPausa.appendChild(boton(doc, "Reanudar", "Reanudar la partida", () => motor.ponerPausa(false)));
+    grupoPausa.appendChild(boton(doc, "Controles", "Ver los controles", () => motor.verControles()));
     grupoPausa.appendChild(boton(doc, "Salir", "Salir de la aventura", () => {
       if (typeof op.onSalir === "function") op.onSalir();
     }));
@@ -2144,6 +2304,31 @@
     dialogoCaja.appendChild(dialogoPie);
     dialogo.appendChild(dialogoCaja);
     raiz.appendChild(dialogo);
+
+    // Cuadro de controles (primera partida y «Controles» de la pausa): mismo marco que el de historia.
+    // Lista las teclas en escritorio y los botones táctiles en móvil; el dispositivo se decide al montar.
+    const conTacto = esTactil();
+    const leyendaEl = crearEl(doc, "div", "av-historia av-leyenda");
+    leyendaEl.setAttribute("role", "dialog");
+    leyendaEl.setAttribute("aria-modal", "true");
+    leyendaEl.setAttribute("aria-label", "Controles de la aventura");
+    leyendaEl.style.display = "none";
+    const leyendaCaja = crearEl(doc, "div", "av-historia-caja");
+    leyendaCaja.appendChild(crearEl(doc, "h2", "av-historia-titulo", "Controles"));
+    const leyendaLista = crearEl(doc, "dl", "av-leyenda-lista");
+    for (const [tecla, accion] of (conTacto ? LEYENDA_TACTIL : LEYENDA_TECLADO)) {
+      leyendaLista.appendChild(crearEl(doc, "dt", null, tecla));
+      leyendaLista.appendChild(crearEl(doc, "dd", null, accion));
+    }
+    leyendaCaja.appendChild(leyendaLista);
+    leyendaCaja.appendChild(crearEl(doc, "p", "av-leyenda-nota",
+      conTacto ? "Toca Entendido para seguir." : "Enter, Espacio o Escape cierran esta lista."));
+    const leyendaPie = crearEl(doc, "div", "av-historia-pie");
+    const botonEntendido = boton(doc, "Entendido", "Entendido: cerrar los controles", () => motor.cerrarLeyenda());
+    leyendaPie.appendChild(botonEntendido);
+    leyendaCaja.appendChild(leyendaPie);
+    leyendaEl.appendChild(leyendaCaja);
+    raiz.appendChild(leyendaEl);
     op.contenedor.appendChild(raiz);
 
     // ----------------------------------------------------------------- actualización de la interfaz
@@ -2174,6 +2359,7 @@
       const av = motor.aviso();
       fijarTexto(mensaje, av.texto);
       fijarAtributo(mensaje, "data-error", av.error);
+      fijarTexto(pistaLinea, motor.pistaActual());
       const pista = motor.pista();
       fijarTexto(pistaLector, pista ? pista.texto : "");
     }
@@ -2235,6 +2421,20 @@
     ui.pausa = (abierta) => {
       panelPausa.style.display = abierta ? "block" : "none";
     };
+    // Foco del cuadro de controles: como el de historia, vuelve al elemento que lo tenía al cerrarse.
+    let focoLeyenda = null;
+    ui.leyenda = (abierta) => {
+      if (!abierta) {
+        leyendaEl.style.display = "none";
+        const previo = focoLeyenda;
+        focoLeyenda = null;
+        if (previo && typeof previo.focus === "function") previo.focus();
+        return;
+      }
+      if (leyendaEl.style.display !== "flex") focoLeyenda = doc.activeElement || null;
+      leyendaEl.style.display = "flex";
+      botonEntendido.focus();
+    };
     ui.escena3d = (activa) => {
       escenario.style.display = activa ? "none" : "block";
       host3d.style.display = activa ? "block" : "none";
@@ -2285,6 +2485,22 @@
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = claveDe(e);
       const prevenir = () => { if (typeof e.preventDefault === "function") e.preventDefault(); };
+      if (motor.modo() === "ayuda") {
+        // Cuadro de controles abierto: Escape, o Enter y Espacio fuera de un botón, lo cierran. Con el foco en
+        // Entendido, Enter y Espacio cierran por su clic (el navegador lo convierte). Tabulador no sale del cuadro.
+        const enBoton = Boolean(e.target && e.target.tagName === "BUTTON");
+        if (k === "tab") { prevenir(); botonEntendido.focus(); return; }
+        if (k === "escape" || ((k === "enter" || k === " ") && !enBoton)) {
+          prevenir();
+          // La tecla es del cuadro: no llega a la pausa de la capa 2D ni a la fase 3D (que escucha Escape y P en window).
+          if (typeof e.stopPropagation === "function") e.stopPropagation();
+          if (!e.repeat) motor.cerrarLeyenda();
+          return;
+        }
+        // Enter y Espacio mantenidos no deben repetir el clic del botón.
+        if ((k === "enter" || k === " ") && e.repeat) prevenir();
+        return;
+      }
       if (k === "escape" || k === "p") {
         // Con un cuadro de historia abierto, Escape y P no pausan ni reanudan nada. La tecla no sale de la capa 2D:
         // la fase 3D escucha Escape y P en window (shooter3d.js) y los alternaría, reanudando el sector con el cuadro abierto.
