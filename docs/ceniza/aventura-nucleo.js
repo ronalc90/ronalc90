@@ -1,4 +1,4 @@
-// Ceniza · núcleo puro de la aventura (FASE 1 en 2D y FASE 2 en 3D).
+// Ceniza · núcleo puro de la aventura (FASE 1 en 2D y FASE 3D en 3D).
 // Script clásico (sin módulos ES): define globalThis.CenizaAventuraNucleo.
 // Requiere cargar antes docs/ceniza/datos.js y docs/ceniza/mundo.js.
 //

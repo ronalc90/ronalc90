@@ -54,13 +54,15 @@
   </div>
 </div>
 <div id="aventura" role="region" aria-label="Aventura de Ceniza" hidden></div>
-<!-- Aventura (FASE 1 en 2D). Three.js y shooter3d.js no se cargan aquí: se piden al entrar en la fase 3D. -->
-<script src="ceniza/datos.js"></script>
-<script src="ceniza/mundo.js"></script>
-<script src="ceniza/personaje-ui.js"></script>
-<script src="ceniza/aventura-nucleo.js"></script>
-<script src="ceniza/historia.js"></script>
-<script src="ceniza/aventura-ui.js"></script>
+<!-- Aventura (FASE 1 en 2D). Three.js y shooter3d.js no se cargan aquí: se piden al entrar en la fase 3D.
+     Los módulos de la aventura van con defer: la página 2D pinta sin esperar a su descarga y su orden se mantiene.
+     Ningún código del juego 2D los usa al arrancar (abrirAventura comprueba que existan). -->
+<script defer src="ceniza/datos.js"></script>
+<script defer src="ceniza/mundo.js"></script>
+<script defer src="ceniza/personaje-ui.js"></script>
+<script defer src="ceniza/aventura-nucleo.js"></script>
+<script defer src="ceniza/historia.js"></script>
+<script defer src="ceniza/aventura-ui.js"></script>
 <script>
 (() => {
 'use strict';
@@ -921,7 +923,7 @@ function treeActivate(it) {
     prog.weapon = it.w; saveProg(); sfx.power(); treeMsg(`Arma equipada: ${WEAPONS[it.w].full}`, WEAPONS[it.w].col);
   } else if (it.kind === 'play') { startRun(); }
   else if (it.kind === 'reset') {
-    if (time - resetArm < 3) { prog.cores = 0; prog.total = 0; prog.lv = {}; prog.weapon = 'hoja'; prog.runs = 0; saveProg(); resetArm = -10; treeMsg('Progreso borrado. Todo vuelve a empezar.', '#ff8a6a'); sfx.over(); }
+    if (time - resetArm < 3) { prog.cores = 0; prog.total = 0; prog.lv = {}; prog.weapon = 'hoja'; prog.runs = 0; saveProg(); resetArm = -10; treeMsg('Núcleos y mejoras borrados. La aventura sigue.', '#ff8a6a'); sfx.over(); }
     else { resetArm = time; treeMsg('¿Seguro? Pulsa otra vez para borrar núcleos y mejoras', '#ff8a6a'); sfx.deny(); }
   }
 }
@@ -931,7 +933,7 @@ function titleReset() {
   if (time - titleResetArm < 3) {
     prog.cores = 0; prog.total = 0; prog.lv = {}; prog.weapon = 'hoja'; prog.runs = 0; saveProg(); avBorrarGuardado(); titleResetArm = -10;
     treeMsg('Progreso borrado. Todo vuelve a empezar.', '#ff8a6a'); sfx.over();
-  } else { titleResetArm = time; treeMsg('¿Seguro? Pulsa otra vez para borrar núcleos y mejoras', '#ff8a6a'); sfx.deny(); }
+  } else { titleResetArm = time; treeMsg('¿Seguro? Pulsa otra vez para borrar núcleos, mejoras, aventura y personaje', '#ff8a6a'); sfx.deny(); }
 }
 
 // ================================================================ player animation (pose, squash and stretch, scarf physics, idle)
@@ -2177,7 +2179,8 @@ let regShown = false;
 let regEnAventura = false; // el enlace de registro se muestra dentro de la aventura (victoria)
 function regUrl() {
   const stats = { arma: S.weapon, jefes: S.stats.bosses, nivel: S.boss.lvl, victoria: S.victory === true, puntos: S.final, segundos: Math.floor(S.t) };
-  const title = stats.victoria ? 'ceniza: victoria' : 'ceniza: caida';
+  // La arena no tiene victoria (docs/ceniza-diseno.md, 12): solo el Coloso final registra victoria, desde la aventura.
+  const title = 'ceniza: caída';
   const body = 'ceniza-stats: ' + JSON.stringify(stats);
   return 'https://github.com/ronalc90/ronalc90/issues/new?title=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(body);
 }
@@ -2197,7 +2200,7 @@ function syncReg() {
   regLink.classList.toggle('show', want);
 }
 
-// ================================================================ aventura (FASE 1 en 2D y FASE 2 en 3D)
+// ================================================================ aventura (FASE 1 en 2D y FASE 3D en 3D)
 // Módulos de docs/ceniza/ (scripts clásicos, cargados antes de este bloque). La aventura se monta en #aventura,
 // una capa a pantalla completa que tapa la arena: mientras está abierta, la arena no lee teclas ni clics.
 // La partida se guarda en localStorage (ceniza.aventura.v1, con try/catch) al descansar en una fogata y al ganar.
@@ -2216,10 +2219,12 @@ function avLeer() {
   } catch { return null; }
 }
 function avGuardar(partida) {
+  if (DEMO) return; // ?demo no persiste nada (igual que saveProg)
   try { localStorage.setItem(AV_CLAVE, globalThis.CenizaAventuraNucleo.serializar(partida)); } catch {}
 }
 // Lo llama REINICIAR PROGRESO del menú principal: borra la partida y la personalización (docs/ceniza-diseno.md, 10.3).
 function avBorrarGuardado() {
+  if (DEMO) return; // ?demo no borra la partida real
   try { localStorage.removeItem(AV_CLAVE); localStorage.removeItem(AV_CLAVE_PERSONAJE); } catch {}
 }
 
@@ -2268,7 +2273,7 @@ function avPrecargarSiCorresponde(partida) {
 
 // Enlace de registro de la aventura: mismo formato que el de la arena (título y línea ceniza-stats).
 function avUrlRegistro(stats) {
-  const title = stats.victoria ? 'ceniza: victoria' : 'ceniza: caida';
+  const title = stats.victoria ? 'ceniza: victoria' : 'ceniza: caída';
   const body = 'ceniza-stats: ' + JSON.stringify(stats);
   return 'https://github.com/ronalc90/ronalc90/issues/new?title=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(body);
 }

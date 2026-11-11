@@ -575,7 +575,7 @@ El Coloso final da 1.000 XP.
 ## 12 Registro y victoria
 
 - El botón **Registrar en mi perfil** ya existe. Aparece al terminar la partida, sea por victoria o por caída, tras 0,9 s. Es un enlace nativo que abre un formulario de issue prellenado en GitHub. No registra nada por sí solo y no toca issues reales.
-- Título del issue: `ceniza: victoria` o `ceniza: caida`.
+- Título del issue: `ceniza: victoria` o `ceniza: caída`. El flujo de GitHub (`scripts/games.mjs`, `CENIZA_TITLE_RE`) acepta ambas grafías.
 - Cuerpo: `ceniza-stats: {...}` con `arma`, `jefes`, `nivel`, `victoria`, `puntos` y `segundos`.
 - Propuesta de ampliación del cuerpo: fase alcanzada (2D o 3D), zona o sector, muertes y versión de guardado (`v1`).
 - La victoria (`victoria: true`) solo se activa al derrotar al Coloso final. Cualquier otro final cuenta como caída.
