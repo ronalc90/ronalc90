@@ -37,7 +37,7 @@
 // enemigos(), secretosDisponibles() y cooldownArma() (solo lectura), y colocar(x, y) (mueve al viajero; solo prueba).
 //
 // Pausa y medición: la pausa (Escape o P) no avanza el tiempo de simulación. El tiempo se
-// cuenta en fotogramas fijos de 1/60 s, así que avanzar(n) es determinista con la misma semilla.
+// cuenta en fotogramas fijos de 1/60 s, así que avanzar(segundos) es determinista con la misma semilla.
 //
 // CALIBRACION (más abajo) recoge valores PROVISIONALES: el diseño no fija PV, daño ni ritmo
 // de los enemigos ni de los jefes de FASE 1, ni la velocidad de esquiva. Hay que revisarlos en prototipo.
@@ -104,9 +104,13 @@
   const VIAJERO = Object.freeze({ ancho: 28, alto: 52, xMin: 14, xMax: W - 14 });
 
   const ARMAS_2D = Object.freeze(["hoja", "arco", "martillo", "lanza"]);
-  const ARMAS_COMPRABLES = Object.freeze(["arco", "martillo", "lanza"]);   // la hoja viene con el viajero
+  const ARMAS_COMPRABLES = Object.freeze(Object.keys(N.COSTO_ARMA));   // las del costo de la fogata; la hoja viene con el viajero
   const TECLA_ARMA = Object.freeze({ "1": "hoja", "2": "arco", "3": "martillo", "4": "lanza" });
   const NOMBRE_ARMA = Object.freeze({ hoja: "Hoja", arco: "Arco", martillo: "Martillo", lanza: "Lanza" });
+  // Adjetivo de «bloqueada» por arma: concuerda con el nombre (Arco y Martillo masculinos, Hoja y Lanza femeninos).
+  const BLOQUEADA = Object.freeze({ hoja: "bloqueada", arco: "bloqueado", martillo: "bloqueado", lanza: "bloqueada" });
+  // Forma femenina de cada rareza para «pieza X de ranura» (pieza es femenino).
+  const RAREZA_FEMENINA = Object.freeze({ comun: "común", poco_comun: "poco común", raro: "rara", epico: "épica", legendario: "legendaria" });
   const NOMBRE_RANURA = Object.freeze({
     arma: "arma", casco: "casco", pecho: "pecho", piernas: "piernas", botas: "botas",
     accesorio1: "accesorio 1", accesorio2: "accesorio 2",
@@ -690,8 +694,6 @@
     ctx.globalAlpha = 1;
   }
 
-  // Dibuja la escena entera. `vista` trae el estado de la sala y dos consultas:
-  // puertaBloqueada(puerta) y cofreAbierto(id). `vista.pista` es el aviso de E junto al objeto cercano.
   // Marcador de un secreto de sala: un rombo que palpita sobre el punto de apoyo (x, y).
   function dibujarSecreto(ctx, s, tiempo) {
     const cy = s.y - 26 + Math.sin(tiempo * 2.4) * 3;
@@ -705,6 +707,8 @@
     ctx.fill();
   }
 
+  // Dibuja la escena entera. `vista` trae el estado de la sala y dos consultas:
+  // puertaBloqueada(puerta) y cofreAbierto(id). `vista.pista` es el aviso de E junto al objeto cercano.
   function dibujarEscena(ctx, vista) {
     dibujarFondo(ctx, vista.tiempo);
     dibujarPlataformas(ctx, vista.sala);
@@ -748,6 +752,10 @@
     let historia = null;         // diálogo abierto: { lineas, pos, volverA, alTerminar }
     let vigia3d = null;          // sector y fase del Coloso vistos en la fase 3D (vigilar3d)
     const entrada = { izq: false, der: false, saltar: false, atacar: false, esquivar: false, interactuar: false, arma: null };
+
+    // Modos en los que la simulación no avanza: pausa, fogata, fase 3D, victoria y cuadro de historia.
+    const MODOS_CONGELADOS = Object.freeze(["pausa", "fogata", "tres_d", "victoria", "historia"]);
+    const modoCongelado = () => MODOS_CONGELADOS.includes(modo);
 
     function mostrar(texto, esError) {
       aviso = { texto, t: FISICA.avisoT, error: Boolean(esError) };
@@ -896,7 +904,7 @@
     const dmgDe = (mul) => (base) => Math.round(base * mul);
 
     // ----------------------------------------------------------------- ataques
-    // Ejecuta el ataque del arma activa. Usa la maestría 0 hasta que el núcleo la guarde (ver notas).
+    // Ejecuta el ataque del arma activa con la maestría que tiene la partida en ese momento (maestriaDe).
     function atacar(st, eventos) {
       const v = viajero;
       const m = maestriaDe(v.arma);
@@ -1115,15 +1123,22 @@
       mostrar("Has caído. Vuelves a la última fogata.", true);
     }
 
-    // Tras la pantalla de caída: vuelve a la última fogata con la vida al máximo.
-    // Los enemigos vuelven a aparecer (ver cache en destinos de muerte).
-    function terminarMuerte() {
+    // Vuelve a la última fogata con la vida al máximo: los enemigos reaparecen y el modo pasa a juego.
+    // Guarda al final, para que el guardado tras la muerte ya no lleve los núcleos de la sala perdida
+    // (docs/ceniza-diseno.md, 10.2 y CA-11). El aviso y el cuadro fogata:morir los pone quien llama.
+    function volverAFogata() {
       escena = null;
       cache.clear();
       partida = N.alMorirVolverFogata(partida);
       cargarSala(partida.sala, null);
       modo = "juego";
-      mostrar("Vuelves a " + escena.sala.nombre + ".");
+      guardarProgreso();
+    }
+
+    // Tras la pantalla de caída: vuelve a la última fogata con la vida al máximo.
+    function terminarMuerte() {
+      volverAFogata();
+      mostrar("Vuelves a la sala «" + escena.sala.nombre + "».");
       historiaPedir(["fogata:morir"], "juego", null);
     }
 
@@ -1176,6 +1191,7 @@
 
     // E: fogata, cofre o puerta, por ese orden. Si nada está al alcance, avisa.
     function interactuar() {
+      aviso = { texto: "", t: 0, error: false };   // el aviso anterior no sigue junto a lo que E abre o cruza
       const v = viajero;
       const area = caja(v.x, v.y, VIAJERO.ancho + 12, VIAJERO.alto);
       const sala = escena.sala;
@@ -1210,7 +1226,7 @@
       const previa = escena.sala.id;
       partida = res.partida;
       cargarSala(partida.sala, previa);
-      mostrar("Entras en " + escena.sala.nombre + ".");
+      mostrar("Entras en la sala «" + escena.sala.nombre + "».");
       alEntrarSala();
       return { ok: true, sala: partida.sala };
     }
@@ -1224,7 +1240,8 @@
       const partes = [r.xp + " XP", r.nucleos + " núcleos", r.chatarra + " chatarra"];
       if (r.pieza) {
         const rareza = D.equipoRarezas.find((x) => x.id === r.pieza.rareza);
-        partes.push("pieza " + (rareza ? rareza.nombre.toLowerCase() : r.pieza.rareza) + " de " + NOMBRE_RANURA[r.pieza.ranura]);
+        const nombreRareza = RAREZA_FEMENINA[r.pieza.rareza] || (rareza ? rareza.nombre.toLowerCase() : r.pieza.rareza);
+        partes.push("pieza " + nombreRareza + " de " + NOMBRE_RANURA[r.pieza.ranura]);
       }
       if (r.consumible) partes.push(r.consumible === "curacion" ? "curación" : "bomba");
       return "Cofre: " + partes.join(", ") + ".";
@@ -1265,13 +1282,14 @@
       guardarProgreso();
       const r = res.recompensa;
       if (r.tipo === "pieza") mostrar("Secreto: pieza");
-      else if (r.tipo === "nucleos") mostrar("Secreto: " + r.cantidad + " núcleos");
-      else mostrar("Secreto: " + r.cantidad + " chatarra");
+      else if (r.tipo === "nucleos") mostrar("Secreto: " + r.cantidad + " núcleos.");
+      else mostrar("Secreto: " + r.cantidad + " chatarra.");
     }
 
     // ----------------------------------------------------------------- armas: ciclo y compra
     // Botón Arma: pasa a la siguiente arma comprada (las bloqueadas se saltan).
     function cambiarArmaCiclica() {
+      if (modo !== "juego") return;   // fuera de la aventura no se encola el cambio: se ejecutaría al reanudar
       const libres = ARMAS_2D.filter((a) => partida.armas.includes(a));
       const i = libres.indexOf(viajero.arma);
       entrada.arma = libres[(i + 1) % libres.length];
@@ -1422,6 +1440,7 @@
     function cerrarFogata() {
       if (modo !== "fogata") return;
       modo = "juego";
+      limpiarEntrada();
       ui.fogata(false);
     }
 
@@ -1571,11 +1590,7 @@
     function alCaida3d() {
       cerrar3d();
       partida = N.danioAJugador(partida, 1e6);
-      partida = N.alMorirVolverFogata(partida);
-      escena = null;
-      cache.clear();
-      cargarSala(partida.sala, null);
-      modo = "juego";
+      volverAFogata();
       mostrar("Caíste en la fase 3D: vuelves a la última fogata.", true);
       historiaPedir(["fogata:morir"], "juego", null);
     }
@@ -1606,6 +1621,18 @@
         ui.escena3d(false);
         mostrar("La fase 3D no está cargada en esta página.", true);
         return;
+      }
+      // Una instancia anterior se destruye antes de arrancar otra: no quedan dos canvas ni dos bucles.
+      if (control3d) {
+        const previo = control3d;
+        control3d = null;
+        if (typeof previo.destruir === "function") {
+          try {
+            previo.destruir();
+          } catch (e) {
+            // La instancia anterior ya no existe: nada que destruir.
+          }
+        }
       }
       try {
         control3d = C3.start({
@@ -1681,15 +1708,15 @@
       aplicarEventos(eventos);
     }
 
-    // avanzar(s) ignora la pantalla de carga de la escena: avanza s segundos de simulación
-    // en fotogramas de 1/60 s. No avanza en pausa, en fogata, en 3D ni tras la victoria.
+    // avanzar(s) avanza s segundos de simulación en fotogramas de 1/60 s. No avanza en pausa, en fogata,
+    // en cuadros de historia, en 3D ni tras la victoria (ver modoCongelado).
     function avanzar(segundos) {
       const s = Number(segundos);
       if (!Number.isFinite(s) || s < 0) throw new RangeError("avanzar necesita un número de segundos no negativo");
       const pasos = Math.round(s / PASO);
       vigilar3d();
       for (let i = 0; i < pasos; i++) {
-        if (modo === "pausa" || modo === "fogata" || modo === "tres_d" || modo === "victoria" || modo === "historia") break;
+        if (modoCongelado()) break;
         paso();
       }
       ui.hud();
@@ -1782,7 +1809,7 @@
       };
     }
 
-    // Ruta de uso de los cuatro botones de pruebas: sin efectos fuera de la sala actual.
+    // Gancho de pruebas (CENIZA_TEST.matarEnemigosDeSala): mata a los enemigos vivos de la sala actual, sin efectos fuera de ella.
     function matarEnemigosDeSala() {
       const vivos = escena.enemigos.filter((e) => !e.muerto);
       for (const e of vivos) {
@@ -1797,7 +1824,7 @@
     // a la entrada de la sala. Tras el despertar, alEntrarSala muestra los cuadros de la zona si faltan.
     function iniciar() {
       cargarSala(partida.sala, null);
-      mostrar("Entras en " + escena.sala.nombre + ".");
+      mostrar("Entras en la sala «" + escena.sala.nombre + "».");
       historiaPedir(["inicio"], "juego", alEntrarSala);
     }
 
@@ -1807,9 +1834,13 @@
         limpiarEntrada();
       } else if (!activa && modo === "pausa") {
         modo = "juego";
+        limpiarEntrada();   // lo pulsado durante la pausa no se ejecuta al reanudar
       }
       ui.pausa(modo === "pausa");
     }
+
+    // Arma equipada del viajero, para el HUD (sin calcular el estado completo cada fotograma).
+    const armaActiva = () => (viajero ? viajero.arma : null);
 
     function destruir() {
       if (control3d) cerrar3d();
@@ -1824,6 +1855,9 @@
       aviso: () => aviso,
       entrada,
       modo: () => modo,
+      modoCongelado,
+      arma: armaActiva,
+      pista: () => pistaCercana(),
       partida: () => partida,
       ponerPausa,
       abrirFogata,
@@ -1865,6 +1899,7 @@
 .av-boton:disabled{opacity:.45;cursor:not-allowed}
 .av-boton:focus-visible,.av-canvas:focus-visible{outline:3px solid #e06b2d;outline-offset:2px}
 .av-mensaje{min-height:24px;margin:6px 0;color:#f3e9d8}
+.av-solo-lector{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .av-mensaje[data-error="true"]{color:#ff8a80}
 .av-panel{display:none;margin-top:12px;padding:12px;border:1px solid #4a3b32;border-radius:8px;background:#1c1714}
 .av-h{margin:0 0 8px;font-size:18px}
@@ -1893,6 +1928,16 @@
     b.setAttribute("aria-label", etiqueta || texto);
     b.addEventListener("click", alPulsar);
     return b;
+  }
+
+  // Escribe solo si cambia: el HUD se actualiza en cada fotograma y reasignar el mismo texto o atributo
+  // genera trabajo del navegador y avisos de mutación que un lector de pantalla puede anunciar otra vez.
+  function fijarTexto(el, t) {
+    if (el.textContent !== t) el.textContent = t;
+  }
+  function fijarAtributo(el, nombre, valor) {
+    const s = String(valor);
+    if (el.getAttribute(nombre) !== s) el.setAttribute(nombre, s);
   }
 
   // Monta la aventura en `contenedor`. Ver el uso al principio del archivo.
@@ -1950,7 +1995,7 @@
     ARMAS_2D.forEach((arma, i) => {
       const nombre = NOMBRE_ARMA[arma];
       const b = boton(doc, (i + 1) + " " + nombre, "Arma " + (i + 1) + ": " + nombre, () => {
-        motor.entrada.arma = arma;
+        if (motor.modo() === "juego") motor.entrada.arma = arma;   // fuera de juego no se encola el cambio
       });
       botonesArma[arma] = b;
       grupoArmas.appendChild(b);
@@ -1962,12 +2007,18 @@
     mensaje.setAttribute("aria-live", "polite");
     escenario.appendChild(mensaje);
 
-    // Controles táctiles: solo en pantallas táctiles.
+    // Pista de E del objeto cercano: se dibuja en el canvas y se copia a un texto oculto con aria-live.
+    const pistaLector = crearEl(doc, "div", "av-solo-lector", "");
+    pistaLector.setAttribute("aria-live", "polite");
+    escenario.appendChild(pistaLector);
+
+    // Controles táctiles: solo en pantallas táctiles. Un toque solo cuenta en juego: lo pulsado en pausa,
+    // en la fogata o en la animación de caída no se ejecuta después, al reanudar.
     if (esTactil()) {
       const tactil = crearEl(doc, "div", "av-tactil");
       const mantener = (texto, etiqueta, clave) => {
         const b = boton(doc, texto, etiqueta, () => {});
-        b.addEventListener("pointerdown", () => { motor.entrada[clave] = true; });
+        b.addEventListener("pointerdown", () => { if (motor.modo() === "juego") motor.entrada[clave] = true; });
         for (const ev of ["pointerup", "pointercancel", "pointerleave"]) {
           b.addEventListener(ev, () => { motor.entrada[clave] = false; });
         }
@@ -1975,7 +2026,7 @@
       };
       const pulsar = (texto, etiqueta, clave) => {
         const b = boton(doc, texto, etiqueta, () => {});
-        b.addEventListener("pointerdown", () => { motor.entrada[clave] = true; });
+        b.addEventListener("pointerdown", () => { if (motor.modo() === "juego") motor.entrada[clave] = true; });
         return b;
       };
       tactil.appendChild(mantener("Izquierda", "Moverse a la izquierda", "izq"));
@@ -1983,15 +2034,17 @@
       tactil.appendChild(pulsar("Saltar", "Saltar", "saltar"));
       tactil.appendChild(pulsar("Atacar", "Atacar con el arma activa", "atacar"));
       tactil.appendChild(pulsar("Esquivar", "Esquivar", "esquivar"));
-      tactil.appendChild(pulsar("E", "Interactuar", "interactuar"));
+      tactil.appendChild(pulsar("E", "E: interactuar", "interactuar"));
       const cambiarArma = boton(doc, "Arma", "Cambiar de arma", () => motor.cambiarArmaCiclica());
       tactil.appendChild(cambiarArma);
-      tactil.appendChild(boton(doc, "||", "Pausa", () => manejarPausa()));
+      tactil.appendChild(boton(doc, "||", "Pausa (||)", () => manejarPausa()));
       escenario.appendChild(tactil);
     }
 
-    // Panel de pausa.
+    // Panel de pausa (diálogo sin mover el foco: Espacio y Enter sobre un botón lo activarían).
     const panelPausa = crearEl(doc, "div", "av-panel");
+    panelPausa.setAttribute("role", "dialog");
+    panelPausa.setAttribute("aria-label", "Pausa");
     panelPausa.appendChild(crearEl(doc, "h2", "av-h", "Pausa"));
     const grupoPausa = crearEl(doc, "div", "av-grupo");
     grupoPausa.appendChild(boton(doc, "Reanudar", "Reanudar la partida", () => motor.ponerPausa(false)));
@@ -2003,13 +2056,15 @@
 
     // Panel de fogata: descanso, personaje y equipo (CenizaPersonaje), atributos y respec.
     const panelFogata = crearEl(doc, "div", "av-panel");
+    panelFogata.setAttribute("role", "dialog");
+    panelFogata.setAttribute("aria-label", "Fogata");
     panelFogata.appendChild(crearEl(doc, "h2", "av-h", "Fogata"));
     const grupoFogata = crearEl(doc, "div", "av-grupo");
     grupoFogata.appendChild(boton(doc, "Descansar y guardar", "Descansar en la fogata y guardar", () => {
       motor.descansar();
       refrescarFogata();
     }));
-    grupoFogata.appendChild(boton(doc, "Personaje y equipo", "Abrir personaje, equipo y forja", () => abrirPersonaje()));
+    grupoFogata.appendChild(boton(doc, "Personaje y equipo", "Personaje y equipo", () => abrirPersonaje()));
     const boton3d = boton(doc, "Volver a la fase 3D", "Volver a la fase 3D", () => motor.entrar3D());
     boton3d.style.display = "none";
     grupoFogata.appendChild(boton3d);
@@ -2028,7 +2083,7 @@
       const fila = crearEl(doc, "div", "av-fila");
       const etiqueta = crearEl(doc, "span", null, NOMBRE_ATRIBUTO[atr]);
       const valor = crearEl(doc, "span", null, "0");
-      const subir = boton(doc, "+1", "Subir " + NOMBRE_ATRIBUTO[atr], () => {
+      const subir = boton(doc, "+1", "Subir " + NOMBRE_ATRIBUTO[atr] + " (+1)", () => {
         motor.invertirAtributo(atr);
         refrescarFogata();
       });
@@ -2038,11 +2093,11 @@
       panelFogata.appendChild(fila);
       filasAtributo[atr] = { valor, boton: subir };
     }
-    const btnRespec = boton(doc, "Reiniciar atributos (" + N.COSTO_RESPEC + " núcleos)",
-      "Reiniciar atributos por " + N.COSTO_RESPEC + " núcleos", () => {
-        motor.reiniciarAtributos();
-        refrescarFogata();
-      });
+    const etiquetaRespec = "Reiniciar atributos (" + N.COSTO_RESPEC + " núcleos)";
+    const btnRespec = boton(doc, etiquetaRespec, etiquetaRespec, () => {
+      motor.reiniciarAtributos();
+      refrescarFogata();
+    });
     panelFogata.appendChild(btnRespec);
 
     // Armas de la fogata: se compran con núcleos consolidados (docs 2.4). La hoja viene con el viajero.
@@ -2098,27 +2153,29 @@
       const p = motor.partida();
       const r = N.resumen(p);
       const st = N.statsJugador(p);
-      vidaRelleno.style.width = (clamp(p.vida / st.vidaMax, 0, 1) * 100).toFixed(1) + "%";
-      vidaTexto.textContent = "Vida " + p.vida + " / " + st.vidaMax;
-      nivelTexto.textContent = "Nivel " + r.nivel + " · XP " + r.xp +
-        (r.xpSiguiente !== null ? " / " + r.xpSiguiente : "");
-      nucleosTexto.textContent = "Núcleos " + p.nucleos +
-        (p.nucleosSala > 0 ? " (+" + p.nucleosSala + " sin consolidar)" : "");
-      chatarraTexto.textContent = "Chatarra " + p.chatarra;
-      zonaTexto.textContent = "Zona " + r.zona + " · " + M.salaPorId(p.sala).nombre;
-      const arma = motor.estado().arma;
+      const anchoVida = (clamp(p.vida / st.vidaMax, 0, 1) * 100).toFixed(1) + "%";
+      if (vidaRelleno.style.width !== anchoVida) vidaRelleno.style.width = anchoVida;
+      fijarTexto(vidaTexto, "Vida " + p.vida + " / " + st.vidaMax);
+      fijarTexto(nivelTexto, "Nivel " + r.nivel + " · XP " + r.xp +
+        (r.xpSiguiente !== null ? " / " + r.xpSiguiente : ""));
+      fijarTexto(nucleosTexto, "Núcleos " + p.nucleos +
+        (p.nucleosSala > 0 ? " (+" + p.nucleosSala + " sin consolidar)" : ""));
+      fijarTexto(chatarraTexto, "Chatarra " + p.chatarra);
+      fijarTexto(zonaTexto, "Zona " + r.zona + " · " + M.salaPorId(p.sala).nombre);
+      const arma = motor.arma();
       ARMAS_2D.forEach((a, i) => {
         const libre = p.armas.includes(a);
         const b = botonesArma[a];
-        const rotulo = (i + 1) + " " + NOMBRE_ARMA[a] + (libre ? "" : " · bloqueada");
-        if (b.textContent !== rotulo) b.textContent = rotulo;
-        b.disabled = !libre;
-        b.setAttribute("aria-pressed", String(arma === a));
-        b.setAttribute("aria-label", "Arma " + (i + 1) + ": " + NOMBRE_ARMA[a] + (libre ? "" : ", bloqueada"));
+        fijarTexto(b, (i + 1) + " " + NOMBRE_ARMA[a] + (libre ? "" : " · " + BLOQUEADA[a]));
+        if (b.disabled !== !libre) b.disabled = !libre;
+        fijarAtributo(b, "aria-pressed", arma === a);
+        fijarAtributo(b, "aria-label", "Arma " + (i + 1) + ": " + NOMBRE_ARMA[a] + (libre ? "" : ", bloqueada"));
       });
       const av = motor.aviso();
-      mensaje.textContent = av.texto;
-      mensaje.setAttribute("data-error", String(av.error));
+      fijarTexto(mensaje, av.texto);
+      fijarAtributo(mensaje, "data-error", av.error);
+      const pista = motor.pista();
+      fijarTexto(pistaLector, pista ? pista.texto : "");
     }
 
     function refrescarFogata() {
@@ -2186,11 +2243,17 @@
     ui.refrescarPanel = () => {
       if (personajeAbierto) abrirPersonaje();
     };
+    // Foco del cuadro de historia: al abrirlo se guarda el elemento que lo tenía y al cerrarlo vuelve a él.
+    let focoPrevio = null;
     ui.historia = (dato) => {
       if (!dato) {
         dialogo.style.display = "none";
+        const previo = focoPrevio;
+        focoPrevio = null;
+        if (previo && typeof previo.focus === "function") previo.focus();
         return;
       }
+      if (dialogo.style.display !== "flex") focoPrevio = doc.activeElement || null;
       dialogoTitulo.textContent = dato.titulo;
       dialogoTexto.textContent = dato.texto;
       dialogoProgreso.textContent = dato.total > 1 ? dato.pagina + " de " + dato.total : "";
@@ -2218,6 +2281,8 @@
 
     function alTeclaBajar(e) {
       if (esCampoDeTexto(e)) return;
+      // Atajos del navegador (Ctrl+P, Ctrl+D, Alt+...): no son de la aventura y no se previenen.
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = claveDe(e);
       const prevenir = () => { if (typeof e.preventDefault === "function") e.preventDefault(); };
       if (k === "escape" || k === "p") {
@@ -2235,6 +2300,10 @@
       if (motor.modo() === "historia") {
         // Cuadro de historia abierto: E, o Enter y Espacio fuera de un botón (el botón ya responde al clic), pasan la línea.
         const enBoton = Boolean(e.target && e.target.tagName === "BUTTON");
+        // Enter y Espacio mantenidos no llegan al botón: el navegador convertiría cada repetición en un clic.
+        if ((k === "enter" || k === " ") && e.repeat) { prevenir(); return; }
+        // El cuadro es modal y su único control es Continuar: Tabulador no sale a la página que hay debajo.
+        if (k === "tab") { prevenir(); dialogoBoton.focus(); return; }
         if (k === "e" || ((k === "enter" || k === " ") && !enBoton)) {
           prevenir();
           // La tecla es del cuadro: no llega a la fase 3D, que al reanudar podría leerla como salto.
@@ -2265,6 +2334,16 @@
       doc.addEventListener("keyup", alTeclaSubir);
     }
 
+    // Al perder el foco de la ventana no llega el keyup de lo que estaba pulsado: se sueltan las direcciones
+    // y se pausa, igual que la fase 3D y la arena (shooter3d.js y docs/index.html).
+    const ventana = doc.defaultView || globalThis;
+    const alPerderFoco = () => {
+      motor.entrada.izq = false;
+      motor.entrada.der = false;
+      motor.ponerPausa(true);
+    };
+    if (typeof ventana.addEventListener === "function") ventana.addEventListener("blur", alPerderFoco);
+
     // ----------------------------------------------------------------- bucle de pantalla
     let destruido = false;
     let rafId = null;
@@ -2284,8 +2363,7 @@
       acumulado += clamp((t - ultimo) / 1000, 0, TOPE_FRAME);
       ultimo = t;
       while (acumulado >= PASO) {
-        const m = motor.modo();
-        if (m === "pausa" || m === "fogata" || m === "tres_d" || m === "victoria" || m === "historia") {
+        if (motor.modoCongelado()) {
           acumulado = 0;
           break;
         }
@@ -2294,7 +2372,7 @@
       }
       motor.vigilar3d();
       dibujar();
-      actualizarHud();
+      if (motor.modo() !== "tres_d") actualizarHud();   // en la fase 3D el HUD está oculto
       rafId = globalThis.requestAnimationFrame(cuadro);
     }
 
@@ -2344,6 +2422,7 @@
           doc.removeEventListener("keydown", alTeclaBajar);
           doc.removeEventListener("keyup", alTeclaSubir);
         }
+        if (typeof ventana.removeEventListener === "function") ventana.removeEventListener("blur", alPerderFoco);
         cerrarPersonaje();
         motor.destruir();
         try {
