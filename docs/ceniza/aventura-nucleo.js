@@ -9,7 +9,7 @@
 //
 // Los números fijos salen de docs/ceniza-diseno.md. Las tablas de datos.js se
 // reutilizan donde el diseño no fija cifras (forja, rarezas, piezas y sets).
-// Las discrepancias entre ambos se cerraron en la ronda 3 de docs/ceniza-diseno.md (cada decisión está en su sección).
+// Las discrepancias entre ambos están resueltas en docs/ceniza-diseno.md; cada decisión está en su sección.
 //
 // Forma de la partida (JSON serializable):
 //   personaje, semilla, nivel, xp, puntosLibres, atributos {vida, dano, armadura,
@@ -50,15 +50,15 @@
   const JEFE_X = Object.keys(M.TIPOS_ENEMIGO).find((id) => M.TIPOS_ENEMIGO[id].jefeX === true);
 
   // Armas 2D: las de tipo "2d" en datos.js (hoja, arco, martillo y lanza).
-  const ARMAS_2D = congelar(Object.keys(D.armas).filter((a) => D.armas[a].tipo === "2d"));
+  const ARMAS_2D = congelar(Object.keys(D.ARMAS).filter((a) => D.ARMAS[a].tipo === "2d"));
   // Costo de compra en núcleos consolidados de cada arma 2D comprable (docs 2.4). La hoja no se compra.
   const COSTO_ARMA = congelar({ arco: 100, martillo: 220, lanza: 400 });
-  // Maestría por arma (decisión D9, propuesta del coordinador; el diseño no fija su origen):
+  // Maestría por arma (docs/ceniza-diseno.md, decisión D9; el diseño no fija su origen, es una propuesta):
   // un nivel por cada UMBRAL_MAESTRIA enemigos vencidos con esa arma, hasta MAESTRIA_MAX.
   const UMBRAL_MAESTRIA = 30;
   const MAESTRIA_MAX = 3;
-  // Recompensas de los secretos de sala (mundo.js). Las cifras son propuesta del coordinador:
-  // docs/ceniza-diseno.md solo menciona los secretos (2.2 y 10.1) y no fija cantidades.
+  // Recompensas de los secretos de sala (mundo.js). Las cifras son una propuesta (decisión D11 de
+  // docs/ceniza-diseno.md): el diseño solo menciona los secretos (2.2 y 10.1) y no fija cantidades.
   // Son rangos enteros inclusivos.
   const SECRETO_NUCLEOS = congelar([20, 40]);
   const SECRETO_CHATARRA = congelar([10, 20]);
@@ -137,7 +137,7 @@
     return suma;
   }
 
-  // Modificadores "Núcleos encontrados" y "Chatarra encontrada" de las piezas equipadas (docs 5.1
+  // Modificadores "Núcleos" y "Chatarra" de las piezas equipadas (docs 5.1
   // y 5.3, en %). Se devuelven en centésimas de % (12,5 % = 1250) para sumar enteros sin error de
   // coma flotante. Dentro de la fuente se suman, como en bonosDeEquipo. Solo cuentan las piezas
   // equipadas (el inventario no). statsDePieza ya aplica la forja.
@@ -177,7 +177,7 @@
       multiplicadorDano: (1 + attr.dano / 100) * (1 + eq.dano / 100) * (1 + sets.dano / 100),
       armadura,
       multiplicadorVelocidad: (1 + attr.velocidad / 100) * (1 + eq.velocidad / 100),
-      // Suerte en puntos (docs 8.3, ronda 3): los del atributo más los de las piezas. El bono de
+      // Suerte en puntos (docs 8.3): los del atributo más los de las piezas. El bono de
       // bonoDeAtributos está en % (para la hoja del personaje) y aquí no se usa.
       suerte: partida.atributos.suerte + eq.suerte,
       nucleosEncontrados: rec.nucleos / 100,
@@ -196,6 +196,7 @@
   // ----------------------------------------------------------------- atributos
   // Gasta un punto libre en uno de los cinco atributos (docs 4.2).
   function invertirPunto(partida, atributo) {
+    if (partida.muerto) return fallo(partida, "El viajero está muerto");
     if (typeof atributo !== "string" || ATRIBUTOS.indexOf(atributo) < 0) {
       return fallo(partida, "Atributo desconocido: " + String(atributo));
     }
@@ -209,6 +210,7 @@
   // Devuelve todos los puntos invertidos. Cuesta COSTO_RESPEC núcleos consolidados (docs 4.3).
   // No cambia el nivel ni la XP.
   function reiniciarAtributos(partida) {
+    if (partida.muerto) return fallo(partida, "El viajero está muerto");
     if (partida.nucleos < COSTO_RESPEC) {
       return fallo(partida, "Faltan núcleos: el reinicio cuesta " + COSTO_RESPEC);
     }
@@ -277,6 +279,7 @@
 
   // Pone la pieza en su ranura. La pieza que estaba en esa ranura vuelve al inventario.
   function equipar(partida, piezaId) {
+    if (partida.muerto) return fallo(partida, "El viajero está muerto");
     const hallada = buscarPieza(partida, piezaId);
     if (!hallada) return fallo(partida, "Pieza no encontrada: " + String(piezaId));
     if (hallada.ranura !== null) return fallo(partida, "La pieza ya está equipada");
@@ -302,6 +305,7 @@
 
   // Sube la forja de la pieza un nivel (de +0 a +5). Cuesta chatarra según costoForja (docs 5.5).
   function forjar(partida, piezaId) {
+    if (partida.muerto) return fallo(partida, "El viajero está muerto");
     const hallada = buscarPieza(partida, piezaId);
     if (!hallada) return fallo(partida, "Pieza no encontrada: " + String(piezaId));
     const nivel = hallada.pieza.forja;
@@ -495,7 +499,8 @@
     }
     if (!FASES.includes(p.faseActual)) return "fase no válida";
     // La fase 3D y la victoria solo existen tras el jefe X (CA-10). La victoria del Coloso no
-    // se guarda en el núcleo, así que no se puede comprobar aquí.
+    // deja rastro en la partida (registrarVictoria solo cambia faseActual), así que aquí no se
+    // puede exigir: una partida guardada en "victoria" sin Coloso vencido se acepta.
     if (p.faseActual !== "2d" && !p.jefesVencidos.includes(JEFE_X)) return "la fase " + p.faseActual + " exige el Guardián de chatarra vencido";
     // Sala y fogata deben estar al alcance con los jefes vencidos (CA-10 y puertas con condición).
     if (!salaAlcanzable(p, p.sala)) return "sala no alcanzable con los jefes vencidos";
@@ -543,8 +548,8 @@
   // ----------------------------------------------------------------- cofres
   // Abre un cofre de la sala actual. Da XP, núcleos (sin consolidar), chatarra, una pieza
   // y un consumible según la tabla 8.1. La suerte se acota a 100 (límite de datos.js).
-  // Núcleos y chatarra: la tabla da la base y los modificadores "Núcleos encontrados" y
-  // "Chatarra encontrada" de las piezas equipadas suman su % (conBonoRecurso, docs 5.1 y 8.1).
+  // Núcleos y chatarra: la tabla da la base y los modificadores "Núcleos" y
+  // "Chatarra" de las piezas equipadas suman su % (conBonoRecurso, docs 5.1 y 8.1).
   // recompensa.nucleos y recompensa.chatarra son el total ganado (base + bono); nucleosBono y
   // chatarraBono son solo el bono. La tirada no cambia: el bono no gasta rng.
   function abrirCofre(partida, cofreId, rng) {
@@ -588,6 +593,7 @@
   // Compra un arma 2D en una fogata (docs 2.4). Cobra COSTO_ARMA de partida.nucleos (consolidados),
   // nunca de nucleosSala. La hoja viene desbloqueada y no se compra.
   function comprarArma(partida, arma) {
+    if (partida.muerto) return fallo(partida, "El viajero está muerto");
     if (typeof arma !== "string" || !tiene(COSTO_ARMA, arma)) {
       return fallo(partida, "Arma no comprable: " + String(arma));
     }
@@ -712,7 +718,7 @@
   }
 
   // Derrota del Coloso final: la partida queda en victoria. Solo cuenta desde la fase 3D (CA-13);
-  // fuera de ella no cambia nada.
+  // fuera de 3D devuelve la partida sin cambios. Devuelve la partida sin envolver: la interfaz no comprueba .ok aquí.
   function registrarVictoria(partida) {
     const p = clonar(partida);
     if (p.faseActual === "3d") p.faseActual = "victoria";
@@ -778,7 +784,8 @@
   }
 
   // Enciende la fogata de la sala actual: consolida núcleos, guarda la fogata y
-  // restaura la vida. Lanza RangeError si la sala no tiene fogata o el viajero está muerto.
+  // restaura la vida. Lanza RangeError si la sala no tiene fogata o el viajero está muerto
+  // (antes hay que volver a la fogata con alMorirVolverFogata).
   function descansarEnFogata(partida) {
     const sala = M.salaPorId(partida.sala);
     if (!sala || sala.fogata === null) throw new RangeError("No hay fogata en " + partida.sala);
@@ -821,12 +828,10 @@
     VERSION,
     VIDA_BASE,
     ARMADURA_MAX,
-    FASES,
     COSTO_RESPEC,
     COSTO_ARMA,
     UMBRAL_MAESTRIA,
     MAESTRIA_MAX,
-    XP_ENEMIGO,
     crearPartida,
     serializar,
     deserializar,
@@ -851,6 +856,7 @@
     registrarJefeVencido,
     registrarVictoria,
     entrarSala,
+    puertaAbierta,
     danioAJugador,
     alMorirVolverFogata,
     descansarEnFogata,

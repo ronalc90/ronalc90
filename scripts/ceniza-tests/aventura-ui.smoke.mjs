@@ -125,6 +125,12 @@ function cargar(url, opciones = {}) {
   const contexto = vm.createContext({
     location: { href: url },
     navigator: opciones.tactil ? { maxTouchPoints: 5 } : {},
+    // Con opciones.bucle, hay requestAnimationFrame: cada petición queda en opciones.bucle.pendiente y la prueba
+    // decide cuándo corre ese fotograma de pantalla (el bucle cuadro() de aventura-ui.js).
+    ...(opciones.bucle ? {
+      requestAnimationFrame: (fn) => { opciones.bucle.pendiente = fn; return 1; },
+      cancelAnimationFrame: () => { opciones.bucle.pendiente = null; },
+    } : {}),
   });
   for (const rel of [
     "docs/ceniza/datos.js",
@@ -366,8 +372,14 @@ test("armas bloqueadas: teclas 1 a 4 sin compra no cambian el arma; el HUD marca
   doc.dispatch("keydown", { key: "4" });
   gancho.avanzar(1 / 60);
   assert.equal(gancho.estado().arma, "hoja");
+  doc.dispatch("keydown", { key: "3" });
+  gancho.avanzar(1 / 60);
+  assert.equal(gancho.estado().arma, "hoja", "el martillo sin comprar tampoco se equipa");
+  doc.dispatch("keydown", { key: "1" });
+  gancho.avanzar(1 / 60);
+  assert.equal(gancho.estado().arma, "hoja", "la tecla 1 deja la hoja, que es la única desbloqueada");
   // El HUD se actualiza en cada fotograma de pantalla: aquí se fuerza con un fotograma de dibujo (cuadro).
-  const botonArco = botonPorEtiqueta(contenedor, "Arma 2: Arco, bloqueada");
+  const botonArco = botonPorTexto(contenedor, "2 Arco · bloqueado");
   assert.ok(botonArco, "el botón del arco aparece como bloqueado");
   assert.equal(botonArco.disabled, true, "el botón del arco está deshabilitado");
   control.destruir();
@@ -428,7 +440,7 @@ test("un secreto se recoge una vez: da su recompensa y deja de aparecer", () => 
   doc.dispatch("keydown", { key: "e" });
   gancho.avanzar(1 / 60);
   const estado = gancho.estado();
-  assert.equal(estado.aviso, "Secreto: pieza", "el aviso anuncia la pieza");
+  assert.match(estado.aviso, /^Secreto: pieza común de accesorio [12]\.$/, "el aviso anuncia la pieza y su ranura");
   assert.deepEqual(plano(estado.secretos), ["Z1.3"]);
   assert.ok(!gancho.secretosDisponibles().includes("Z1.3"), "ya no aparece como disponible");
   // Otra vez con E: no se repite.
@@ -657,7 +669,7 @@ test("fogata: encender una fogata en otra zona guarda esa sala; el guardado al e
   assert.equal(gancho.estado().dialogo.titulo, "Fogata · Ciudad de cristal");
   cerrarHistoria(contenedor);
   assert.equal(gancho.estado().modo, "fogata");
-  pulsar(botonPorEtiqueta(contenedor, "Descansar en la fogata y guardar"));
+  pulsar(botonPorEtiqueta(contenedor, "Descansar y guardar en la fogata"));
   const encendido = plano(registro.guardados[registro.guardados.length - 1]);
   assert.equal(encendido.sala, "Z2.1", "encender la fogata guarda la sala real");
   assert.equal(encendido.ultimaFogata, "Z2.1");
@@ -981,4 +993,47 @@ test("ayudas: una partida antigua sin el campo carga (valor por defecto) y un ca
     assert.match(m.error, /ayudas/);
   }
   assert.throws(() => N.marcarAyuda(p, "inventada"), (e) => e.name === "RangeError", "un id desconocido no se marca");
+});
+
+// Cadencia del arco en el bucle de pantalla real (cuadro() de aventura-ui.js): con la J pulsada en cada fotograma,
+// los fotogramas entre dos flechas son los que cuenta restarFotograma para la maestría de la partida (docs 7.5).
+// La maestría se fija con los usos del arco (un nivel por cada 30 usos, decisión D9 del núcleo).
+// La prueba «CA-03 con el juego real a 60 Hz» mide lo mismo con avanzar(); esta es la única que pasa por el
+// acumulador de cuadro(), con el que el juego convierte el tiempo de pantalla en pasos.
+test("cadencia del arco en el bucle de pantalla: fotogramas entre flechas para maestría 0 a 3 (CA-03)", () => {
+  // Un poco más que 1/60 s (16,7 ms): cada fotograma da exactamente un paso de simulación, sin depender del
+  // redondeo de coma flotante del acumulador (con 1000/60 algún fotograma daba dos pasos).
+  const CUADRO_MS = 16.7;
+  for (let m = 0; m <= 3; m++) {
+    const bucle = {};
+    const contexto = cargar(CON_PRUEBA, { bucle });
+    const D = contexto.CenizaDatos;
+    // Fotogramas que tarda en llegar a cero un cooldown: la misma cuenta que tickTimers (restarFotograma a 1/60 s).
+    const fotogramasHastaCero = (cooldown) => {
+      let restante = cooldown;
+      let n = 0;
+      do {
+        restante = D.restarFotograma(restante, 1 / 60);
+        n++;
+      } while (restante > 0);
+      return n;
+    };
+    const { doc } = montarEn(contexto, { armas: ["hoja", "arco"], usos: { arco: m * 30 } });
+    const gancho = contexto.CENIZA_TEST;
+    assert.equal(gancho.estado().arma, "hoja", "la partida empieza con la hoja");
+    doc.dispatch("keydown", { key: "2" });
+    const disparos = [];
+    for (let k = 0; k < 4000 && disparos.length < 4; k++) {
+      doc.dispatch("keydown", { key: "j" });
+      const antes = gancho.cooldownArma();
+      bucle.pendiente(k * CUADRO_MS);
+      if (gancho.cooldownArma() > antes) disparos.push(k);
+    }
+    assert.equal(gancho.estado().arma, "arco", `maestría ${m}: el arco está en la mano`);
+    assert.equal(disparos.length, 4, `maestría ${m}: cuatro flechas en el bucle`);
+    const intervalos = disparos.slice(1).map((k, i) => k - disparos[i]);
+    const esperado = fotogramasHastaCero(D.cooldownArco(m));
+    assert.deepEqual(intervalos, [esperado, esperado, esperado], `maestría ${m}: fotogramas entre flechas`);
+    assert.equal(esperado, [14, 18, 26, 26][m], `maestría ${m}: el cooldown del arco a 60 Hz de docs 7.5`);
+  }
 });

@@ -176,9 +176,6 @@
       aumentoRadio: 0.25,     // +25 % por maestría
       radioCaida: 120,        // px, en la caída desde el aire
       ondaV: 470,             // px/s de las dos ondas de suelo
-      ondaDano: 12,           // daño base de cada onda
-      danoCaida: 42,          // daño base de la caída
-      ondaCaidaDano: 18,      // daño base de cada onda de la caída
       cadenciaCaida: 0.9,     // s (docs 6.1)
       ondaAncho: 26,
       ondaAlto: 26,
@@ -251,9 +248,6 @@
   const caja = (x, y, ancho, alto) => ({ x0: x - ancho / 2, x1: x + ancho / 2, y0: y - alto, y1: y });
   const solapa = (a, b) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
   const distancia = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
-
-  // Daño base redondeado con la maestría, igual que danoGolpe de datos.js (docs 7.2).
-  const danoConMaestria = (base, maestria) => Math.round(base * (1 + D.CRECIMIENTO_MAESTRIA * maestria));
 
   // Generador determinista (mulberry32). Solo lo usa abrirCofre, así una semilla reproduce la partida.
   function crearRng(semilla) {
@@ -963,7 +957,7 @@
             dano: dmg(d.onda), vida: ARMA.hoja.ondaT, perfora: true, golpeados: [], cadena: 0,
           });
         }
-        v.armaCd = D.armas.hoja.cadencias[k];
+        v.armaCd = D.ARMAS.hoja.cadencias[k];
         v.combo = (k + 1) % 3;
         v.comboT = FISICA.comboT;
         return;
@@ -995,7 +989,7 @@
         }
         const radio = ARMA.martillo.radio * (1 + ARMA.martillo.aumentoRadio * m);
         golpeArea(v.x, v.y, radio, dmg(D.danoPorGolpe("martillo", m)), eventos);
-        const onda = dmg(danoConMaestria(ARMA.martillo.ondaDano, m));
+        const onda = dmg(D.danoGolpe(D.ARMAS.martillo.danoOnda, m));
         for (const sentido of [-1, 1]) {
           lanzar({
             origen: "jugador", tipo: "suelo", x: v.x, y: SUELO - ARMA.martillo.ondaAlto / 2,
@@ -1004,7 +998,7 @@
             dano: onda, vida: ARMA.martillo.ondaVida, perfora: true, golpeados: [], cadena: 0,
           });
         }
-        v.armaCd = D.armas.martillo.cadencia;
+        v.armaCd = D.ARMAS.martillo.cadencia;
         return;
       }
 
@@ -1017,7 +1011,7 @@
         dano: dmg(D.danoPorGolpe("lanza", m)), vida: alcance / ARMA.lanza.velocidad,
         perfora: false, golpeados: [], cadena: ARMA.lanza.cadenaBase + m,
       });
-      v.armaCd = D.armas.lanza.cadencia;
+      v.armaCd = D.ARMAS.lanza.cadencia;
     }
 
     // Caída del martillo: al aterrizar, golpe de área y dos ondas (docs 6.1).
@@ -1025,8 +1019,8 @@
       const v = viajero;
       const m = maestriaDe(v.arma);
       const dmg = dmgDe(stats().multiplicadorDano);
-      golpeArea(v.x, v.y, ARMA.martillo.radioCaida, dmg(danoConMaestria(ARMA.martillo.danoCaida, m)), eventos);
-      const onda = dmg(danoConMaestria(ARMA.martillo.ondaCaidaDano, m));
+      golpeArea(v.x, v.y, ARMA.martillo.radioCaida, dmg(D.danoGolpe(D.ARMAS.martillo.danoCaida, m)), eventos);
+      const onda = dmg(D.danoGolpe(D.ARMAS.martillo.danoOndaCaida, m));
       for (const sentido of [-1, 1]) {
         lanzar({
           origen: "jugador", tipo: "suelo", x: v.x, y: SUELO - ARMA.martillo.ondaAlto / 2,
@@ -1322,8 +1316,11 @@
       partida = res.partida;
       guardarProgreso();
       const r = res.recompensa;
-      if (r.tipo === "pieza") mostrar("Secreto: pieza");
-      else if (r.tipo === "nucleos") mostrar("Secreto: " + r.cantidad + " núcleos.");
+      if (r.tipo === "pieza") {
+        const rareza = D.equipoRarezas.find((x) => x.id === r.pieza.rareza);
+        const nombreRareza = RAREZA_FEMENINA[r.pieza.rareza] || (rareza ? rareza.nombre.toLowerCase() : r.pieza.rareza);
+        mostrar("Secreto: pieza " + nombreRareza + " de " + NOMBRE_RANURA[r.pieza.ranura] + ".");
+      } else if (r.tipo === "nucleos") mostrar("Secreto: " + r.cantidad + " núcleos.");
       else mostrar("Secreto: " + r.cantidad + " chatarra.");
     }
 
@@ -1924,16 +1921,15 @@
       }
       for (const d of sala.puertas) {
         if (solapa(area, { x0: d.x, x1: d.x + d.ancho, y0: d.y, y1: d.y + d.alto })) {
-          const bloqueada = d.condicion && !partida.jefesVencidos.some((j) => M.TIPOS_ENEMIGO[j].zona === d.condicion.zona);
+          const bloqueada = !N.puertaAbierta(partida, d);
           return { texto: bloqueada ? "Puerta cerrada" : "E: cruzar", x: d.x + d.ancho / 2, y: d.y - 20 };
         }
       }
       return null;
     }
 
-    // Puerta bloqueada por jefe no vencido (misma regla que el núcleo, solo para mostrarla).
-    const puertaBloqueada = (d) =>
-      Boolean(d.condicion) && !partida.jefesVencidos.some((j) => M.TIPOS_ENEMIGO[j].zona === d.condicion.zona);
+    // Puerta bloqueada por jefe no vencido: la regla es la del núcleo (puertaAbierta), solo para mostrarla.
+    const puertaBloqueada = (d) => !N.puertaAbierta(partida, d);
 
     function vista() {
       return {
@@ -2050,6 +2046,7 @@
 .av-solo-lector{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .av-mensaje[data-error="true"]{color:#ff8a80}
 .av-panel{display:none;margin-top:12px;padding:12px;border:1px solid #4a3b32;border-radius:8px;background:#1c1714}
+.av-panel:focus{outline:none}
 .av-h{margin:0 0 8px;font-size:18px}
 .av-fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #4a3b32}
 .av-tactil{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-top:10px;touch-action:none}
@@ -2075,10 +2072,12 @@
     return el;
   }
 
+  // Con etiqueta, el nombre accesible es la etiqueta, que debe contener el texto visible (WCAG 2.5.3).
+  // Sin etiqueta, el nombre es el texto visible.
   function boton(doc, texto, etiqueta, alPulsar) {
     const b = crearEl(doc, "button", "av-boton", texto);
     b.setAttribute("type", "button");
-    b.setAttribute("aria-label", etiqueta || texto);
+    if (etiqueta) b.setAttribute("aria-label", etiqueta);
     b.addEventListener("click", alPulsar);
     return b;
   }
@@ -2091,6 +2090,11 @@
   function fijarAtributo(el, nombre, valor) {
     const s = String(valor);
     if (el.getAttribute(nombre) !== s) el.setAttribute(nombre, s);
+  }
+  // ¿Está `nodo` dentro de `ancestro` (o es él)? Recorre los padres, sin depender de Node.contains.
+  function estaDentro(ancestro, nodo) {
+    for (let n = nodo || null; n; n = n.parentNode) if (n === ancestro) return true;
+    return false;
   }
 
   // Monta la aventura en `contenedor`. Ver el uso al principio del archivo.
@@ -2148,7 +2152,8 @@
     const botonesArma = {};
     ARMAS_2D.forEach((arma, i) => {
       const nombre = NOMBRE_ARMA[arma];
-      const b = boton(doc, (i + 1) + " " + nombre, "Arma " + (i + 1) + ": " + nombre, () => {
+      // Sin etiqueta: el nombre accesible es el texto visible, que cambia con «bloqueada» en el HUD.
+      const b = boton(doc, (i + 1) + " " + nombre, null, () => {
         if (motor.modo() === "juego") motor.entrada.arma = arma;   // fuera de juego no se encola el cambio
       });
       botonesArma[arma] = b;
@@ -2218,9 +2223,10 @@
     const panelFogata = crearEl(doc, "div", "av-panel");
     panelFogata.setAttribute("role", "dialog");
     panelFogata.setAttribute("aria-label", "Fogata");
+    panelFogata.setAttribute("tabindex", "-1");   // recibe el foco al abrirse (ver ui.fogata)
     panelFogata.appendChild(crearEl(doc, "h2", "av-h", "Fogata"));
     const grupoFogata = crearEl(doc, "div", "av-grupo");
-    grupoFogata.appendChild(boton(doc, "Descansar y guardar", "Descansar en la fogata y guardar", () => {
+    grupoFogata.appendChild(boton(doc, "Descansar y guardar", "Descansar y guardar en la fogata", () => {
       motor.descansar();
       refrescarFogata();
     }));
@@ -2334,13 +2340,20 @@
     // ----------------------------------------------------------------- actualización de la interfaz
     let personajeAbierto = false;
 
+    // Resumen de la partida para el HUD. El núcleo devuelve una partida nueva en cada cambio, así que el resumen
+    // (con sus estadísticas) se calcula al cambiar la partida y no en cada fotograma.
+    let hudPartida = null;
+    let hudResumen = null;
     function actualizarHud() {
       const p = motor.partida();
-      const r = N.resumen(p);
-      const st = N.statsJugador(p);
-      const anchoVida = (clamp(p.vida / st.vidaMax, 0, 1) * 100).toFixed(1) + "%";
+      if (p !== hudPartida) {
+        hudPartida = p;
+        hudResumen = N.resumen(p);
+      }
+      const r = hudResumen;
+      const anchoVida = (clamp(p.vida / r.vidaMax, 0, 1) * 100).toFixed(1) + "%";
       if (vidaRelleno.style.width !== anchoVida) vidaRelleno.style.width = anchoVida;
-      fijarTexto(vidaTexto, "Vida " + p.vida + " / " + st.vidaMax);
+      fijarTexto(vidaTexto, "Vida " + p.vida + " / " + r.vidaMax);
       fijarTexto(nivelTexto, "Nivel " + r.nivel + " · XP " + r.xp +
         (r.xpSiguiente !== null ? " / " + r.xpSiguiente : ""));
       fijarTexto(nucleosTexto, "Núcleos " + p.nucleos +
@@ -2354,7 +2367,6 @@
         fijarTexto(b, (i + 1) + " " + NOMBRE_ARMA[a] + (libre ? "" : " · " + BLOQUEADA[a]));
         if (b.disabled !== !libre) b.disabled = !libre;
         fijarAtributo(b, "aria-pressed", arma === a);
-        fijarAtributo(b, "aria-label", "Arma " + (i + 1) + ": " + NOMBRE_ARMA[a] + (libre ? "" : ", bloqueada"));
       });
       const av = motor.aviso();
       fijarTexto(mensaje, av.texto);
@@ -2413,13 +2425,34 @@
     }
 
     ui.hud = actualizarHud;
+    // Foco del panel de fogata: al abrirse pasa al propio panel, para que el lector anuncie «Fogata». Se enfoca el
+    // panel y no un botón, para que Espacio o Enter no activen «Descansar» sin querer. Al cerrarse, si el foco
+    // estaba dentro, vuelve al elemento que lo tenía (o al lienzo).
+    let focoFogata = null;
     ui.fogata = (abierta) => {
-      panelFogata.style.display = abierta ? "block" : "none";
-      if (abierta) refrescarFogata();
-      else cerrarPersonaje();
+      if (abierta) {
+        if (panelFogata.style.display !== "block") focoFogata = doc.activeElement || null;
+        panelFogata.style.display = "block";
+        refrescarFogata();
+        panelFogata.focus({ preventScroll: true });
+        return;
+      }
+      const dentro = estaDentro(panelFogata, doc.activeElement);
+      panelFogata.style.display = "none";
+      cerrarPersonaje();
+      const previo = focoFogata;
+      focoFogata = null;
+      if (dentro) {
+        const destino = previo && typeof previo.focus === "function" ? previo : canvas;
+        destino.focus();
+      }
     };
     ui.pausa = (abierta) => {
+      // El panel de pausa no mueve el foco al abrirse (ver panelPausa). Al cerrarse, si el foco estaba en él
+      // (por ejemplo, en Reanudar), vuelve al lienzo para no perderse en la página.
+      const dentro = !abierta && estaDentro(panelPausa, doc.activeElement);
       panelPausa.style.display = abierta ? "block" : "none";
+      if (dentro) canvas.focus();
     };
     // Foco del cuadro de controles: como el de historia, vuelve al elemento que lo tenía al cerrarse.
     let focoLeyenda = null;
@@ -2485,6 +2518,17 @@
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = claveDe(e);
       const prevenir = () => { if (typeof e.preventDefault === "function") e.preventDefault(); };
+      if (k === "tab" && (motor.modo() === "fogata" || motor.modo() === "pausa")) {
+        // Fogata y pausa son paneles modales: el Tabulador da vuelta entre sus botones y no sale a la página de debajo.
+        const panel = motor.modo() === "fogata" ? panelFogata : panelPausa;
+        const botones = Array.from(panel.querySelectorAll("button:not([disabled])"));
+        prevenir();
+        if (botones.length === 0) { panel.focus({ preventScroll: true }); return; }
+        const i = botones.indexOf(doc.activeElement);
+        const j = e.shiftKey ? (i <= 0 ? botones.length - 1 : i - 1) : (i < 0 || i === botones.length - 1 ? 0 : i + 1);
+        botones[j].focus();
+        return;
+      }
       if (motor.modo() === "ayuda") {
         // Cuadro de controles abierto: Escape, o Enter y Espacio fuera de un botón, lo cierran. Con el foco en
         // Entendido, Enter y Espacio cierran por su clic (el navegador lo convierte). Tabulador no sale del cuadro.

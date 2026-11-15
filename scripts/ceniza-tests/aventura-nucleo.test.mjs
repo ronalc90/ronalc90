@@ -1,5 +1,5 @@
 // Pruebas de docs/ceniza/aventura-nucleo.js (Ceniza).
-// Ejecutar desde la raíz del repo: node --test scripts/ceniza-tests/
+// Ejecutar desde la raíz del repo: node --test scripts/ceniza-tests/*.mjs
 // Los archivos se cargan con vm.runInNewContext, como scripts clásicos del navegador,
 // en el orden datos.js, mundo.js y aventura-nucleo.js.
 // Los objetos creados dentro del contexto son de otro realm: se comparan con JSON.

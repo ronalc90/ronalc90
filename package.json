@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "node --test scripts/ceniza-tests/*.mjs scripts/games.test.mjs",
+    "e2e": "node scripts/ceniza-e2e/shooter3d.browser.mjs",
+    "e2e:aventura": "node scripts/ceniza-e2e/aventura-guardado.browser.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

@@ -73,7 +73,7 @@ La arena vuelve a su cauce y deja ver un tubo de metal que sube hacia el norte: 
 
 **Entrada, en Calles de vidrio**
 1. Cada cristal de la calle muestra un visor {visor} que tarda un segundo en seguirte.
-2. Hay voces que repiten lo último que oyeron. Ninguna dice {nombre} todavía.
+2. Hay voces que repiten lo último que oyeron. Ninguna dice tu nombre todavía.
 
 **Tras el jefe, en Corazón de cristal**
 Sin la centinela, la ciudad deja de vibrar y todos sus cristales se giran hacia la fundición.

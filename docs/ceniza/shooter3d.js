@@ -68,6 +68,8 @@
     Digit1: "rifle", Digit2: "escopeta", Digit3: "plasma",
     Numpad1: "rifle", Numpad2: "escopeta", Numpad3: "plasma",
   });
+  // Artículo que acompaña al nombre del arma en los mensajes (el rifle, la escopeta, el plasma).
+  const ARTICULO_ARMA = Object.freeze({ rifle: "el", escopeta: "la", plasma: "el" });
 
   // Congela un dato y sus anidados para que nada lo altere.
   function congelar(obj) {
@@ -224,25 +226,10 @@
     return el;
   }
 
-  // Quita un objeto 3D de su padre y libera sus geometrías y materiales propios.
-  // Los recursos marcados en el conjunto "compartidos" no se liberan aquí.
-  const compartidos = new Set();
-  function desmontar(obj) {
-    if (!obj) return;
-    if (obj.parent) obj.parent.remove(obj);
-    obj.traverse(function (o) {
-      if (o.geometry && !compartidos.has(o.geometry)) o.geometry.dispose();
-      if (o.material) {
-        (Array.isArray(o.material) ? o.material : [o.material]).forEach(function (m) {
-          if (!compartidos.has(m)) m.dispose();
-        });
-      }
-    });
-  }
-
   const CSS = [
     ".ceniza3d-raiz{position:relative;width:100%;height:100%;min-height:240px;overflow:hidden;background:#05060a;color:#eef3f8;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;user-select:none;-webkit-user-select:none}",
-    ".ceniza3d-canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;outline:none}",
+    ".ceniza3d-canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block}",
+    ".ceniza3d-canvas:focus-visible{outline:2px solid #ffd54a;outline-offset:-4px}",
     ".ceniza3d-hud{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none}",
     ".ceniza3d-sup{position:absolute;top:10px;left:14px;right:120px;text-shadow:0 1px 3px #000;line-height:1.35}",
     ".ceniza3d-sector{font-size:14px;font-weight:700;letter-spacing:.04em}",
@@ -371,6 +358,27 @@
     let raiz = null, canvas = null, hud = null, estiloEl = null, observador = null;
     let renderer = null, escena = null, camara = null, luzHemi = null, luzSol = null;
 
+    // Recursos de esta partida que se crean una vez y se reutilizan. destruir() solo libera los suyos.
+    const compartidos = new Set();
+    const lineasLibres = [];                          // trazadores terminados, listos para reutilizar
+    const matsLibres = { esfera: [], anillo: [] };    // materiales de efecto terminados
+    const geoEnemigos = {};                           // geometrías de enemigos, una por tipo y forma
+
+    // Quita un objeto 3D de su padre y libera sus geometrías y materiales propios.
+    // Los recursos marcados en el conjunto "compartidos" no se liberan aquí.
+    function desmontar(obj) {
+      if (!obj) return;
+      if (obj.parent) obj.parent.remove(obj);
+      obj.traverse(function (o) {
+        if (o.geometry && !compartidos.has(o.geometry)) o.geometry.dispose();
+        if (o.material) {
+          (Array.isArray(o.material) ? o.material : [o.material]).forEach(function (m) {
+            if (!compartidos.has(m)) m.dispose();
+          });
+        }
+      });
+    }
+
     // ---- utilidades de la partida
 
     function llamar(fn) {
@@ -406,6 +414,15 @@
       return matBasico[hex];
     }
 
+    // Material transparente de efecto. Se reutiliza al terminar el efecto, porque su opacidad se anima por separado.
+    function matEfecto(clave, opciones) {
+      const libres = matsLibres[clave];
+      if (libres.length > 0) return libres.pop();
+      const m = new THREE.MeshBasicMaterial(opciones);
+      compartidos.add(m);
+      return m;
+    }
+
     function formatoTiempo(seg) {
       const s = Math.floor(seg);
       return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
@@ -426,6 +443,8 @@
       raiz = crearEl("div", "ceniza3d-raiz", null);
       canvas = crearEl("canvas", "ceniza3d-canvas", raiz);
       canvas.tabIndex = 0;
+      canvas.setAttribute("role", "application");
+      canvas.setAttribute("aria-label", "Escena 3D del juego");
       hud = crearEl("div", "ceniza3d-hud", raiz);
       const sup = crearEl("div", "ceniza3d-sup", hud);
       hud.sector = crearEl("div", "ceniza3d-sector", sup);
@@ -444,8 +463,12 @@
       hud.aviso = crearEl("div", "ceniza3d-aviso", hud);
       construirTactil(hud);
       hud.pausa = crearEl("div", "ceniza3d-pausa", raiz);
+      hud.pausa.setAttribute("role", "dialog");
       const caja = crearEl("div", "ceniza3d-pausa-caja", hud.pausa);
       hud.pausaTitulo = crearEl("h2", null, caja);
+      // El nombre del diálogo es su título, que cambia entre pausa, inicio y fin de partida.
+      hud.pausaTitulo.setAttribute("id", "ceniza3d-pausa-titulo");
+      hud.pausa.setAttribute("aria-labelledby", "ceniza3d-pausa-titulo");
       hud.pausaTexto = crearEl("p", null, caja);
       const botones = crearEl("div", "ceniza3d-botones", caja);
       hud.botonContinuar = crearEl("button", "ceniza3d-boton", botones, "Continuar");
@@ -665,6 +688,7 @@
       geo.plasma = new THREE.SphereGeometry(0.2, 10, 8);
       geo.pickup = new THREE.BoxGeometry(0.5, 0.5, 0.5);
       geo.esfera = new THREE.SphereGeometry(1, 12, 8);
+      geo.anillo = new THREE.RingGeometry(3.1, 3.5, 40);
       matLinea = new THREE.LineBasicMaterial({ color: 0xfff2a8 });
       Object.values(geo).forEach(function (g) { compartidos.add(g); });
       compartidos.add(matLinea);
@@ -801,6 +825,15 @@
       };
     }
 
+    // Geometría de forma de enemigo: se crea una vez y la comparten todos los enemigos de ese tipo.
+    function geometriaEnemigo(clave, Forma) {
+      if (!geoEnemigos[clave]) {
+        geoEnemigos[clave] = new Forma(...Array.prototype.slice.call(arguments, 2));
+        compartidos.add(geoEnemigos[clave]);
+      }
+      return geoEnemigos[clave];
+    }
+
     // Enemigos: figuras sencillas con material propio (para el destello al recibir impacto).
     function crearEnemigo(tipo, x, y, z, oleada, zona) {
       const T = TIPOS[tipo];
@@ -809,38 +842,38 @@
       const mats = [mat];
       let escudoMalla = null;
       if (tipo === "explorador") {
-        grupo.add(new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 10), mat));
-        const ala1 = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.25), mat);
+        grupo.add(new THREE.Mesh(geometriaEnemigo("explorador.cuerpo", THREE.SphereGeometry, 0.45, 12, 10), mat));
+        const ala1 = new THREE.Mesh(geometriaEnemigo("explorador.ala", THREE.BoxGeometry, 0.9, 0.05, 0.25), mat);
         ala1.position.x = 0.6;
-        const ala2 = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.25), mat);
+        const ala2 = new THREE.Mesh(geometriaEnemigo("explorador.ala", THREE.BoxGeometry, 0.9, 0.05, 0.25), mat);
         ala2.position.x = -0.6;
         grupo.add(ala1, ala2);
-        const ojo = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+        const ojo = new THREE.Mesh(geometriaEnemigo("explorador.ojo", THREE.SphereGeometry, 0.12, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
         ojo.position.z = -0.4;
         grupo.add(ojo);
       } else if (tipo === "asalto") {
-        grupo.add(new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.7, 1.2), mat));
+        grupo.add(new THREE.Mesh(geometriaEnemigo("asalto.cuerpo", THREE.BoxGeometry, 1.0, 0.7, 1.2), mat));
         [-0.4, 0.4].forEach(function (px) {
-          const pincho = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.7, 6), mat);
+          const pincho = new THREE.Mesh(geometriaEnemigo("asalto.pincho", THREE.ConeGeometry, 0.18, 0.7, 6), mat);
           pincho.position.set(px, 0.6, 0);
           grupo.add(pincho);
         });
       } else if (tipo === "torreta") {
-        grupo.add(new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.8, 12), mat));
-        const cañon = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.25, 0.25), mat);
+        grupo.add(new THREE.Mesh(geometriaEnemigo("torreta.cuerpo", THREE.CylinderGeometry, 0.6, 0.7, 0.8, 12), mat));
+        const cañon = new THREE.Mesh(geometriaEnemigo("torreta.canon", THREE.BoxGeometry, 1.2, 0.25, 0.25), mat);
         cañon.position.set(-0.6, 0.15, 0);
         grupo.add(cañon);
       } else {
-        const cuerpo = new THREE.Mesh(new THREE.SphereGeometry(0.85, 16, 12), mat);
+        const cuerpo = new THREE.Mesh(geometriaEnemigo("elite.cuerpo", THREE.SphereGeometry, 0.85, 16, 12), mat);
         cuerpo.scale.y = 1.2;
         grupo.add(cuerpo);
         [-0.9, 0.9].forEach(function (px) {
-          const pinza = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.5, 0.9), mat);
+          const pinza = new THREE.Mesh(geometriaEnemigo("elite.pinza", THREE.BoxGeometry, 0.35, 0.5, 0.9), mat);
           pinza.position.set(px, 0, 0.2);
           grupo.add(pinza);
         });
         escudoMalla = new THREE.Mesh(
-          new THREE.TorusGeometry(1.5, 0.06, 8, 24),
+          geometriaEnemigo("elite.escudo", THREE.TorusGeometry, 1.5, 0.06, 8, 24),
           new THREE.MeshBasicMaterial({ color: 0x7fe9ff, transparent: true, opacity: 0.7 }),
         );
         grupo.add(escudoMalla);
@@ -1089,7 +1122,9 @@
     // ---------------------------------------------------------------- efectos y proyectiles
 
     function efectoEsfera(punto, color, radio, dur) {
-      const mat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8, depthWrite: false });
+      const mat = matEfecto("esfera", { transparent: true, opacity: 0.8, depthWrite: false });
+      mat.color.setHex(color);
+      mat.opacity = 0.8;
       const malla = new THREE.Mesh(geo.esfera, mat);
       malla.position.copy(punto);
       malla.scale.setScalar(radio);
@@ -1097,11 +1132,22 @@
       efectos.push({ obj: malla, t: dur, dur: dur, radio: radio, mat: mat });
     }
 
+    // Trazador de un disparo: reutiliza una línea libre (dos puntos) en lugar de crear geometría nueva.
     function trazador(origen, punto) {
-      const geometria = new THREE.BufferGeometry().setFromPoints([origen.clone(), punto.clone()]);
-      const linea = new THREE.Line(geometria, matLinea);
+      let linea = lineasLibres.pop();
+      if (!linea) {
+        const geometria = new THREE.BufferGeometry();
+        geometria.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3));
+        compartidos.add(geometria);
+        linea = new THREE.Line(geometria, matLinea);
+      }
+      const pos = linea.geometry.attributes.position;
+      pos.setXYZ(0, origen.x, origen.y, origen.z);
+      pos.setXYZ(1, punto.x, punto.y, punto.z);
+      pos.needsUpdate = true;
+      linea.geometry.boundingSphere = null;   // se recalcula con los puntos nuevos al dibujar
       escenario.add(linea);
-      efectos.push({ obj: linea, t: 0.06, dur: 0.06, radio: 0, mat: null });
+      efectos.push({ obj: linea, t: 0.06, dur: 0.06, radio: 0, mat: null, linea: true });
     }
 
     function actualizarEfectos(dt) {
@@ -1114,6 +1160,9 @@
         }
         if (f.t <= 0) {
           desmontar(f.obj);
+          // Trazadores y materiales compartidos vuelven a su lista para el siguiente efecto.
+          if (f.linea) lineasLibres.push(f.obj);
+          if (f.mat) matsLibres.esfera.push(f.mat);
           f.hecho = true;
         }
       }
@@ -1158,8 +1207,10 @@
     // Pulso del Coloso: aviso de 1,2 s en el suelo y daño si el viajero sigue dentro del radio.
     function telegrafoPulso() {
       const x = jugador.pos.x, z = jugador.pos.z;
-      const mat = new THREE.MeshBasicMaterial({ color: 0xff3b2e, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide });
-      const malla = new THREE.Mesh(new THREE.RingGeometry(3.1, 3.5, 40), mat);
+      const mat = matEfecto("anillo", { color: 0xff3b2e, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide });
+      mat.color.setHex(0xff3b2e);
+      mat.opacity = 0.6;
+      const malla = new THREE.Mesh(geo.anillo, mat);
       malla.rotation.x = -Math.PI / 2;
       malla.position.set(x, 0.05, z);
       escenario.add(malla);
@@ -1175,6 +1226,7 @@
           if (Math.hypot(jugador.pos.x - t.x, jugador.pos.z - t.z) <= 3.5) daniarJugador(30);
           efectoEsfera(new THREE.Vector3(t.x, 0.8, t.z), 0xff3b2e, 3.5, 0.5);
           desmontar(t.malla);
+          matsLibres.anillo.push(t.malla.material);
         }
       }
       telegrafos = telegrafos.filter(function (t) { return !t.hecho; });
@@ -1198,8 +1250,10 @@
       if (imp) aplicarImpacto(imp.e, imp.parte, A.dano * mult);
       efectoEsfera(punto.clone(), 0x6ff2ff, A.radioArea, 0.35);
       for (const e of todosLosEnemigos()) {
-        if (imp && e === imp.e) continue;
         for (const parte of partesDe(e)) {
+          // Se salta solo la parte impactada: el resto del mismo enemigo (p. ej. los brazos del Coloso) sí recibe el área.
+          // Se compara por id porque partesDe() crea objetos nuevos en cada llamada.
+          if (imp && e === imp.e && parte.id === imp.parte.id) continue;
           if (!parte.activa) continue;
           if (punto.distanceTo(parte.centro) - parte.radio <= A.radioArea) {
             aplicarImpacto(e, parte, A.danoArea * mult);
@@ -1621,7 +1675,7 @@
 
     function cambiarArma(id) {
       if (armasDesbloqueadas.indexOf(id) < 0) {
-        mensaje("Aún no tienes el " + ARMAS[id].nombre.toLowerCase(), 1.5);
+        mensaje("Aún no tienes " + ARTICULO_ARMA[id] + " " + ARMAS[id].nombre.toLowerCase(), 1.5);
         return;
       }
       if (id === armaActual) return;
@@ -1693,6 +1747,8 @@
       soltarTactil();
       if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
       mostrarPausa();
+      // Al pausar, el foco pasa a "Continuar" para que el teclado (Espacio o Intro) lo active.
+      if (typeof hud.botonContinuar.focus === "function") hud.botonContinuar.focus({ preventScroll: true });
     }
 
     function reanudar() {
@@ -1736,18 +1792,18 @@
         if (recargaT <= 0) terminarRecarga();
       }
       for (const e of enemigos) {
+        // intentarDisparo() puede haber terminado la partida (victoria con el rifle).
+        if (terminado) break;
         if (e.muerto) continue;
         actualizarEnemigo(e, dt);
-        if (terminado) break;
       }
       if (!terminado && coloso && !coloso.muerto) actualizarColoso(dt);
-      if (!terminado) {
-        actualizarBalas(dt);
-        actualizarPlasmas(dt);
-        actualizarTelegrafos(dt);
-        actualizarPickups(dt);
-        actualizarEfectos(dt);
-      }
+      // Cada bloque puede terminar la partida (caída o victoria): los siguientes no deben seguir cambiando el estado.
+      if (!terminado) actualizarBalas(dt);
+      if (!terminado) actualizarPlasmas(dt);
+      if (!terminado) actualizarTelegrafos(dt);
+      if (!terminado) actualizarPickups(dt);
+      if (!terminado) actualizarEfectos(dt);
       enemigos = enemigos.filter(function (e) { return !e.muerto; });
       if (!arena && !terminado) actualizarSector();
       if (jugador.destello > 0) jugador.destello = Math.max(0, jugador.destello - dt);
@@ -1835,6 +1891,8 @@
       if (!pausado && !terminado && !modoPaso) avanzar(dt);
       actualizarCamara();
       if (renderer) renderer.render(escena, camara);
+      // avanzar() puede haber destruido el juego (p. ej. al caer): entonces no se pide otro fotograma.
+      if (destruido) return;
       frameId = window.requestAnimationFrame(bucle);
     }
 
@@ -1849,8 +1907,10 @@
         prevenir(ev);
         return;
       }
-      if (TECLAS_QUE_NO_DESPLAZAN.indexOf(c) >= 0 || c.indexOf("Arrow") === 0) prevenir(ev);
+      if (c.indexOf("Arrow") === 0) prevenir(ev);
       if (pausado || terminado) return;
+      // Espacio solo se anula cuando el juego lo usa: en pausa o en la pantalla de inicio deja actuar a los botones.
+      if (TECLAS_QUE_NO_DESPLAZAN.indexOf(c) >= 0) prevenir(ev);
       teclas[c] = true;
       if (TECLAS_ARMA[c]) cambiarArma(TECLAS_ARMA[c]);
       else if (c === "KeyR") recargar();
@@ -1921,6 +1981,12 @@
       coloso = null;
       if (renderer) {
         renderer.dispose();
+        // Pierde el contexto WebGL: si no, cada partida nueva abre otro hasta que el recolector libere el canvas.
+        try {
+          if (typeof renderer.forceContextLoss === "function") renderer.forceContextLoss();
+        } catch (err) {
+          // Sin pérdida forzada, el navegador libera el contexto cuando recoja el canvas.
+        }
         renderer = null;
       }
       compartidos.forEach(function (r) { r.dispose(); });

@@ -1,5 +1,5 @@
 // Smoke de docs/ceniza/shooter3d.js (Ceniza3D) con three.min.js r160.
-// Ejecutar desde la raíz del repo: node --test scripts/ceniza-tests/
+// Ejecutar desde la raíz del repo: node --test scripts/ceniza-tests/*.mjs
 // Sin jsdom: el repo no tiene node_modules, así que el DOM es mínimo y solo cubre lo que usa el script.
 // Sin WebGL (getContext devuelve null): el render se omite y la simulación corre igual con step().
 // Los archivos se cargan con vm.runInContext, como scripts clásicos del navegador.
@@ -235,6 +235,130 @@ test("el Coloso final arranca en fase 1 y la simulación corre sin errores con e
   e = juego.step(60 * 90);
   assert.equal(e.fase, 1);
   assert.equal(e.terminado, false);
+  juego.destruir();
+});
+
+// ---------------------------------------------------------------- Coloso: pelea con un bot de prueba
+// El bot usa solo la API pública del modo de prueba: vista() para las partes, estado() para la munición, step() para
+// avanzar y los mismos eventos que un jugador (mousemove, mousedown en el lienzo, mouseup, teclas 1 y R).
+// Fase 1: apunta al ojo y dispara solo mientras está abierto. Fase 2: apunta a un brazo (siempre expuesto).
+// Fase 3: apunta al núcleo. Sin disparar (opción disparar: false), el Coloso acaba derribando al viajero.
+const SENSIBILIDAD_CURSOR = 0.0022; // la misma que shooter3d.js: cada píxel de cursor gira este ángulo
+const ALTURA_OJOS_BOT = 1.6;        // altura de la mirada del viajero (ALTURA_OJOS de shooter3d.js)
+const PASOS_POR_TURNO = 12;         // 0,2 s de juego por decisión del bot
+
+// Gira la mira hacia un punto con el mismo camino que el cursor en modo de prueba (sin puntero bloqueado).
+function apuntarA(ventana, cursor, jugador, punto) {
+  const dx = punto.x - jugador.x, dy = punto.y - (jugador.y + ALTURA_OJOS_BOT), dz = punto.z - jugador.z;
+  const yawObjetivo = Math.atan2(-dx, -dz), pitchObjetivo = Math.atan2(dy, Math.hypot(dx, dz));
+  const giroYaw = Math.atan2(Math.sin(yawObjetivo - jugador.yaw), Math.cos(yawObjetivo - jugador.yaw));
+  // yaw -= (x - x previa) * sensibilidad: el desplazamiento exacto de cursor deja la mira en el objetivo.
+  cursor.x -= giroYaw / SENSIBILIDAD_CURSOR;
+  cursor.y -= (pitchObjetivo - jugador.pitch) / SENSIBILIDAD_CURSOR;
+  ventana.emitir("mousemove", { clientX: cursor.x, clientY: cursor.y });
+}
+
+// Juega contra el Coloso hasta el final (victoria, caída o el límite de pasos). Devuelve el control y lo observado:
+// fases en orden de aparición y, en cada cambio de fase, la vida antes del paso y después del cambio.
+function pelearColoso(opciones = {}, { disparar = true, pasosMaximos = 20000 } = {}) {
+  const { juego, ventana, contenedor } = nuevoJuego({ sectorInicial: "COLOSO", ...opciones });
+  const lienzo = buscar(contenedor, (el) => el.className === "ceniza3d-canvas");
+  juego.reanudar();
+  const cursor = { x: 640, y: 360 };
+  ventana.emitir("mousemove", { clientX: cursor.x, clientY: cursor.y }); // fija la posición previa del cursor
+  let disparando = false;
+  const pulsarBoton = (pulsado) => {
+    if (pulsado === disparando) return;
+    disparando = pulsado;
+    if (pulsado) lienzo.oyentes.filter(([t]) => t === "mousedown").forEach(([, f]) => f({ button: 0, preventDefault() {} }));
+    else ventana.emitir("mouseup", { button: 0, preventDefault() {} });
+  };
+  const fases = [];
+  const cambios = [];
+  let e = juego.estado();
+  let vidaAntesDelPaso = e.vida;
+  let faseAnterior = null;
+  tecla(ventana, "Digit1");
+  for (let paso = 0; !e.terminado && paso < pasosMaximos; paso++) {
+    const v = juego.vista();
+    if (v.coloso && v.coloso.fase !== faseAnterior) {
+      if (faseAnterior !== null) {
+        cambios.push({ de: faseAnterior, a: v.coloso.fase, vidaAntes: vidaAntesDelPaso, vidaDespues: e.vida, vidaMax: e.vidaMax });
+      }
+      fases.push(v.coloso.fase);
+      faseAnterior = v.coloso.fase;
+    }
+    let objetivo = null;
+    if (v.coloso) {
+      const c = v.coloso;
+      if (c.fase === 2) objetivo = c.partes.find((p) => p.id.startsWith("brazo")) || c.partes.find((p) => p.id === "ojo");
+      else if (c.fase === 1) objetivo = c.partes.find((p) => p.id === "ojo");
+      else objetivo = c.partes.find((p) => p.id === "nucleo");
+    }
+    if (objetivo) apuntarA(ventana, cursor, v.jugador, objetivo);
+    if (e.arma !== "rifle" && e.armas.includes("rifle")) tecla(ventana, "Digit1");
+    if (e.municion && e.municion.cargador === 0) tecla(ventana, "KeyR");
+    pulsarBoton(disparar && !!objetivo && objetivo.activa);
+    vidaAntesDelPaso = e.vida;
+    e = juego.step(PASOS_POR_TURNO);
+  }
+  pulsarBoton(false);
+  return { juego, ventana, e, fases, cambios };
+}
+
+test("Coloso: pasa de la fase 1 a la 2 y de la 2 a la 3 en ese orden, y termina con la victoria", () => {
+  const { juego, fases, cambios, e } = pelearColoso({ bonos: { vida: 100000 } });
+  assert.deepEqual(fases, [1, 2, 3]);
+  assert.deepEqual(cambios.map((c) => [c.de, c.a]), [[1, 2], [2, 3]]);
+  assert.equal(e.terminado, true);
+  assert.equal(e.resultado, "victoria");
+  juego.destruir();
+});
+
+test("Coloso: al cambiar de fase el viajero recupera la vida completa (D13), después de haber recibido daño", () => {
+  const { juego, cambios } = pelearColoso({ bonos: { vida: 100000 } });
+  assert.equal(cambios.length, 2, "hay dos cambios de fase");
+  for (const c of cambios) {
+    assert.ok(c.vidaAntes < c.vidaMax, `antes del cambio ${c.de}→${c.a} el viajero había perdido vida (${c.vidaAntes} de ${c.vidaMax})`);
+    assert.equal(c.vidaDespues, c.vidaMax, `tras el cambio ${c.de}→${c.a} la vida vuelve al máximo`);
+  }
+  juego.destruir();
+});
+
+test("Coloso: la victoria llama a onVictoria una sola vez y el estado queda fijo al terminar", () => {
+  const victorias = [];
+  const caidas = [];
+  const { juego, e } = pelearColoso({ bonos: { vida: 100000 }, onVictoria: (r) => victorias.push(r), onCaida: (r) => caidas.push(r) });
+  assert.equal(e.resultado, "victoria");
+  assert.equal(victorias.length, 1, "onVictoria se llama una vez");
+  assert.equal(caidas.length, 0, "onCaida no se llama");
+  assert.equal(victorias[0].resultado, "victoria");
+  assert.equal(victorias[0].sector, "COLOSO");
+  assert.equal(juego.vista().coloso, null, "el Coloso derrotado ya no aparece en la vista");
+  const antes = juego.estado();
+  juego.step(60 * 60);
+  const despues = juego.estado();
+  assert.equal(victorias.length, 1, "tras la victoria, más pasos no vuelven a llamar onVictoria");
+  assert.equal(caidas.length, 0);
+  assert.equal(despues.vida, antes.vida, "la vida no cambia tras terminar");
+  assert.equal(despues.xp, antes.xp, "la XP no cambia tras terminar");
+  assert.equal(despues.tiempo, antes.tiempo, "la simulación se detiene tras terminar");
+  juego.destruir();
+});
+
+test("Coloso: si el viajero cae, onCaida se llama una sola vez y onVictoria no", () => {
+  const victorias = [];
+  const caidas = [];
+  const { juego, e } = pelearColoso({ onVictoria: (r) => victorias.push(r), onCaida: (r) => caidas.push(r) }, { disparar: false });
+  assert.equal(e.resultado, "caida");
+  assert.equal(caidas.length, 1, "onCaida se llama una vez");
+  assert.equal(victorias.length, 0, "onVictoria no se llama");
+  assert.equal(caidas[0].resultado, "caida");
+  assert.equal(caidas[0].sector, "COLOSO");
+  const tiempo = juego.estado().tiempo;
+  juego.step(600);
+  assert.equal(juego.estado().tiempo, tiempo, "tras terminar, la simulación se detiene");
+  assert.equal(caidas.length, 1);
   juego.destruir();
 });
 

@@ -140,8 +140,8 @@
     velocidad: { nombre: "Velocidad", unidad: "%", min: 1, max: 4 },
     armadura: { nombre: "Armadura", unidad: "%", min: 1, max: 4 },
     vida: { nombre: "Vida", unidad: "HP", min: 2, max: 6 },
-    nucleos: { nombre: "Núcleos encontrados", unidad: "%", min: 5, max: 15 },
-    chatarra: { nombre: "Chatarra encontrada", unidad: "%", min: 5, max: 15 },
+    nucleos: { nombre: "Núcleos", unidad: "%", min: 5, max: 15 },
+    chatarra: { nombre: "Chatarra", unidad: "%", min: 5, max: 15 },
   });
 
   // Modificadores posibles por ranura (docs 5.1: el documento no fija el grupo de cada ranura).
@@ -188,6 +188,8 @@
   // arco: cadencia es el cooldown base de la ráfaga; cooldownArco le aplica el tope del 95 %.
   // escopeta: dano es por perdigón y perdigones por disparo.
   // plasma: danoArea y radioArea no entran en el DPS directo.
+  // martillo: dano es el golpe de área en el suelo; danoCaida, el de la caída desde el aire (docs 6.1).
+  //   danoOnda y danoOndaCaida son el daño base de cada onda de suelo y de cada onda de la caída.
   // rango: alcance en metros de las armas 3D. La geometría 2D (alcance en píxeles) vive en aventura-ui.js,
   // que la declara según docs 6.1; aquí no se duplica.
   // MULTIDISPARO_ARCO: flechas por ráfaga = 1 + min(maestría, 2). El tope recorta el espaciado, no este número.
@@ -195,7 +197,7 @@
   const ARMAS = congelar({
     hoja: { nombre: "Hoja", tipo: "2d", golpes: [14, 14, 22], cadencias: [0.25, 0.25, 0.42], onda: 13 },
     arco: { nombre: "Arco", tipo: "2d", dano: 9, cadencia: 0.23, multidisparo: true },
-    martillo: { nombre: "Martillo", tipo: "2d", dano: 28, cadencia: 0.72 },
+    martillo: { nombre: "Martillo", tipo: "2d", dano: 28, cadencia: 0.72, danoOnda: 12, danoCaida: 42, danoOndaCaida: 18 },
     lanza: { nombre: "Lanza", tipo: "2d", dano: 16, cadencia: 0.46 },
     rifle: { nombre: "Rifle", tipo: "3d", dano: 18, cadencia: 0.2, rango: 60, sector: "S1" },
     escopeta: { nombre: "Escopeta", tipo: "3d", dano: 10, perdigones: 8, cadencia: 0.9, rango: 14, sector: "S2" },
@@ -665,10 +667,11 @@
     tablaDeCofres,
     CONSUMIBLES,
     abrirCofre,
-    armas: ARMAS,
+    ARMAS,
     MULTIDISPARO_ARCO,
-    cicloHoja: CICLO_HOJA,
+    CICLO_HOJA,
     danoHoja,
+    danoGolpe,
     danoPorGolpe,
     dpsArma,
     cooldownArco,

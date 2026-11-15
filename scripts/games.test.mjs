@@ -10,9 +10,11 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 
 const GAMES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "games.mjs");
+const RAIZ = path.resolve(path.dirname(GAMES), "..");
 const DIR = fs.mkdtempSync(path.join(os.tmpdir(), "games-test-"));
 after(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
@@ -152,4 +154,18 @@ test("ceniza: un login con caracteres de HTML se escapa en la sección del READM
   const { salida } = ejecutar(lote);
   assert.match(salida, /\[@x&lt;i&gt;\]\(https:\/\/github\.com\/x&lt;i&gt;\)/);
   assert.doesNotMatch(salida, /\[@x<i>\]/);
+});
+
+// ----------------------------------------------------------------------------- armas de CENIZA frente a datos.js
+test("ceniza: CENIZA_ARMAS de games.mjs coincide con las claves de ARMAS de docs/ceniza/datos.js", () => {
+  // games.mjs no exporta sus constantes (ejecuta main al cargarse): la lista se lee del fuente.
+  const m = /^const CENIZA_ARMAS = \[([^\]]*)\];/m.exec(fs.readFileSync(GAMES, "utf8"));
+  assert.ok(m, "games.mjs debe declarar CENIZA_ARMAS");
+  const armasGames = [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
+  // datos.js es un script clásico: se ejecuta en un contexto vm, igual que en scripts/ceniza-tests/.
+  const contexto = {};
+  vm.runInNewContext(fs.readFileSync(path.join(RAIZ, "docs", "ceniza", "datos.js"), "utf8"), contexto, { filename: "datos.js" });
+  const armasDatos = Object.keys(contexto.CenizaDatos.ARMAS);
+  assert.ok(armasGames.length > 0, "CENIZA_ARMAS no puede estar vacía");
+  assert.deepEqual([...armasGames].sort(), [...armasDatos].sort());
 });

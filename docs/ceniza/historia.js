@@ -63,7 +63,7 @@
     2: {
       entrada: [
         "Cada cristal de la calle muestra un visor {visor} que tarda un segundo en seguirte.",
-        "Hay voces que repiten lo último que oyeron. Ninguna dice {nombre} todavía.",
+        "Hay voces que repiten lo último que oyeron. Ninguna dice tu nombre todavía.",
       ],
       trasJefe: "Sin la centinela, la ciudad deja de vibrar y todos sus cristales se giran hacia la fundición.",
     },

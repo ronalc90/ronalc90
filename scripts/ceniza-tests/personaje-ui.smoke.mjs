@@ -380,6 +380,17 @@ test("un accesorio va en accesorio 1 o 2; las piezas no válidas se descartan co
   assert.equal(llamadas[0].inventario.length, 0);
 
   P.cerrar();
+
+  // El mismo accesorio también puede ir a Accesorio 1.
+  const { P: P1, D: D1 } = cargar();
+  const contenedor1 = new Documento().createElement("div");
+  const llamadas1 = [];
+  P1.abrir(contenedor1, opcionesBase(D1, { inventario: [accesorio], onCambio: (e) => llamadas1.push(e) }));
+  boton(contenedor1, "Pestaña EQUIPO").disparar("click");
+  botonQue(contenedor1, "Equipar en Accesorio 1").disparar("click");
+  assert.equal(llamadas1[0].equipadas.accesorio1.ranura, "accesorio1");
+  assert.equal(llamadas1[0].equipadas.accesorio2, null);
+  P1.cerrar();
 });
 
 test("cerrar vacía el contenedor", () => {

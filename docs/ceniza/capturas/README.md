@@ -11,7 +11,7 @@ Capturas tomadas del juego con Chromium (Playwright), en modo de prueba (?prueba
 
 Notas sobre estas capturas:
 
-- No se pueden reproducir desde un commit concreto. La captura 02 muestra un texto del Acto I que no existe en ningún commit anterior a 0f05cb8, posterior al commit cd05838 que añadió estas capturas. Por eso no corresponde al commit 0373a88 que citaba la versión anterior de este documento.
-- Las armas bloqueadas se muestran hoy con la forma que concuerda con cada arma: «Arco · bloqueado», «Martillo · bloqueado», «Hoja · bloqueada» y «Lanza · bloqueada». Las capturas 02 y 03 muestran el rótulo anterior, «· bloqueada» en todas.
+- El HUD muestra el número de zona y el nombre de la sala, por ejemplo «Zona 1 · Mar de arena». El nombre de la zona 1 es Duna tibia; «Mar de arena» es la sala Z1.1.
+- Las capturas 02 y 03 muestran el rótulo anterior de las armas bloqueadas, «· bloqueada» en todas. Hay que rehacerlas con la forma que concuerda con cada arma: «Arco · bloqueado», «Martillo · bloqueado», «Hoja · bloqueada» y «Lanza · bloqueada».
 - Faltan las capturas de la fogata con la tienda de armas y de la fase 3D.
-- La numeración no es continua: no hay archivo 04.
+- La numeración no es continua: la captura 04 no está en el repositorio, así que la numeración salta del 03 al 05.

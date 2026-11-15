@@ -1,5 +1,5 @@
 // Pruebas de docs/ceniza/datos.js (Ceniza).
-// Ejecutar desde la raíz del repo: node --test scripts/ceniza-tests/
+// Ejecutar desde la raíz del repo: node --test scripts/ceniza-tests/*.mjs
 // El archivo se carga con vm.runInNewContext, como un script clásico del navegador.
 // Los objetos creados dentro del contexto son de otro realm: se comparan con JSON.
 
@@ -26,6 +26,20 @@ function rngSemilla(semilla) {
     x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
     return x / 4294967296;
   };
+}
+
+// Cuenta las llamadas a Math.random del contexto de datos.js (otro realm) mientras corre fn.
+function contarLlamadasRandom(fn) {
+  const mathCtx = vm.runInContext("Math", contexto);
+  const original = mathCtx.random;
+  let llamadas = 0;
+  mathCtx.random = () => { llamadas++; return original(); };
+  try {
+    fn();
+  } finally {
+    mathCtx.random = original;
+  }
+  return llamadas;
 }
 
 // Copia en JSON para sacar los objetos del realm del contexto.
@@ -122,7 +136,7 @@ const TABLA_7_3 = {
 };
 
 test("hoja (tabla 7.3): combo 14, 14, 22 y onda 13 con maestría; ciclo de 0,92 s", () => {
-  assert.equal(redondear(D.cicloHoja, 2), 0.92);
+  assert.equal(redondear(D.CICLO_HOJA, 2), 0.92);
   for (let m = 0; m <= 3; m++) {
     const d = plano(D.danoHoja(m));
     assert.deepEqual(d.golpes, TABLA_7_3.golpes[m], `golpes con maestría ${m}`);
@@ -134,7 +148,7 @@ test("hoja (tabla 7.3): combo 14, 14, 22 y onda 13 con maestría; ciclo de 0,92 
 
 test("arco sin tope (tabla 7.3, columnas actuales): supera el 95 % desde maestría 1", () => {
   for (let m = 0; m <= 3; m++) {
-    const dps = (D.MULTIDISPARO_ARCO[m] * D.danoPorGolpe("arco", m)) / D.armas.arco.cadencia;
+    const dps = (D.MULTIDISPARO_ARCO[m] * D.danoPorGolpe("arco", m)) / D.ARMAS.arco.cadencia;
     assert.equal(redondear(dps, 2), TABLA_7_3.arcoSinTopeDps[m], `DPS sin tope, maestría ${m}`);
     assert.equal(porcentaje(dps, D.dpsArma("hoja", m)), TABLA_7_3.arcoSinTopePorc[m], `% sin tope, maestría ${m}`);
   }
@@ -162,20 +176,19 @@ test("tope del 95 %: el DPS del arco nunca supera el 95 % de la hoja con la mism
   }
 });
 
-// Cada duración se redondea hacia arriba al fotograma (docs 7.5).
-const alCuadro = (segundos, hz) => Math.ceil(segundos * hz - 1e-9) / hz;
-
 test("tope a 60 y 120 Hz (docs 7.5): el arco sigue por debajo del 95 % de la hoja", () => {
   const esperado = {
     60: { hoja: [67.5, 72.86, 81.43, 87.86], arco: [57.1, 91.5, 93.5, 94.6] },
     120: { hoja: [68.11, 73.51, 82.16, 88.65], arco: [56.6, 93.3, 94.5, 93.7] },
   };
   for (const hz of [60, 120]) {
-    const cicloHz = D.armas.hoja.cadencias.reduce((s, c) => s + alCuadro(c, hz), 0);
+    const paso = 1 / hz;
+    // Cada duración se cuenta en fotogramas con restarFotograma, igual que tickTimers en aventura-ui.js.
+    const cicloHz = D.ARMAS.hoja.cadencias.reduce((s, c) => s + fotogramasHastaCero(c, paso) * paso, 0);
     for (let m = 0; m <= 3; m++) {
       const d = plano(D.danoHoja(m));
       const hoja = (d.golpes.reduce((s, x) => s + x, 0) + d.onda) / cicloHz;
-      const arco = (D.MULTIDISPARO_ARCO[m] * D.danoPorGolpe("arco", m)) / alCuadro(D.cooldownArco(m), hz);
+      const arco = (D.MULTIDISPARO_ARCO[m] * D.danoPorGolpe("arco", m)) / (fotogramasHastaCero(D.cooldownArco(m), paso) * paso);
       assert.equal(redondear(hoja, 2), esperado[hz].hoja[m], `hoja a ${hz} Hz, maestría ${m}`);
       assert.equal(porcentaje(arco, hoja), esperado[hz].arco[m], `arco a ${hz} Hz, maestría ${m}`);
       assert.ok(porcentaje(arco, hoja) <= 95, `arco a ${hz} Hz, maestría ${m}`);
@@ -186,8 +199,8 @@ test("tope a 60 y 120 Hz (docs 7.5): el arco sigue por debajo del 95 % de la hoj
 test("el tope recorta el espaciado de la ráfaga: flechas y daño por flecha no cambian", () => {
   assert.deepEqual(plano(D.MULTIDISPARO_ARCO), [1, 2, 3, 3]);
   assert.deepEqual([0, 1, 2, 3].map((m) => D.danoPorGolpe("arco", m)), [9, 10, 11, 12]);
-  for (let m = 0; m <= 3; m++) assert.ok(D.cooldownArco(m) >= D.armas.arco.cadencia);
-  assert.equal(D.cooldownArco(0), D.armas.arco.cadencia, "sin tope activo a maestría 0");
+  for (let m = 0; m <= 3; m++) assert.ok(D.cooldownArco(m) >= D.ARMAS.arco.cadencia);
+  assert.equal(D.cooldownArco(0), D.ARMAS.arco.cadencia, "sin tope activo a maestría 0");
 });
 
 // Cuenta atrás de un cooldown por fotogramas, como en el juego (tickTimers): se resta un paso hasta
@@ -219,7 +232,7 @@ test("restarFotograma: 0,25 s son 15 fotogramas a 60 Hz (sin el umbral serían 1
 
 test("CA-03 a 60 Hz con los fotogramas del juego (docs 7.5): hoja 56 fotogramas y arco 14, 18, 26, 26", () => {
   const paso = 1 / 60;
-  const cicloHoja = D.armas.hoja.cadencias.reduce((s, c) => s + fotogramasHastaCero(c, paso), 0);
+  const cicloHoja = D.ARMAS.hoja.cadencias.reduce((s, c) => s + fotogramasHastaCero(c, paso), 0);
   assert.equal(cicloHoja, 56, "ciclo de la hoja: 15 + 15 + 26 fotogramas");
   const framesArco = [0, 1, 2, 3].map((m) => fotogramasHastaCero(D.cooldownArco(m), paso));
   assert.deepEqual(framesArco, [14, 18, 26, 26]);
@@ -235,7 +248,7 @@ test("CA-03 a 60 Hz con los fotogramas del juego (docs 7.5): hoja 56 fotogramas 
 test("CA-03 a 60 y 120 Hz con restarFotograma (docs 7.5): el arco queda por debajo del 95 % de la hoja", () => {
   for (const hz of [60, 120]) {
     const paso = 1 / hz;
-    const cicloHoja = D.armas.hoja.cadencias.reduce((s, c) => s + fotogramasHastaCero(c, paso), 0);
+    const cicloHoja = D.ARMAS.hoja.cadencias.reduce((s, c) => s + fotogramasHastaCero(c, paso), 0);
     for (let m = 0; m <= 3; m++) {
       const d = plano(D.danoHoja(m));
       const dpsHoja = (d.golpes.reduce((s, x) => s + x, 0) + d.onda) / (cicloHoja * paso);
@@ -250,19 +263,23 @@ test("armas 2D y 3D (tablas 6.1 y 6.2): DPS de referencia y datos de cada arma",
   assert.equal(redondear(D.dpsArma("arco", 0), 1), 39.1);
   assert.equal(redondear(D.dpsArma("martillo", 0), 1), 38.9);
   assert.equal(redondear(D.dpsArma("lanza", 0), 1), 34.8);
+  // Daños de onda y caída del martillo (tabla 6.1): viven en ARMAS y la interfaz los lee de ahí.
+  assert.equal(D.ARMAS.martillo.danoOnda, 12);
+  assert.equal(D.ARMAS.martillo.danoCaida, 42);
+  assert.equal(D.ARMAS.martillo.danoOndaCaida, 18);
   // 3D: rifle 18 a 0,20 s; escopeta 8 perdigones de 10 a 0,90 s; plasma 45 directo y 20 de área a 0,60 s.
-  assert.equal(D.armas.rifle.dano, 18);
-  assert.equal(D.armas.rifle.cadencia, 0.2);
-  assert.equal(D.armas.rifle.rango, 60);
-  assert.equal(D.armas.escopeta.perdigones, 8);
-  assert.equal(D.armas.escopeta.dano, 10);
-  assert.equal(D.armas.escopeta.cadencia, 0.9);
-  assert.equal(D.armas.escopeta.rango, 14);
-  assert.equal(D.armas.plasma.dano, 45);
-  assert.equal(D.armas.plasma.danoArea, 20);
-  assert.equal(D.armas.plasma.radioArea, 2);
-  assert.equal(D.armas.plasma.cadencia, 0.6);
-  assert.equal(D.armas.plasma.rango, 50);
+  assert.equal(D.ARMAS.rifle.dano, 18);
+  assert.equal(D.ARMAS.rifle.cadencia, 0.2);
+  assert.equal(D.ARMAS.rifle.rango, 60);
+  assert.equal(D.ARMAS.escopeta.perdigones, 8);
+  assert.equal(D.ARMAS.escopeta.dano, 10);
+  assert.equal(D.ARMAS.escopeta.cadencia, 0.9);
+  assert.equal(D.ARMAS.escopeta.rango, 14);
+  assert.equal(D.ARMAS.plasma.dano, 45);
+  assert.equal(D.ARMAS.plasma.danoArea, 20);
+  assert.equal(D.ARMAS.plasma.radioArea, 2);
+  assert.equal(D.ARMAS.plasma.cadencia, 0.6);
+  assert.equal(D.ARMAS.plasma.rango, 50);
   assert.equal(redondear(D.dpsArma("rifle", 0), 1), 90);
   assert.equal(redondear(D.dpsArma("escopeta", 0), 1), 88.9);
   assert.equal(redondear(D.dpsArma("plasma", 0), 1), 75);
@@ -474,7 +491,9 @@ test("generarPieza: un cofre de jefe nunca da rareza común", () => {
 });
 
 test("generarPieza sin rng usa Math.random; un rng que no es función lanza TypeError; tipo inválido, RangeError", () => {
-  const pieza = plano(D.generarPieza(1, "comun", 0));
+  let pieza = null;
+  const llamadas = contarLlamadasRandom(() => { pieza = plano(D.generarPieza(1, "comun", 0)); });
+  assert.ok(llamadas > 0, "sin rng se llama a Math.random");
   assert.ok(pieza.modificadores.length >= 1);
   assert.throws(() => D.generarPieza(1, "comun", 0, 5), esError("TypeError"));
   assert.throws(() => D.generarPieza(1, "epico", 0, rngSemilla(1)), esError("RangeError"));

@@ -1,6 +1,6 @@
 # Ceniza: diseño de la expansión
 
-Estado: diseño v1 (FASE 1 en 2D y FASE 3D en 3D). Este documento es la referencia de la expansión. En la ronda 3 se cerraron las discrepancias con `docs/ceniza/datos.js`; cada decisión está en su sección, marcada como «Decisión de la ronda 3».
+Estado: diseño v1 (FASE 1 en 2D y FASE 3D en 3D). Este documento es la fuente de verdad de la expansión: `docs/ceniza/datos.js` se alinea con él. Cada decisión cerrada está en su sección, marcada como «Decisión».
 
 Notas sobre los números:
 
@@ -116,7 +116,7 @@ Las armas 2D se compran con núcleos como hoy: arco 100, martillo 220 y lanza 40
 
 1. El tiempo es de simulación, no de reloj de pared. La pausa (Escape o P) no cuenta. Las animaciones de cofre y los diálogos sí cuentan.
 2. Ruta de referencia: lista fija de salas, cofres, puertas y jefes, sin secretos, sin forja y sin respec.
-3. En 2D, `CENIZA_TEST.avanzar(s)` avanza la aventura `s` segundos en pasos fijos de 1/60 s. Solo existe con `?prueba=1` (`docs/ceniza/aventura-ui.js`). `window.__ceniza.step(n)` de `docs/index.html` avanza la arena, no la aventura. En 3D se expondrá un gancho equivalente.
+3. En 2D, `CENIZA_TEST.avanzar(s)` avanza la aventura `s` segundos en pasos fijos de 1/60 s. Solo existe con `?prueba=1` (`docs/ceniza/aventura-ui.js`). `window.__ceniza.step(n)` de `docs/index.html` avanza la arena, no la aventura. En 3D, `control.step(n)` del objeto que devuelve `Ceniza3D.start` avanza n fotogramas de 1/60 s en modo de prueba (`?prueba=1`, `docs/ceniza/shooter3d.js`). `CENIZA_TEST` no avanza la fase 3D.
 4. Se marca el tiempo al cruzar cada puerta y al derrotar a cada jefe. Con esas marcas se obtiene el tiempo por zona y sector.
 5. Aceptación: 3 repeticiones. El total medido debe ser de al menos 120 minutos y cada zona o sector debe quedar dentro de ±10 % de su tabla.
 
@@ -167,7 +167,7 @@ El tiempo humano varía. Explorar secretos, leer textos, repetir patrones de jef
 
 Fuentes de XP: enemigo común 5, élite 10, cofre común 30, cofre raro 75, cofre de jefe 120, jefe de zona 150 (Z1), 200 (Z2), 300 (Z3) y 400 (Z4), Coloso final 1.000.
 
-Decisión de la ronda 3 (XP del jefe de Z2): el Centinela de cristal da 200 XP, como en 2.4 y en la lista anterior. `datos.js` tenía 220 y se corrigió a 200 en `ZONAS.xpJefe`.
+Decisión (XP del jefe de Z2): el Centinela de cristal da 200 XP, como en 2.4 y en la lista anterior. `datos.js` tenía 220 y se corrigió a 200 en `ZONAS.xpJefe`.
 
 Consecuencia de la lectura adoptada: llegar al nivel 30 necesita 9.235 XP, que equivalen a unos 1.847 enemigos comunes. Los jefes de zona y el Coloso final suman 2.050 XP fijos.
 
@@ -210,7 +210,7 @@ Hay 7 ranuras: arma, casco, pecho, piernas, botas, accesorio 1 y accesorio 2. La
 | Épico | Morado (#a35bbf) | 3 |
 | Legendario | Naranja (#e67e22) | 3 |
 
-Decisión de la ronda 3 (colores y contraste):
+Decisión (colores y contraste):
 
 - Los colores son los de esta tabla. `datos.js` tenía otros (por ejemplo #8e24aa para épico y #43a047 para poco común) y se alinearon con el documento.
 - Contraste sobre el fondo del juego `#0b0807`, con un mínimo de 4,5:1: común 5,8:1; poco común 8,0:1; raro 6,0:1; legendario 7,0:1.
@@ -244,7 +244,7 @@ Rangos resultantes por zona (cada límite se redondea; `rangoModificador(id, zon
 | Núcleos (%) | 5 a 15 | 6 a 18 | 7 a 21 | 8 a 24 |
 | Chatarra (%) | 5 a 15 | 6 a 18 | 7 a 21 | 8 a 24 |
 
-Decisión de la ronda 3: la escala se aplica a los dos límites del rango, y el valor de cada modificador se tira dentro de los límites ya escalados. `datos.js` no escalaba los modificadores y tenía otros rangos (por ejemplo, daño de 3 a 8). Ahora sigue esta tabla. La unidad de suerte es «puntos», como en la tabla de arriba.
+Decisión: la escala se aplica a los dos límites del rango, y el valor de cada modificador se tira dentro de los límites ya escalados. `datos.js` no escalaba los modificadores y tenía otros rangos (por ejemplo, daño de 3 a 8). Ahora sigue esta tabla. La unidad de suerte es «puntos», como en la tabla de arriba.
 
 ### 5.4 Sets
 
@@ -256,7 +256,7 @@ Decisión de la ronda 3: la escala se aplica a los dos límites del rango, y el 
 
 - En una fogata, cada pieza sube de +0 a +5.
 - Costo en chatarra para subir de nivel `k` a `k+1`: `round(5 * (k + 1)^1.5)`.
-- Efecto (decisión D8, cerrada en la ronda 3): cada nivel de forja multiplica todos los modificadores de la pieza por `1 + 0,10 * nivel`. Así +5 da ×1,5. El valor final se redondea a 2 decimales. Ejemplo: vida 10 en +3 da 13 HP y suerte 5 en +3 da 6,5 puntos.
+- Efecto (decisión D8, cerrada): cada nivel de forja multiplica todos los modificadores de la pieza por `1 + 0,10 * nivel`. Así +5 da ×1,5. El valor final se redondea a 2 decimales. Ejemplo: vida 10 en +3 da 13 HP y suerte 5 en +3 da 6,5 puntos.
 - `datos.js` solo subía el modificador principal, +1 % por nivel. Ahora sube todos los modificadores, como indica D8.
 
 | Subida | Valor exacto | Costo (chatarra) | Acumulado |
@@ -405,7 +405,7 @@ Consumibles:
 
 Un cofre abierto queda abierto en el progreso. Cada zona tiene de 2 a 4 cofres de sala, y el cofre de jefe aparece al derrotar al jefe. El cofre de jefe no cuenta en ese rango.
 
-Decisión de la ronda 3 (cofres): esta tabla es la referencia y `datos.js` la sigue (`tablaDeCofres`, `abrirCofre`).
+Decisión (cofres): esta tabla es la referencia y `datos.js` la sigue (`tablaDeCofres`, `abrirCofre`).
 
 - XP del cofre raro: 75, no 60. El código tenía 60.
 - Núcleos y chatarra: el mismo rango en todas las zonas. El código tenía rangos por zona.
@@ -433,13 +433,13 @@ Pesos en porcentaje. La rareza sube con la zona.
 | De jefe | Z3 | 0 | 25 | 44 | 23 | 8 |
 | De jefe | Z4 | 0 | 15 | 40 | 30 | 15 |
 
-Decisión de la ronda 3 (rareza por cofre): esta tabla es la única fuente de rareza de las piezas. `datos.js` tenía además una rareza mínima por zona (Z2 poco común, Z3 raro y Z4 épico) que contradecía la tabla. Por ejemplo, el común de Z4 da 25 % de piezas comunes. Esa rareza mínima se eliminó. `probabilidadesRareza(tipo, zona, suerte)` devuelve estas probabilidades con la suerte de 8.3 ya aplicada, y `generarPieza` las usa para tirar la rareza.
+Decisión (rareza por cofre): esta tabla es la única fuente de rareza de las piezas. `datos.js` tenía además una rareza mínima por zona (Z2 poco común, Z3 raro y Z4 épico) que contradecía la tabla. Por ejemplo, el común de Z4 da 25 % de piezas comunes. Esa rareza mínima se eliminó. `probabilidadesRareza(tipo, zona, suerte)` devuelve estas probabilidades con la suerte de 8.3 ya aplicada, y `generarPieza` las usa para tirar la rareza.
 
 ### 8.3 Efecto de la suerte
 
-Los pesos de raro, épico y legendario se multiplican por `(1 + 0,03 * suerte)`. Después se normalizan los pesos. Así el peso de la rareza alta sube un 3 % relativo por punto, pero la probabilidad sube menos, porque la normalización reparte el total. Con 10 puntos, la probabilidad de rareza alta sube entre un 3,6 % (de jefe en Z4) y un 28,1 % relativo (común en Z1), según el cofre y la zona; la tabla de abajo muestra cinco casos.
+Los pesos de raro, épico y legendario se multiplican por `(1 + 0,03 * suerte)`. Después se normalizan los pesos. Así el peso de la rareza alta sube un 3 % relativo por punto, pero la probabilidad sube menos, porque la normalización reparte el total. Con 10 puntos, la probabilidad de rareza alta sube entre un 3,5 % (de jefe en Z4) y un 22,5 % relativo (raro en Z1) en los cinco casos de la tabla de abajo.
 
-Decisión de la ronda 3 (suerte en puntos): la suerte se mide en puntos. Los puntos de un jugador son los del atributo Suerte (4.2) más la suma de los modificadores de Suerte de las piezas equipadas (5.3, de 1 a 3 puntos cada uno). Cada punto multiplica por 1,03 el peso de la rareza alta. `datos.js` trataba la suerte como porcentaje (0 a 100 %) y usaba otra fórmula de subida. Ahora `abrirCofre` y `generarPieza` reciben puntos, validados de 0 a 100. `bonoDeAtributos` sigue dando el bono de Suerte en % (3 por punto) para la hoja del personaje. La función `probabilidadSubidaRareza(tipo, zona, suerte)` conserva su nombre, que usan las pruebas. Devuelve la probabilidad de rareza alta, que es lo que muestra la tabla de esta sección.
+Decisión (suerte en puntos): la suerte se mide en puntos. Los puntos de un jugador son los del atributo Suerte (4.2) más la suma de los modificadores de Suerte de las piezas equipadas (5.3, de 1 a 3 puntos cada uno). Cada punto multiplica por 1,03 el peso de la rareza alta. `datos.js` trataba la suerte como porcentaje (0 a 100 %) y usaba otra fórmula de subida. Ahora `abrirCofre` y `generarPieza` reciben puntos, validados de 0 a 100. `bonoDeAtributos` sigue dando el bono de Suerte en % (3 por punto) para la hoja del personaje. La función `probabilidadSubidaRareza(tipo, zona, suerte)` conserva su nombre, que usan las pruebas. Devuelve la probabilidad de rareza alta, que es lo que muestra la tabla de esta sección.
 
 Probabilidad de rareza alta (raro, épico o legendario):
 
@@ -465,7 +465,7 @@ Probabilidad de rareza alta (raro, épico o legendario):
 | Patrón del traje | 3: liso, rayas y celdas |
 | Nombre de viajero | Máximo 12 caracteres: letras (con tildes y ñ), números y espacios. Se recortan los espacios de los extremos y se colapsan los dobles |
 
-Decisión de la ronda 3 (personalización): `datos.js` se alineó con esta sección.
+Decisión (personalización): `datos.js` se alineó con esta sección.
 
 - Colores del traje: las claves son ASCII (`oxido`, `carmesi`, `ambar`). El código tenía `bronce`, `acero` y `grafito` en lugar de `cobalto`, `cristal` y `ambar`. Los nuevos valores son `cobalto` #2f5f8f, `cristal` #9fc9d8 y `ambar` #c98a1b.
 - Visor: `carmesi` (#e0403a) y `blanco` (#f2efe9) reemplazan a `rojo` y `verde`.
@@ -477,8 +477,8 @@ La personalización es solo visual. No cambia atributos ni estadísticas.
 
 ### 9.2 Persistencia
 
-- No tiene clave propia en el código actual. La personalización va dentro de la partida de la aventura, en `ceniza.aventura.v1` (campo `personaje`, con `v: 1`). La clave `ceniza.personaje.v1` se declara en `docs/index.html` y se borra al reiniciar, pero nada la escribe.
-- Decisión de la ronda 3: el objeto guardado tiene la misma forma que el JSON del código de exportación (9.3), con `capa.on` y `patron` en la raíz. La validación rechaza cualquier `v` distinto de 1.
+- No tiene clave propia: no hay escritura ni lectura de `ceniza.personaje.v1`. La personalización va dentro de la partida de la aventura, en `ceniza.aventura.v1` (campo `personaje`, con `v: 1`).
+- Decisión: el objeto guardado tiene la misma forma que el JSON del código de exportación (9.3), con `capa.on` y `patron` en la raíz. La validación rechaza cualquier `v` distinto de 1.
 - Se guarda en la partida tras cada cambio del panel de personaje, en la fogata, y se restaura al reanudar. Una partida ganada no se reanuda: la siguiente empieza con el mismo personaje. Si la partida guardada no es válida, la aventura empieza una partida nueva con el personaje por defecto, sin aviso.
 - Todas las lecturas y escrituras van dentro de `try/catch`. Si el almacenamiento no está disponible, el juego sigue, pero la personalización no persiste.
 
@@ -494,7 +494,7 @@ CENIZA1.<base64 del JSON en UTF-8>.<checksum>
 - El JSON tiene estas claves: `v`, `traje` (con `color`, `tono` y `brillo`), `visor`, `casco`, `capa` (con `color` y `on`), `emblema`, `patron` y `nombre`.
 - Al importar se valida el prefijo, el checksum, la base64, el JSON, los rangos, los tipos y la longitud del nombre. Si algo falla, no cambia nada y se muestra el motivo.
 
-Decisión de la ronda 3 (formato): `datos.js` se alineó con esta sección.
+Decisión (formato): `datos.js` se alineó con esta sección.
 
 - Separador: punto, como `CENIZA1.<base64>.<checksum>`. El código tenía guiones. El base64 no usa puntos.
 - Checksum: FNV-1a de 32 bits sobre la parte base64, no sobre el JSON. Así la suma se comprueba antes de decodificar.
@@ -527,7 +527,7 @@ Claves reales: `ceniza.aventura.v1` guarda la partida de la aventura, con lo ant
 
 ### 10.3 Reinicio
 
-- REINICIAR PROGRESO borra el progreso de la arena (`ceniza-prog`) y la partida de la aventura (`ceniza.aventura.v1`, con el personaje, el equipo, los cofres y la historia). También borra la clave `ceniza.personaje.v1`.
+- REINICIAR PROGRESO borra el progreso de la arena (`ceniza-prog`) y la partida de la aventura (`ceniza.aventura.v1`, con el personaje, el equipo, los cofres y la historia).
 - Es una doble pulsación. La primera muestra el aviso "¿Seguro?" durante 3 s y la segunda borra. Es el mismo mecanismo que ya existe en el menú principal.
 - Antes de borrar se recomienda mostrar un aviso para exportar la personalización. El aviso no bloquea el reinicio. Estado: el aviso no está implementado; hoy el reinicio borra sin mostrarlo.
 
@@ -611,9 +611,9 @@ Decisiones pendientes del dueño:
 - **D5 (onda).** La onda de la hoja cuenta en el DPS de referencia. Sin ella, el tope cambia como se indica en 7.4.
 - **D6 (cuantización).** El tope se mantiene a 60 y 120 Hz. Si el código cambia cómo se descuentan los cooldowns, hay que repetir la verificación de 7.5.
 - **D7 (uptime del coloso).** Se supuso 0,5 para calibrar los PV del Coloso final.
-- **D8 (forja).** Cerrada en la ronda 3: el efecto es `1 + 0,10 * nivel` sobre todos los modificadores de la pieza (5.5).
+- **D8 (forja).** Cerrada: el efecto es `1 + 0,10 * nivel` sobre todos los modificadores de la pieza (5.5).
 - **D9 (maestría de arma, propuesta).** El diseño no fija de dónde sale la maestría. Propuesta: `maestría = min(3, floor(usos / 30))`, donde `usos` cuenta los enemigos comunes o élite vencidos con esa arma 2D. Código: `maestriaDe` en `docs/ceniza/aventura-nucleo.js`.
 - **D10 (munición 3D, propuesta).** El diseño no fija munición. La reserva no se agota: el cargador se recarga con el tiempo de recarga existente. Código: shooter3d.js.
 - **D11 (secretos, propuesta).** El diseño no fija cantidades ni tipo de recompensa de los secretos. Propuesta: pieza común de la zona, o 20 a 40 núcleos, o 10 a 20 chatarra, según el secreto. Código: `recogerSecreto` en `docs/ceniza/aventura-nucleo.js`.
-- **D12 (historia).** Texto de docs/ceniza-historia.md, ronda de guionistas: cuatro propuestas, tres jueces, síntesis y revisión. Cuadros de diálogo en la aventura; la historia se guarda con las claves de historia en la partida.
+- **D12 (historia).** Texto de docs/ceniza-historia.md. Cuadros de diálogo en la aventura; la historia se guarda con las claves de historia en la partida.
 - **D13 (curación 3D, propuesta).** El viajero recupera la vida al entrar a cada sector y al cambiar de fase en el Coloso final. El diseño no fija curación en 3D. Código: shooter3d.js.

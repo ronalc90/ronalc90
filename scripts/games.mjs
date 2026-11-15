@@ -34,7 +34,8 @@ const COOLDOWN_MIN = 20;
 const MAX_GUESTS = 24;
 const CENIZA_COOLDOWN_MIN = 10;
 // Armas que puede enviar la aventura de CENIZA: 2D (hoja, arco, martillo, lanza) y 3D (rifle, escopeta, plasma).
-// Deben coincidir con las armas que escribe docs/index.html (avUrlRegistro); el formato de ceniza-stats no cambia.
+// Deben coincidir con las claves de ARMAS de docs/ceniza/datos.js y con las que escribe docs/index.html (avUrlRegistro).
+// scripts/games.test.mjs compara esta lista con datos.js; el formato de ceniza-stats no cambia.
 const CENIZA_ARMAS = ["hoja", "arco", "martillo", "lanza", "rifle", "escopeta", "plasma"];
 const CENIZA_CAMPOS = ["arma", "jefes", "nivel", "victoria", "puntos", "segundos"];
 const CENIZA_WINS_KEEP = 50;
@@ -227,20 +228,24 @@ function cenizaPlay(user, avatarUrl, victoriaTitulo, body) {
   if (wait > 0) {
     return { ok: false, msg: `⏳ @${user}, ya registraste una partida de CENIZA hace poco. Podrás registrar otra en **${fmtMin(wait)} min**; esta no se ha sumado.` };
   }
-  const p = entradaDe(c.players, user, () => ({ avatar: avatarUrl, last: 0, runs: 0, wins: 0, bestLevel: 0 }));
-  p.avatar = avatarUrl;
-  p.last = NOW;
-  p.runs += 1;
-  p.bestLevel = Math.max(p.bestLevel, s.nivel);
-  if (s.victoria) {
-    p.wins += 1;
-    c.wins.unshift({ user, ...s, t: NOW });
-    c.wins = c.wins.slice(0, CENIZA_WINS_KEEP);
-  }
   const msg = s.victoria
     ? `🔥 @${user}, ¡el coloso ha caído! Victoria registrada con **${s.arma}** en el nivel ${s.nivel}: **${s.puntos} puntos** en ${s.segundos} s. Tu nombre sube en el [ranking de CENIZA](https://github.com/${OWNER}).`
     : `🔥 @${user}, registramos tu caída en CENIZA con **${s.arma}**: nivel ${s.nivel}, ${s.jefes} jefe(s) derrotado(s) y **${s.puntos} puntos**. Levántate y vuelve a intentarlo.`;
-  return { ok: true, msg };
+  // El registro no se toca aquí: main() lo aplica con aplicar() solo si la respuesta al issue se envió.
+  // Así una partida cuyo reply() falla no queda contada y el reintento de la siguiente ejecución no choca con el enfriamiento.
+  const aplicar = () => {
+    const p = entradaDe(c.players, user, () => ({ avatar: avatarUrl, last: 0, runs: 0, wins: 0, bestLevel: 0 }));
+    p.avatar = avatarUrl;
+    p.last = NOW;
+    p.runs += 1;
+    p.bestLevel = Math.max(p.bestLevel, s.nivel);
+    if (s.victoria) {
+      p.wins += 1;
+      c.wins.unshift({ user, ...s, t: NOW });
+      c.wins = c.wins.slice(0, CENIZA_WINS_KEEP);
+    }
+  };
+  return { ok: true, msg, aplicar };
 }
 
 function cenizaMarkdown() {
@@ -557,7 +562,10 @@ async function main() {
         const res = cenizaPlay(user, avatarUrl, cm[1].toLowerCase() === "victoria", issue.body);
         const foot = res.ok ? `\n\n<sub>Tu partida aparecerá en la sección CENIZA del [perfil](https://github.com/${OWNER}) en un par de minutos.</sub>` : "";
         await reply(issue, res.msg + foot, ["ceniza"]);
-        if (res.ok) changed = true;
+        if (res.ok) {
+          res.aplicar();
+          changed = true;
+        }
         continue;
       }
       const m = TITLE_RE.exec(title);
