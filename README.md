@@ -150,11 +150,19 @@ currently_working_on:
     </td>
   </tr>
   <tr>
-    <td width="14%" align="center"><b>ago. 2025</b><br/><sub>→ jun. 2026</sub></td>
+    <td width="14%" align="center"><b>ago. 2025</b><br/><sub>→ abr. 2026</sub></td>
     <td>
       <b>🏦 Falabella (Chile) — Desarrollador Full Stack</b><br/>
       Sistema de conciliación transaccional del banco: el proceso diario que cruza las transacciones de tarjetas reportadas por Redeban, Mastercard, cajeros, POS e internet contra el switch, y del que dependen la contabilidad, la facturación de redes y la reportería. Reglas de conciliación en T-SQL, herramienta en Python para validar scripts SQL antes de ejecutarlos, revisión de pares, diagnóstico de defectos y documentación técnica y funcional.<br/>
       <sub>SQL Server · T-SQL · Python · Git · GitLab CI · Jira · Confluence</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="14%" align="center"><b>ene. 2026</b><br/><sub>→ mar. 2026</sub></td>
+    <td>
+      <b>🔐 SOSALUD SAS — Desarrollador de software (proyecto VPN)</b><br/>
+      VPN a medida en Python para que los trabajadores accedieran de forma segura, desde fuera de la red interna, a los servicios de Nueva EPS: túnel cifrado entre sus equipos y el servidor corporativo. Servidor VPN, autenticación y control de acceso, pruebas de conectividad y documentación técnica.<br/>
+      <sub>Python · TCP/IP · cifrado · VPN</sub>
     </td>
   </tr>
   <tr>
