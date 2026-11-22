@@ -150,29 +150,29 @@ currently_working_on:
     </td>
   </tr>
   <tr>
-    <td width="14%" align="center"><b>nov. 2025</b><br/><sub>→ jun. 2026</sub></td>
+    <td width="14%" align="center"><b>ago. 2025</b><br/><sub>→ jun. 2026</sub></td>
     <td>
-      <b>🏦 BC Tecnología — Desarrollador Full Stack (cliente: Banco Falabella Colombia)</b><br/>
+      <b>🏦 Falabella (Chile) — Desarrollador Full Stack</b><br/>
       Sistema de conciliación transaccional del banco: el proceso diario que cruza las transacciones de tarjetas reportadas por Redeban, Mastercard, cajeros, POS e internet contra el switch, y del que dependen la contabilidad, la facturación de redes y la reportería. Reglas de conciliación en T-SQL, herramienta en Python para validar scripts SQL antes de ejecutarlos, revisión de pares, diagnóstico de defectos y documentación técnica y funcional.<br/>
       <sub>SQL Server · T-SQL · Python · Git · GitLab CI · Jira · Confluence</sub>
     </td>
   </tr>
   <tr>
-    <td width="14%" align="center"><b>2024</b><br/><sub>→ 2025</sub></td>
+    <td width="14%" align="center"><b>ene. 2025</b><br/><sub>→ jul. 2025</sub></td>
     <td>
-      <b>🤖 Globa — Desarrollador Full Stack</b><br/>
+      <b>🤖 Globa (Flimp Media · EE. UU.) — Desarrollador Full Stack</b><br/>
       React + TypeScript en frontend y Node.js/TypeScript en backend. Chatbots inteligentes con OpenAI API, embeddings, vector stores y recuperación semántica. Procesamiento de documentos (PDF, DOCX, HTML, TXT), microservicios, AWS (S3), JWT y pipelines CI/CD.
     </td>
   </tr>
   <tr>
-    <td width="14%" align="center"><b>2023</b><br/><sub>→ 2024</sub></td>
+    <td width="14%" align="center"><b>oct. 2023</b><br/><sub>→ ene. 2025</sub></td>
     <td>
       <b>🎓 Universitas XXI — Desarrollador Full Stack</b><br/>
       Arquitectura modular por capas con Java EE y REST sobre WebLogic. Interfaces en Oracle APEX, pruebas unitarias con JUnit, CI/CD, Git/Bitbucket, JIRA y soporte en entornos preproductivos y productivos.
     </td>
   </tr>
   <tr>
-    <td width="14%" align="center"><b>2020</b><br/><sub>→ 2023</sub></td>
+    <td width="14%" align="center"><b>ene. 2020</b><br/><sub>→ oct. 2023</sub></td>
     <td>
       <b>🌐 Koptup — Desarrollador Full Stack & Consultor Tecnológico</b><br/>
       Soluciones a medida con React, Angular, TypeScript. Apps de escritorio WPF + SQL Server, integraciones AWS S3, autenticación JWT, despliegues en Vercel, eCommerce personalizados y consultoría técnica.
@@ -237,7 +237,7 @@ currently_working_on:
     <td width="50%" valign="top">
       <a href="https://www.koptup.com"><img src="assets/proyectos/koptup.webp" width="100%" alt="Koptup: demo RAG respondiendo con la fuente citada"/></a>
       <h3>🌐 <a href="https://github.com/ronalc90/koptup">Koptup</a></h3>
-      Sistemas <b>RAG</b>: IA que responde con los documentos de la empresa y <b>cita la fuente</b>. Catálogo de <b>28 demos</b> interactivas.<br/><br/>
+      Sistemas <b>RAG</b>: IA que responde con los documentos de la empresa y <b>cita la fuente</b>. Catálogo de <b>14 demos</b> interactivas.<br/><br/>
       <img src="https://img.shields.io/badge/Next.js-B4532A?style=flat-square&logo=nextdotjs&logoColor=EFE2C6&labelColor=16100B" alt="Next.js"/>
       <img src="https://img.shields.io/badge/Express-E06B2D?style=flat-square&logo=express&logoColor=EFE2C6&labelColor=16100B" alt="Express"/>
       <img src="https://img.shields.io/badge/MongoDB-C8923A?style=flat-square&logo=mongodb&logoColor=EFE2C6&labelColor=16100B" alt="MongoDB"/>
@@ -266,24 +266,24 @@ currently_working_on:
       <a href="https://motattomotocicletas.com"><img src="https://img.shields.io/badge/🌐_Demo-motattomotocicletas.com-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
     </td>
     <td width="50%" valign="top">
-      <a href="https://meraki-wine.vercel.app"><img src="assets/proyectos/koptup-comercio.webp" width="100%" alt="Koptup Comercio: dashboard del negocio"/></a>
+      <a href="https://github.com/ronalc90/koptup-comercio-electronico#readme"><img src="assets/proyectos/koptup-comercio.webp" width="100%" alt="Koptup Comercio: dashboard del negocio"/></a>
       <h3>🛒 <a href="https://github.com/ronalc90/koptup-comercio-electronico">Koptup Comercio</a></h3>
       SaaS para comercios: pedidos por WhatsApp o voz con <b>IA que valida el stock</b>, inventario por variante, despachos y finanzas.<br/><br/>
       <img src="https://img.shields.io/badge/Next.js_16-B4532A?style=flat-square&logo=nextdotjs&logoColor=EFE2C6&labelColor=16100B" alt="Next.js 16"/>
       <img src="https://img.shields.io/badge/Supabase_·_RLS-E06B2D?style=flat-square&logo=supabase&logoColor=EFE2C6&labelColor=16100B" alt="Supabase con RLS"/>
       <img src="https://img.shields.io/badge/OpenAI-C8923A?style=flat-square" alt="OpenAI"/>
-      <a href="https://meraki-wine.vercel.app"><img src="https://img.shields.io/badge/🌐_Demo-meraki--wine.vercel.app-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
+      <a href="https://github.com/ronalc90/koptup-comercio-electronico#readme"><img src="https://img.shields.io/badge/📖_Código-GitHub-E06B2D?style=flat-square&labelColor=16100B" alt="Código en GitHub"/></a>
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <a href="https://www.saludadultomayor.org"><img src="assets/proyectos/salud-salta-noa.webp" width="100%" alt="Salud Adulto Mayor: portada de la plataforma"/></a>
+      <a href="https://saludadultomayor.org"><img src="assets/proyectos/salud-salta-noa.webp" width="100%" alt="Salud Adulto Mayor: portada de la plataforma"/></a>
       <h3>🩺 <a href="https://github.com/ronalc90/saludSalta_Noa">Salud Adulto Mayor</a></h3>
       Plataforma <b>accesible</b> de educación en salud para personas mayores de Salta: clases en video, IMC y orientación por síntomas con <b>ML</b>.<br/><br/>
       <img src="https://img.shields.io/badge/Next.js-B4532A?style=flat-square&logo=nextdotjs&logoColor=EFE2C6&labelColor=16100B" alt="Next.js"/>
       <img src="https://img.shields.io/badge/FastAPI-E06B2D?style=flat-square&logo=fastapi&logoColor=EFE2C6&labelColor=16100B" alt="FastAPI"/>
       <img src="https://img.shields.io/badge/scikit--learn-C8923A?style=flat-square&logo=scikitlearn&logoColor=EFE2C6&labelColor=16100B" alt="scikit-learn"/>
-      <a href="https://www.saludadultomayor.org"><img src="https://img.shields.io/badge/🌐_Demo-saludadultomayor.org-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
+      <a href="https://saludadultomayor.org"><img src="https://img.shields.io/badge/🌐_Demo-saludadultomayor.org-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
     </td>
     <td width="50%" valign="top">
       <a href="https://github.com/ronalc90/Visual-code-Latigo-Claude#readme"><img src="assets/proyectos/latigo.webp" width="100%" alt="Látigo para Claude Code: el latigazo revienta sobre la conversación y el effort sube a high"/></a>
@@ -399,7 +399,7 @@ currently_working_on:
 >
 > ### 🏆 FINAL · El Arquitecto de Interfaces
 > Así trabajo en el frontend: **React + TypeScript**, también **Angular**, apps responsivas, integraciones **eCommerce** y despliegues en **Vercel**.
-> Mira 28 demos en [**koptup.com**](https://koptup.com) · [repo](https://github.com/ronalc90/koptup)
+> Mira 14 demos en [**koptup.com**](https://koptup.com) · [repo](https://github.com/ronalc90/koptup)
 
 </details>
 
@@ -428,7 +428,7 @@ currently_working_on:
 > *Línea por línea encuentras el error escondido en una lógica bancaria de hace años. Lo corriges, validas de punta a punta y, por primera vez en meses, el libro mayor cuadra al centavo.*
 >
 > ### 🏆 FINAL · El Guardián del Libro Mayor
-> Esto hice en **BC Tecnología**: **conciliación bancaria para Banco Falabella Colombia**, con validaciones **end-to-end** y **stored procedures** sobre **SQL Server**, cuidando consistencia, exactitud y trazabilidad.
+> Esto hice en **Falabella (Chile)**: **conciliación bancaria** del banco, con validaciones **end-to-end** y **stored procedures** sobre **SQL Server**, cuidando consistencia, exactitud y trazabilidad.
 
 </details>
 
@@ -474,7 +474,7 @@ currently_working_on:
 >
 > ### 🏆 FINAL SECRETO · El que despertó al coloso
 > Llegaste al final más raro de la travesía. Si buscas a alguien que mezcle **backend sólido**, **frontend moderno** e **IA aplicada**, hablemos:
-> [**LinkedIn**](https://www.linkedin.com/in/ronald-demian-cipagauta-penagos-384944209/) · [**Email**](mailto:ronalddemiancipagauta@gmail.com) · [**WhatsApp**](https://wa.me/573024794842)
+> [**LinkedIn**](https://www.linkedin.com/in/ronald-cipagauta/) · [**Email**](mailto:ronalddemiancipagauta@gmail.com) · [**WhatsApp**](https://wa.me/573024794842)
 
 </details>
 </details>
@@ -489,7 +489,7 @@ currently_working_on:
 
 <div align="center">
 
-<a href="https://www.linkedin.com/in/ronald-demian-cipagauta-penagos-384944209/"><img src="https://skillicons.dev/icons?i=linkedin" height="44" alt="LinkedIn"/></a>&nbsp;
+<a href="https://www.linkedin.com/in/ronald-cipagauta/"><img src="https://skillicons.dev/icons?i=linkedin" height="44" alt="LinkedIn"/></a>&nbsp;
 <a href="mailto:ronalddemiancipagauta@gmail.com"><img src="https://skillicons.dev/icons?i=gmail" height="44" alt="Gmail"/></a>&nbsp;
 <a href="https://github.com/ronalc90"><img src="https://skillicons.dev/icons?i=github&theme=dark" height="44" alt="GitHub"/></a>
 
