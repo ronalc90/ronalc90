@@ -274,13 +274,13 @@ currently_working_on:
       <a href="https://motattomotocicletas.com"><img src="https://img.shields.io/badge/🌐_Demo-motattomotocicletas.com-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
     </td>
     <td width="50%" valign="top">
-      <a href="https://github.com/ronalc90/koptup-comercio-electronico#readme"><img src="assets/proyectos/koptup-comercio.webp" width="100%" alt="Koptup Comercio: dashboard del negocio"/></a>
-      <h3>🛒 <a href="https://github.com/ronalc90/koptup-comercio-electronico">Koptup Comercio</a></h3>
-      SaaS para comercios: pedidos por WhatsApp o voz con <b>IA que valida el stock</b>, inventario por variante, despachos y finanzas.<br/><br/>
+      <a href="https://moto-arriendo.vercel.app"><img src="assets/proyectos/moto-arriendo.webp" width="100%" alt="Moto Arriendo: panel «Hoy» del administrador"/></a>
+      <h3>🛵 <a href="https://github.com/ronalc90/Moto_Arriendo">Moto Arriendo</a></h3>
+      App instalable (PWA) para arrendar motos a conductores de apps: pagos diarios con comprobante, préstamos con abonos, atrasos con <b>semáforo</b>, documentos con vencimiento y reportes de <b>recuperación de la inversión</b>.<br/><br/>
       <img src="https://img.shields.io/badge/Next.js_16-B4532A?style=flat-square&logo=nextdotjs&logoColor=EFE2C6&labelColor=16100B" alt="Next.js 16"/>
       <img src="https://img.shields.io/badge/Supabase_·_RLS-E06B2D?style=flat-square&logo=supabase&logoColor=EFE2C6&labelColor=16100B" alt="Supabase con RLS"/>
-      <img src="https://img.shields.io/badge/OpenAI-C8923A?style=flat-square" alt="OpenAI"/>
-      <a href="https://github.com/ronalc90/koptup-comercio-electronico#readme"><img src="https://img.shields.io/badge/📖_Código-GitHub-E06B2D?style=flat-square&labelColor=16100B" alt="Código en GitHub"/></a>
+      <img src="https://img.shields.io/badge/PWA-C8923A?style=flat-square&logo=pwa&logoColor=EFE2C6&labelColor=16100B" alt="PWA"/>
+      <a href="https://moto-arriendo.vercel.app"><img src="https://img.shields.io/badge/🌐_Demo-moto--arriendo.vercel.app-E06B2D?style=flat-square&labelColor=16100B" alt="Demo"/></a>
     </td>
   </tr>
   <tr>
